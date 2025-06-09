@@ -9,10 +9,9 @@ const PorfolioComponent = () => {
     }, []);
 
     async function addNewPortfolio() {
-        const response = await fetch(`${API_BASE_URI}/asdf`);
+        const response = await fetch(`${API_BASE_URI}/addPorfolio`);
         const text = await response.text(); // get plain text
         setAsdfName(text);
-        console.log(text);
     }
     function removeAnPortfolio() {
 
@@ -25,6 +24,7 @@ const PorfolioComponent = () => {
 
             <h1>NISAAAN</h1>
             <p1>{asdfName}</p1>
+            <button onclick="addNewPortfolio()">Click Me!</button> 
         </div>
     );
 }
