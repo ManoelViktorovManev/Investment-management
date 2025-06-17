@@ -11,12 +11,20 @@ class QueryBuilder
     private $sql;
     private $bindings;
     private BaseModel $model;
+    private bool $firstTimeWhere;
+    private bool $firstTimeOrder;
+    private int $countWhereStatements;
 
     public function __construct(BaseModel $model)
     {
         $this->model = $model;
         $this->modelClassTable = $this->model->getTable();
         $this->db = DataBaseComponent::getInstance()->getDB();
+        $this->sql = "SELECT * FROM {$this->modelClassTable}";
+        $this->firstTimeWhere = true;
+        $this->firstTimeOrder = true;
+        $this->countWhereStatements = 0;
+        $this->bindings = [];
     }
 
     private function buildAndExecuteSTMT($sql)
@@ -28,19 +36,42 @@ class QueryBuilder
         $stmt->execute();
         return $stmt;
     }
-    public function all(): array
+    public function all($wantingInstances = false): array
     {
-        $sql = $this->sql ?: "SELECT * FROM {$this->modelClassTable}";
-        $stmt = $this->buildAndExecuteSTMT($sql);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt = $this->buildAndExecuteSTMT($this->sql);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if ($wantingInstances) {
+            $instances = [];
+            foreach ($results as $result) {
+                $reflect = new \ReflectionClass($this->model);
+                $modelInstance = $reflect->newInstance(); // create a new model instance
+
+                foreach ($result as $property => $value) {
+                    if ($reflect->hasProperty($property)) {
+                        $prop = $reflect->getProperty($property);
+                        $prop->setAccessible(true);
+                        $prop->setValue($modelInstance, $value);
+                    }
+                }
+
+                $instances[] = $modelInstance;
+            }
+
+            return $instances;
+        } else {
+            return $results;
+        }
     }
+
     public function first(): ?BaseModel
     {
-        $sql = $this->sql ?: "SELECT * FROM {$this->modelClassTable} LIMIT 1";
-        $stmt = $this->buildAndExecuteSTMT($sql);
+        $this->sql .= " LIMIT 1";
+
+        $stmt = $this->buildAndExecuteSTMT($this->sql);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         if (!$result) {
-            return null; // Nothing found
+            return null;
         }
 
         $reflect = new \ReflectionClass($this->model);
@@ -63,13 +94,18 @@ class QueryBuilder
         if (!in_array($operation, $allowedOps)) {
             throw new \InvalidArgumentException("Invalid operation: $operation");
         }
-        $this->sql = "SELECT * FROM {$this->modelClassTable} WHERE {$key} {$operation} :value";
-        $this->bindings = [
-            ':value' => [
-                'value' => $value,
-                'type' => is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
-            ]
+        if ($this->firstTimeWhere) {
+            $this->firstTimeWhere = false;
+            $this->sql .= " WHERE {$key} {$operation} :value{$this->countWhereStatements}";
+        } else {
+            $this->sql .= " {$key} {$operation} :value{$this->countWhereStatements}";
+        }
+
+        $this->bindings[":value{$this->countWhereStatements}"] = [
+            'value' => $value,
+            'type' => is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
         ];
+        $this->countWhereStatements++;
         return $this;
     }
 
@@ -90,11 +126,23 @@ class QueryBuilder
             $orders[] = "$key $value";
         }
 
-        if (empty($this->sql)) {
-            $this->sql = "SELECT * FROM {$this->modelClassTable}";
+        if ($this->firstTimeOrder) {
+            $this->firstTimeOrder = false;
+            $this->sql .= " ORDER BY " . implode(", ", $orders);
+        } else {
+            $this->sql .= " " . implode(", ", $orders);
         }
 
-        $this->sql .= " ORDER BY " . implode(", ", $orders);
+        return $this;
+    }
+    public function and()
+    {
+        $this->sql .= " AND ";
+        return $this;
+    }
+    public function or()
+    {
+        $this->sql .= " OR ";
         return $this;
     }
 };

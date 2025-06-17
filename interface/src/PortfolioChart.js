@@ -7,7 +7,7 @@ const PortfolioChart = ({ data }) => (
   <PieChart width={400} height={300}>
     <Pie
       data={data}
-      dataKey="value"
+      dataKey="currentMarketCap"
       nameKey="name"
       cx="50%"
       cy="50%"
