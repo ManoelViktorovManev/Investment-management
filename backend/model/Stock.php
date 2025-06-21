@@ -11,14 +11,16 @@ class Stock extends BaseModel
     private string $symbol;
     private string $currency;
     private float $price;
+    private bool $isCash;
 
-    public function __construct(?int $id = null, string $name = '', string $symbol = '', string $currency = '', float $price = 0)
+    public function __construct(?int $id = null, string $name = '', string $symbol = '', string $currency = '', float $price = 0, bool $isCash = false)
     {
         $this->id = $id;
         $this->name = $name;
         $this->symbol = $symbol;
         $this->currency = $currency;
         $this->price = $price;
+        $this->isCash = $isCash;
     }
 
     public function getId(): ?int
@@ -69,5 +71,15 @@ class Stock extends BaseModel
     public function setPrice(float $price): void
     {
         $this->price = $price;
+    }
+
+    public function getIsCash(): bool
+    {
+        return $this->isCash;
+    }
+
+    public function setIsCash(bool $isCash): void
+    {
+        $this->isCash = $isCash;
     }
 }

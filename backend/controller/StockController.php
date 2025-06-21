@@ -11,22 +11,14 @@ use App\Model\Stock;
 class StockController extends BaseController
 {
 
-    #[Route('/createNewStock', methods: ['POST'])]
-    public function createNewStock()
+    public function createNewStock($stockName, $stockSymbol, $stockCurrency, $stockPrice, bool $isCash = false)
     {
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
-
-        $stockName = $data["name"];
-        $stockSymbol = $data["symbol"];
-        $stockCurrency = $data["currency"];
-        $stockPrice = $data["price"];
-
         $newStock = new Stock();
         $newStock->setName($stockName);
         $newStock->setSymbol($stockSymbol);
         $newStock->setCurrency($stockCurrency);
         $newStock->setPrice($stockPrice);
+        $newStock->setIsCash($isCash);
 
         $db = new DbManipulation();
         $db->add($newStock);

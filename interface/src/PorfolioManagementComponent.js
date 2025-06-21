@@ -5,7 +5,6 @@ const PorfolioComponent = () => {
     const [portfolios, setPortfolios] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [PortfolioName, setPortfolioName] = useState("");
-    const [PortfolioCurrency, setPortfolioCurrency] = useState("");
 
     useEffect(() => {
         showAllPortfolios();
@@ -17,7 +16,7 @@ const PorfolioComponent = () => {
         const response = await fetch(`${API_BASE_URI}/createNewPortfolio`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "name": PortfolioName, "currency": PortfolioCurrency })
+            body: JSON.stringify({ "name": PortfolioName })
         });
         if (response.status != 200) {
             alert("Problem trying to create a new Portfolio");
@@ -60,7 +59,6 @@ const PorfolioComponent = () => {
                 {portfolios.map((portfolio) => (
                     <li key={portfolio.id} style={{ marginBottom: '10px' }}>
                         <strong>Name:</strong> {portfolio.name} <br />
-                        <strong>Currency:</strong> {portfolio.currency} <br />
                         <button onClick={() => removePortfolio(portfolio.id)} style={{ marginTop: '5px' }}>
                             Delete
                         </button>
@@ -86,13 +84,6 @@ const PorfolioComponent = () => {
                         placeholder="Portfolio Name"
                         value={PortfolioName}
                         onChange={(e) => setPortfolioName(e.target.value)}
-                        style={{ display: 'block', marginBottom: '10px' }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Currency"
-                        value={PortfolioCurrency}
-                        onChange={(e) => setPortfolioCurrency(e.target.value)}
                         style={{ display: 'block', marginBottom: '10px' }}
                     />
                     <button onClick={addNewPortfolio}>Submit</button>

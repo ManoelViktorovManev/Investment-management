@@ -9,11 +9,11 @@ class StockPortfolioManagement extends BaseModel
     private ?int $id;
     private int $idPortfolio;
     private int $idStock;
-    private int $numStocks;
+    private float $numStocks;
     private float $price;
     private float $valueOfStock;
 
-    public function __construct(?int $id = null, int $idPortfolio = 0, int $idStock = 0, int $numStocks = 0, float $price = 0, float $valueOfStock = 0)
+    public function __construct(?int $id = null, int $idPortfolio = 0, int $idStock = 0, float $numStocks = 0, float $price = 0, float $valueOfStock = 0)
     {
         $this->id = $id;
         $this->idPortfolio = $idPortfolio;
@@ -53,12 +53,12 @@ class StockPortfolioManagement extends BaseModel
         $this->idStock = $idStock;
     }
 
-    public function getNumStocks(): int
+    public function getNumStocks(): float
     {
         return $this->numStocks;
     }
 
-    public function setNumStocks(int $numStocks): void
+    public function setNumStocks(float $numStocks): void
     {
         $this->numStocks = $numStocks;
     }

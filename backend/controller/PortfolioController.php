@@ -23,7 +23,7 @@ class PortfolioController extends BaseController
 
         $new_porfolio = new Portfolio();
         $new_porfolio->setName($name);
-        $new_porfolio->setCurrency($currency);
+        // $new_porfolio->setCurrency($currency);
 
         $db = new DbManipulation();
         $db->add($new_porfolio);
