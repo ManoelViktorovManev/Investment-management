@@ -23,8 +23,6 @@ class StockController extends BaseController
         $db = new DbManipulation();
         $db->add($newStock);
         $db->commit();
-
-        return new Response("OK");
     }
 
     #[Route('/getAllStocks')]
@@ -33,9 +31,22 @@ class StockController extends BaseController
         $stock = new Stock();
         $allStocks = $stock->query()->all();
 
+        return $this->json($allStocks);
+    }
+
+    #[Route('/getSingleStockData/{id}')]
+    public function getSingleStockData($id)
+    {
+        $stock = new Stock();
+        $allStocks = $stock
+            ->query()
+            ->select("name, currency, price")
+            ->where(["id", "=", $id])
+            ->all();
 
         return $this->json($allStocks);
     }
+
 
     #[Route('/updateStock', methods: ['POST'])]
     public function updateStock()

@@ -3,11 +3,12 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#aa00ff', '#ff4f81', '#aaff00'];
 
-const PortfolioChart = ({ data }) => (
+//datakey we need to can change
+const PortfolioChart = ({ data, dataKey }) => (
   <PieChart width={400} height={300}>
     <Pie
       data={data}
-      dataKey="currentMarketCap"
+      dataKey={dataKey}
       nameKey="name"
       cx="50%"
       cy="50%"

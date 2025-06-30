@@ -4,10 +4,12 @@ import PortfolioList from './PortfolioList';
 import API_BASE_URI from './EnvVar.js';
 import FormInput from './FormInput.js';
 import PriceUpdateTable from './PriceUpdateTable.js';
+import StockDistributionView from './StockDistributionView.js'
 
 const HomeComponent = () => {
   const [porfoliosNamesAndId, setPorfoliosNamesAndId] = useState({});
   const [selectedPortfolio, setSelectedPortfolio] = useState('');
+  const [allUsers, setAllUsers] = useState({});
 
   const [showBuyStockForm, setShowBuyStockForm] = useState(false);
   const [showSellStockForm, setShowSellStockForm] = useState(false);
@@ -29,10 +31,13 @@ const HomeComponent = () => {
   const [entireCashValue, setEntireCashValue] = useState(1);
 
 
+  const [selectedStockId, setSelectedStockId] = useState(null);
+
+
   useEffect(() => {
     getAllPortfolios();
     getAllStocks();
-
+    getAllUsers();
   }, []);
 
   useEffect(() => {
@@ -81,10 +86,23 @@ const HomeComponent = () => {
     }
   }
 
+  async function getAllUsers() {
+    const response = await fetch(`${API_BASE_URI}/getAllUsers`, {
+      method: 'GET'
+    });
+    if (response.status !== 200) {
+      alert("Problem trying to get all Stocks");
+    } else {
+      const data = await response.json();
+      setAllUsers(data.reduce((map, item) => {
+        map[item.id] = item.name;
+        return map;
+      }, {}));
+    }
+  }
   const handleChange = (event) => {
     const selected = event.target.value;
     setSelectedPortfolio(selected);
-    // setEntireCashValue(0);
     selected == "" ? getAllValueOfPortfolio(null) : getAllValueOfPortfolio(selected);
   };
 
@@ -126,7 +144,7 @@ const HomeComponent = () => {
 
     const url = newStock.isStock == true
       ? `${API_BASE_URI}/buyStockInPortfolio`
-      : `${API_BASE_URI}/updateCashAmount`;
+      : `${API_BASE_URI}/addCashInPortfolio`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -138,20 +156,24 @@ const HomeComponent = () => {
         quantity: newStock.quantity,
         portfolioId: selectedPortfolio,
         date: newStock.transactionDate,
-        isStock: newStock.isStock
+        isStock: newStock.isStock,
+        allocations: newStock.allocations
       })
     });
     if (response.status !== 200) {
       alert("Problem trying to add a new Stock to portfolio");
     }
-    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false });
+    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
     setShowBuyStockForm(false);
     getAllStocks();
   }
 
   async function handleSellSubmit(e) {
     e.preventDefault();
-    const response = await fetch(`${API_BASE_URI}/sellStockInPortfolio`, {
+    const url = newStock.isStock == true
+      ? `${API_BASE_URI}/sellStockInPortfolio`
+      : `${API_BASE_URI}/removeCashFromPortfolio`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -162,13 +184,14 @@ const HomeComponent = () => {
         quantity: newStock.quantity,
         portfolioId: selectedPortfolio,
         date: newStock.transactionDate,
-        isStock: newStock.isStock
+        isStock: newStock.isStock,
+        allocations: newStock.allocations
       })
     });
     if (response.status !== 200) {
       alert("Problem trying to add a new Stock to portfolio");
     }
-    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false });
+    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
     setShowSellStockForm(false);
     getAllStocks();
   }
@@ -224,8 +247,10 @@ const HomeComponent = () => {
         entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)));
         setEntireCashValue(entireCashValue);
         return {
+          stockId: stock.id,
           symbol: stock.symbol,
           name: stock.name,
+          stockCurrency: stock.currency,
           numShares: numStocks,
           value: valueOfStock,
           currentPrice: stock.price,
@@ -236,7 +261,6 @@ const HomeComponent = () => {
           idOfDB: item.id // optional for updates/deletes
         };
       }).filter(Boolean); // remove nulls
-
       setStockData(mapped);
     }
   }
@@ -255,6 +279,7 @@ const HomeComponent = () => {
       </button>
 
       {selectedPortfolio !== '' && (
+
         <div>
           <button type="button" onClick={() => setShowBuyStockForm(prev => !prev)}>
             {showBuyStockForm ? 'Hide Buy Stock/Insert Cash' : 'Buy Stock/Insert Cash'}
@@ -269,23 +294,39 @@ const HomeComponent = () => {
 
       {/* Buying stock */}
       {showBuyStockForm && (
-        <FormInput
-          title="Buy Stock/Insert Cash"
-          stock={newStock}
-          onChange={handleInputChange}
-          onSubmit={handleBuySubmit}
-        />
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
+            <FormInput
+              title="Buy Stock/Insert Cash"
+              stock={newStock}
+              listOfStocks={allStocksInfo}
+              onChange={handleInputChange}
+              onSubmit={handleBuySubmit}
+              portfolioId={selectedPortfolio}
+              listOfUsers={allUsers}
+            />
+          </div>
+        </div>
       )}
 
       {/* Selling a stock */}
       {
         showSellStockForm && (
-          <FormInput
-            title="Sell Stock/Remove Cash"
-            stock={newStock}
-            onChange={handleInputChange}
-            onSubmit={handleSellSubmit}
-          />
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
+              <FormInput
+                title="Sell Stock/Remove Cash"
+                stock={newStock}
+                listOfStocks={allStocksInfo}
+                onChange={handleInputChange}
+                onSubmit={handleSellSubmit}
+                portfolioId={selectedPortfolio}
+                listOfUsers={allUsers}
+              />
+            </div>
+          </div>
         )
       }
 
@@ -299,27 +340,44 @@ const HomeComponent = () => {
       )}
 
 
-      <h2 className="text-3xl font-semibold mb-6">Portfolio Overview</h2>
-
-      <PortfolioChart data={stockData} />
-      <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>
-      <h3>Current value: {entireCashValue}</h3>
-      <PortfolioList stocks={stockData} setDelete={setDeletedStock} />
+      {selectedStockId ? (
+        <StockDistributionView
+          stock={stockData.find(s => s.stockId === selectedStockId)}
+          goBack={() => setSelectedStockId(null)}
+        />
+      ) : (
+        <>
+          <h2 className="text-3xl font-semibold mb-6">
+            Portfolio Overview: {porfoliosNamesAndId[selectedPortfolio]}
+          </h2>
+          <PortfolioChart data={stockData} dataKey={"currentMarketCap"} />
+          <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>
+          <h3>Current value: {entireCashValue}</h3>
+          <PortfolioList
+            stocks={stockData}
+            setDelete={setDeletedStock}
+            onStockClick={(stockId) => setSelectedStockId(stockId)}
+          />
+        </>
+      )}
     </div >
   );
 };
 
 export { HomeComponent };
-
 /*
-  TODO: 
-  Add sell stock OK
-  Add date on adding a new stock OK
-  Add insert/remove money OK
-  проблем когато се добави същата валута в друг акаунт - изкачат два пъти примерно USD! OK
-  fix the db, by removing in Portfolio => Currency and valueOfPortfolio OK
-  add Currency in display
-  add in Portfolio menu the entire portfolio price + currency exchange.
-  Add transaction history + delete some of the history
+  TASKS TO DO:
+    TOP PRIORITY!
+    Individual Profile of user (How much profit he has) -> друга база ще ни трябва
+    Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
+    добавяне на възможност за добавяне на дивиденти
+    fixing form input field!
 
+    MID!
+    Оправяне на менютата
+    Optimization of time and memory of the code!
+  
+    LOW!
+    документиране на кода
+    Transaction history!
 */

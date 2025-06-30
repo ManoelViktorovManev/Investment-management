@@ -19,11 +19,9 @@ class PortfolioController extends BaseController
         $data = json_decode($rawInput, true);
 
         $name = $data["name"];
-        $currency = $data["currency"];
 
         $new_porfolio = new Portfolio();
         $new_porfolio->setName($name);
-        // $new_porfolio->setCurrency($currency);
 
         $db = new DbManipulation();
         $db->add($new_porfolio);

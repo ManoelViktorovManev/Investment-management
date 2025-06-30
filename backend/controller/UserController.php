@@ -54,4 +54,12 @@ class UserController extends BaseController
         $allUsers = $user->query()->all();
         return $this->json($allUsers);
     }
+
+    #[Route('/getUser/{id}')]
+    public function getUser($id)
+    {
+        $user = new User();
+        $user->query()->where(["id", "=", $id])->first();
+        return $this->json(["name" => $user->getName()]);
+    }
 }
