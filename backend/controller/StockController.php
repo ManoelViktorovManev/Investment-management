@@ -54,16 +54,22 @@ class StockController extends BaseController
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        $stockId = $data["id"];
-        $stockPrice = $data["price"];
-
-        $stock = new Stock();
-        $stock->query()->where(["id", "=", $stockId])->first();
-
-        $stock->setPrice($stockPrice);
+        // $stockId = $data["id"];
+        // $stockPrice = $data["price"];
+        $allocations = $data["allocations"];
 
         $db = new DbManipulation();
-        $db->add($stock);
+        foreach ($allocations as $stockId => $stockPrice) {
+            $stock = new Stock();
+            $stock->query()->where(["id", "=", $stockId])->first();
+            if ($stock->getPrice() == $stockPrice) {
+                continue;
+            }
+            $stock->setPrice($stockPrice);
+
+            $db->add($stock);
+        }
+
         $db->commit();
 
         return new Response("OK");

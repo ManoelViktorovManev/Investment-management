@@ -7,36 +7,13 @@ import { TransactionHistoryComponent } from './TransactionHistoryComponent.js';
 import { SettingsMenuComponent } from './SettingsMenuComponent.js';
 
 const NavbarComponent = ({ setCurrentPage }) => {
-  const [users, setUsers] = useState([]);
-
-  const getAllUsersData = async () => {
-    const response = await fetch(`${API_BASE_URI}/getAllUsers`, {
-      method: 'GET'
-    });
-    if (response.status !== 200) {
-      alert("Problem trying to get all Users");
-    } else {
-      const data = await response.json();
-      setUsers(data);
-    }
-  };
-
-  useEffect(() => {
-    getAllUsersData();
-  }, []);
-
   const navItems = [
     { label: 'Home', action: () => setCurrentPage(<HomeComponent />) },
     { label: 'Users', action: () => setCurrentPage(<UserComponent />) },
     { label: 'Portfolio', action: () => setCurrentPage(<PorfolioComponent />) },
     {
       label: 'Settings',
-      action: () => setCurrentPage(
-        <SettingsMenuWrapper
-          users={users}
-          reloadUsers={getAllUsersData}
-        />
-      )
+      action: () => setCurrentPage(<SettingsMenuWrapper />)
     },
     { label: 'Transaction History', action: () => setCurrentPage(<TransactionHistoryComponent />) },
   ];
@@ -60,14 +37,43 @@ const NavbarComponent = ({ setCurrentPage }) => {
   );
 };
 
-const SettingsMenuWrapper = ({ users, reloadUsers }) => {
-  const [localUsers, setLocalUsers] = useState(users);
+const SettingsMenuWrapper = () => {
+  const [users, setUsers] = useState([]);
+  const [portfolios, setPortfolios] = useState([]);
+  const [stocks, setStocks] = useState([]);
+
+  const getAllUsers = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllUsers`);
+    if (res.ok) setUsers(await res.json());
+  };
+
+  const getAllPortfolios = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
+    if (res.ok) setPortfolios(await res.json());
+  };
+
+  const getAllStocks = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllStocks`);
+    if (res.ok) setStocks(await res.json());
+  };
+
 
   useEffect(() => {
-    setLocalUsers(users);
-  }, [users]);
+    getAllUsers();
+    getAllPortfolios();
+    getAllStocks();
+  }, []);
 
-  return <SettingsMenuComponent users={localUsers} reloadUsers={reloadUsers} />;
+  return (
+    <SettingsMenuComponent
+      users={users}
+      reloadUsers={getAllUsers}
+      portfolios={portfolios}
+      reloadPortfolios={getAllPortfolios}
+      stocks={stocks}
+      reloadStocks={getAllStocks}
+    />
+  );
 };
 
 export { NavbarComponent };

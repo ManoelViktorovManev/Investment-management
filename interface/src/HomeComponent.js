@@ -43,6 +43,7 @@ const HomeComponent = () => {
   useEffect(() => {
     if (allStocksInfo.length > 0) {
       setUpdatedStocks([...allStocksInfo]);
+      console.log(allStocksInfo);
       getAllValueOfPortfolio(selectedPortfolio);
     }
   }, [allStocksInfo]);

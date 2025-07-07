@@ -47,6 +47,27 @@ class PortfolioController extends BaseController
         return new Response("Successfully deleted");
     }
 
+
+    #[Route('/updatePortfolio', methods: ['POST'])]
+    public function updatePortfolio()
+    {
+
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        $name = $data["name"];
+        $id = $data["id"];
+
+        $porfolio = new Portfolio();
+        $porfolio->query()->where(['id', '=', $id])->first();
+        $porfolio->setName($name);
+
+        $db = new DbManipulation();
+        $db->add($porfolio);
+        $db->commit();
+
+        return new Response("OK");
+    }
     #[Route('/getAllPortfolios')]
     public function getAllPortfolios()
     {

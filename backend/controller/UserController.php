@@ -46,6 +46,26 @@ class UserController extends BaseController
 
         return new Response("Successfully deleted");
     }
+    #[Route('/updateUser', methods: ['POST'])]
+    public function updateUser()
+    {
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        $id = $data["id"];
+        $newName = $data["name"];
+
+        $user = new User();
+        $user->query()->where(['id', '=', $id])->first();
+        $user->setName($newName);
+
+
+        $db = new DbManipulation();
+        $db->add($user);
+        $db->commit();
+
+        return new Response("OK");
+    }
 
     #[Route('/getAllUsers')]
     public function getAllUsers()
