@@ -41,6 +41,7 @@ const SettingsMenuWrapper = () => {
   const [users, setUsers] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [stocks, setStocks] = useState([]);
+  const [settings, setSettings] = useState([]);
 
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
@@ -56,12 +57,17 @@ const SettingsMenuWrapper = () => {
     const res = await fetch(`${API_BASE_URI}/getAllStocks`);
     if (res.ok) setStocks(await res.json());
   };
+  const getSettings = async () => {
+    const res = await fetch(`${API_BASE_URI}/getSettings`);
+    if (res.ok) setSettings(await res.json());
+  };
 
 
   useEffect(() => {
     getAllUsers();
     getAllPortfolios();
     getAllStocks();
+    getSettings();
   }, []);
 
   return (
@@ -72,6 +78,8 @@ const SettingsMenuWrapper = () => {
       reloadPortfolios={getAllPortfolios}
       stocks={stocks}
       reloadStocks={getAllStocks}
+      settings={settings}
+      reloadSettings={getSettings}
     />
   );
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import PriceUpdateTable from './PriceUpdateTable.js';
 
-const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolios, stocks, reloadStocks }) => {
+const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolios, stocks, reloadStocks, settings, reloadSettings }) => {
   const [activeSection, setActiveSection] = useState(null);
 
   // User state
@@ -17,12 +17,20 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
 
   // Stock state
   const [buttonForUpdatePrices, setbuttonForUpdatePrices] = useState(false);
+  const [buttonForSetDefaultCurrency, setButtonForSetDefaultCurrency] = useState(false);
+  const [buttonForSetCurrencyRates, setButtonForSetCurrencyRates] = useState(false);
+
+  //states for every stock price change
   const [updatedStocks, setUpdatedStocks] = useState([]);
 
+  // Settings state
+  const [newDefaultCurrency, setNewDefaultCurrency] = useState('');
+  const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState('');
 
   useEffect(() => {
     setUpdatedStocks([...stocks]);
-  }, [stocks]);
+    setCurrentDefaultCurrency(settings.defaultCurrency);
+  }, [stocks, settings]);
 
   // USER FUNCTIONS
   async function addNewUser() {
@@ -125,6 +133,21 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     } catch (error) {
       console.error("Update error:", error);
     }
+
+  }
+
+  //SETTINGS METHODS
+
+  async function updateSettings() {
+    if (!newDefaultCurrency.trim()) return alert("Settings name cannot be empty");
+    const response = await fetch(`${API_BASE_URI}/updateSettings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ defaultCurrency: newDefaultCurrency })
+    });
+    if (response.status !== 200) return alert("Problem updating settings");
+    setNewDefaultCurrency('');
+    reloadSettings();
   }
 
   return (
@@ -274,6 +297,14 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
             {buttonForUpdatePrices ? 'Hide Price Update' : 'Update the stock prices'}
           </button>
 
+          <button type="button" onClick={() => setButtonForSetDefaultCurrency(prev => !prev)}>
+            {buttonForSetDefaultCurrency ? 'Hide default currency' : 'Set default currency'}
+          </button>
+
+          <button type="button" onClick={() => setButtonForSetCurrencyRates(prev => !prev)}>
+            {buttonForSetCurrencyRates ? 'Hide currency rates' : 'Set currency rates'}
+          </button>
+
           {buttonForUpdatePrices && (
             <PriceUpdateTable
               title="Edit Stock Prices"
@@ -282,6 +313,33 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
               onConfirm={updateAllStocksPrice}
             />
           )}
+
+          {buttonForSetDefaultCurrency && (
+            <div className="mt-4">
+              {currentDefaultCurrency && (
+                <p className="text-gray-700 mb-2">
+                  Currently default currency is <b>{currentDefaultCurrency}</b>
+                </p>
+              )}
+              <label className="block mb-1 font-medium">Setting default Currency</label>
+              <div className="flex gap-2">
+                <input
+                  value={newDefaultCurrency}
+                  onChange={(e) => setNewDefaultCurrency(e.target.value)}
+                  placeholder="e.g. USD/EUR"
+                  className="border px-3 py-1 flex-1"
+                />
+                <button
+                  onClick={updateSettings}
+                  className="bg-blue-500 text-white px-4 py-1 rounded"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+
+
         </div>
       )}
     </div>

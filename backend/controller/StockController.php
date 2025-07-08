@@ -13,12 +13,7 @@ class StockController extends BaseController
 
     public function createNewStock($stockName, $stockSymbol, $stockCurrency, $stockPrice, bool $isCash = false)
     {
-        $newStock = new Stock();
-        $newStock->setName($stockName);
-        $newStock->setSymbol($stockSymbol);
-        $newStock->setCurrency($stockCurrency);
-        $newStock->setPrice($stockPrice);
-        $newStock->setIsCash($isCash);
+        $newStock = new Stock(null, $stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
 
         $db = new DbManipulation();
         $db->add($newStock);
@@ -54,14 +49,14 @@ class StockController extends BaseController
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        // $stockId = $data["id"];
-        // $stockPrice = $data["price"];
         $allocations = $data["allocations"];
 
         $db = new DbManipulation();
         foreach ($allocations as $stockId => $stockPrice) {
             $stock = new Stock();
             $stock->query()->where(["id", "=", $stockId])->first();
+
+            // if the price is same, you don`t need to update
             if ($stock->getPrice() == $stockPrice) {
                 continue;
             }

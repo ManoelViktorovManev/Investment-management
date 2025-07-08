@@ -369,10 +369,11 @@ export { HomeComponent };
 /*
   TASKS TO DO:
     TOP PRIORITY!
-    Individual Profile of user (How much profit he has) -> друга база ще ни трябва
-    Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
-    добавяне на възможност за добавяне на дивиденти
+    Exchange rate
     fixing form input field!
+    Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
+    добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.
+    Individual Profile of user (How much profit he has) -> друга база ще ни трябва
 
     MID!
     Оправяне на менютата
