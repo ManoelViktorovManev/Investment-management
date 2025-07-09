@@ -137,21 +137,13 @@ class QueryBuilder
         }
         $this->countWhereStatements++;
         return $this;
-
-
-
-
-
-
-
-        // $this->bindings[":value{$this->countWhereStatements}"] = [
-        //     'value' => $value,
-        //     'type' => is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
-        // ];
-        // $this->countWhereStatements++;
-        // return $this;
     }
 
+    public function join(string $typeJoin, string $table, string $sql)
+    {
+        $this->sql .= " {$typeJoin} JOIN {$table} ON {$sql} ";
+        return $this;
+    }
     public function order(array ...$inputs)
     {
         $default_value = "ASC";

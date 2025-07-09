@@ -140,12 +140,27 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
 
   async function updateSettings() {
     if (!newDefaultCurrency.trim()) return alert("Settings name cannot be empty");
+    const hasCashCurrency = stocks.some(
+      stock => stock.isCash === 1 && stock.currency === newDefaultCurrency
+    );
+
+    console.log(hasCashCurrency);
     const response = await fetch(`${API_BASE_URI}/updateSettings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ defaultCurrency: newDefaultCurrency })
     });
     if (response.status !== 200) return alert("Problem updating settings");
+
+    if (hasCashCurrency == false) {
+      const response = await fetch(`${API_BASE_URI}/createStock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockName: newDefaultCurrency + " cash", stockSymbol: newDefaultCurrency, stockCurrency: newDefaultCurrency, stockPrice: 1, isCash: 1 })
+      });
+      if (response.status !== 200) return alert("Problem updating settings");
+    }
+
     setNewDefaultCurrency('');
     reloadSettings();
   }

@@ -144,9 +144,6 @@ class PortfolioTradeController extends BaseController
         $usac->updateUsersStocksPositionInPortfolio($data, $action, $portfolio, $cash);
     }
 
-
-
-
     private function getPortfolioInstance($portfolioId): Portfolio
     {
         return (new Portfolio())->query()->where(['id', '=', $portfolioId])->first();
@@ -162,6 +159,12 @@ class PortfolioTradeController extends BaseController
             $newStock = new StockController();
             $newStock->createNewStock($stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
             $stock->query()->where(['symbol', '=', $stockSymbol])->first();
+
+            // create a new currency exchange rate instance
+            if ($isCash == true) {
+                $newCurrencyConnections = new CurrencyExchangeRateController();
+                $newCurrencyConnections->createNewCurrencyExchangeRatebyMethod($stock->getId());
+            }
         }
         return $stock;
     }

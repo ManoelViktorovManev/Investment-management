@@ -20,6 +20,44 @@ class StockController extends BaseController
         $db->commit();
     }
 
+
+    #[Route('/createStock', methods: ['POST'])]
+    public function createStock()
+    {
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        $stockName = $data["stockName"];
+        $stockSymbol = $data["stockSymbol"];
+        $stockCurrency = $data["stockCurrency"];
+        $stockPrice = $data["stockPrice"];
+        $isCash = $data["isCash"];
+
+
+        $newStock = new Stock(null, $stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
+
+        $db = new DbManipulation();
+        $db->add($newStock);
+        $db->commit();
+
+        if ($isCash == true) {
+            $newStock->query()->where(['symbol', '=', $stockSymbol])->first();
+            $newCurrencyConnections = new CurrencyExchangeRateController();
+            $newCurrencyConnections->createNewCurrencyExchangeRatebyMethod($newStock->getId());
+        }
+        return new Response("OK");
+    }
+
+
+    #[Route('/getCash')]
+    public function getCash()
+    {
+        $stock = new Stock();
+        $allStocks = $stock->query()->select("id")->where(["isCash", "=", "1"])->all();
+
+        return $this->json($allStocks);
+    }
+
     #[Route('/getAllStocks')]
     public function getAllStocks()
     {
@@ -41,7 +79,6 @@ class StockController extends BaseController
 
         return $this->json($allStocks);
     }
-
 
     #[Route('/updateStock', methods: ['POST'])]
     public function updateStock()

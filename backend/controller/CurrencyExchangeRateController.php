@@ -7,12 +7,13 @@ use App\Core\Response;
 use App\Core\Route;
 use App\Model\CurrencyExchangeRate;
 use App\Core\DbManipulation;
+use App\Model\Stock;
 
 class CurrencyExchangeRateController extends BaseController
 {
 
     #[Route('/createNewCurrencyExchangeRate', methods: ['POST'])]
-    public function createNewPortfolio()
+    public function createNewCurrencyExchangeRate()
     {
 
         $rawInput = file_get_contents("php://input");
@@ -30,6 +31,41 @@ class CurrencyExchangeRateController extends BaseController
 
         return new Response("OK");
     }
+
+    #[Route('/getInfo')]
+    public function asdf()
+    {
+
+
+        $currencyExchangeRateInstance = new CurrencyExchangeRate();
+        $currencyExchangeRateInstanceArray = $currencyExchangeRateInstance
+            ->query()
+            ->select(" Stock.Symbol, S.symbol, currencyexchangerate.rate")
+            ->join("INNER", "STOCK", "currencyexchangerate.idFirstCurrency=Stock.id")
+            ->join("INNER", "STOCK as S", "currencyexchangerate.idSecondCurrency=S.id")
+            ->all();
+
+
+
+        return $this->json($currencyExchangeRateInstanceArray);
+    }
+    public function createNewCurrencyExchangeRatebyMethod($newCurrencyId)
+    {
+        $currencys = new Stock();
+        $array = $currencys->query()->select("id")->where(["isCash", "=", "1"])->all();
+        $cashStockIds = array_map(fn($row) => $row['id'], $array);
+
+        $db = new DbManipulation();
+        foreach ($cashStockIds as $currencyId) {
+            if ($newCurrencyId == $currencyId)
+                continue;
+            $db->add(new CurrencyExchangeRate(null, $newCurrencyId, $currencyId, 1));
+        }
+        $db->commit();
+
+        return new Response("OK");
+    }
+
 
     #[Route('/updateExchangeRate', methods: ['POST'])]
     public function updateExchangeRate()
