@@ -32,20 +32,16 @@ class CurrencyExchangeRateController extends BaseController
         return new Response("OK");
     }
 
-    #[Route('/getInfo')]
-    public function asdf()
+    #[Route('/getExchangeRates')]
+    public function getExchangeRates()
     {
-
-
         $currencyExchangeRateInstance = new CurrencyExchangeRate();
         $currencyExchangeRateInstanceArray = $currencyExchangeRateInstance
             ->query()
-            ->select(" Stock.Symbol, S.symbol, currencyexchangerate.rate")
+            ->select(" currencyexchangerate.id, Stock.Symbol, S.symbol, currencyexchangerate.rate")
             ->join("INNER", "STOCK", "currencyexchangerate.idFirstCurrency=Stock.id")
             ->join("INNER", "STOCK as S", "currencyexchangerate.idSecondCurrency=S.id")
             ->all();
-
-
 
         return $this->json($currencyExchangeRateInstanceArray);
     }

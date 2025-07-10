@@ -369,7 +369,7 @@ export { HomeComponent };
 /*
   TASKS TO DO:
     TOP PRIORITY!
-    Exchange rate
+    Exchange rate - DONE
     fixing form input field!
     Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
     добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.

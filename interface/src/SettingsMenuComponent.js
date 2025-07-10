@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import PriceUpdateTable from './PriceUpdateTable.js';
 
-const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolios, stocks, reloadStocks, settings, reloadSettings }) => {
+const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolios, stocks, reloadStocks, settings, reloadSettings, exchangeRates, reloadExchangeRates }) => {
   const [activeSection, setActiveSection] = useState(null);
 
   // User state
@@ -27,10 +27,15 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [newDefaultCurrency, setNewDefaultCurrency] = useState('');
   const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState('');
 
+
+  // ExchangeRate state
+  const [editedExchangeRates, setEditedExchangeRates] = useState([]);
+
   useEffect(() => {
     setUpdatedStocks([...stocks]);
     setCurrentDefaultCurrency(settings.defaultCurrency);
-  }, [stocks, settings]);
+    setEditedExchangeRates([...exchangeRates]);
+  }, [stocks, settings,exchangeRates]);
 
   // USER FUNCTIONS
   async function addNewUser() {
@@ -133,7 +138,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     } catch (error) {
       console.error("Update error:", error);
     }
-
+    reloadExchangeRates();
   }
 
   //SETTINGS METHODS
@@ -163,6 +168,30 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
 
     setNewDefaultCurrency('');
     reloadSettings();
+  }
+
+  // Exchange rate methods
+
+  const handleRateChange = (id, newRate) => {
+    setEditedExchangeRates(prev =>
+      prev.map(rate =>
+        rate.id === id ? { ...rate, rate: newRate } : rate
+      )
+    );
+  };
+
+  async function updateExchangeRate(id, rate) {
+    const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id:id, newRate:rate })
+    });
+
+    if (!response.ok) {
+      alert("Failed to update exchange rate");
+    } else {
+      reloadSettings(); 
+    }
   }
 
   return (
@@ -351,6 +380,36 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
                   Save
                 </button>
               </div>
+            </div>
+          )}
+
+          {buttonForSetCurrencyRates && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold mb-2">Exchange Rates</h3>
+              {editedExchangeRates.length === 0 ? (
+                <p>No exchange rates available.</p>
+              ) : (
+                <div className="space-y-3">
+                  {editedExchangeRates.map(rate => (
+                    <div key={rate.id} className="flex items-center gap-2">
+                      <span className="w-24">{rate.Symbol} → {rate.symbol}</span>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        className="border px-2 py-1 w-32"
+                        value={rate.rate}
+                        onChange={(e) => handleRateChange(rate.id, e.target.value)}
+                      />
+                      <button
+                        onClick={() => updateExchangeRate(rate.id, rate.rate)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

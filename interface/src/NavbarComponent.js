@@ -42,6 +42,7 @@ const SettingsMenuWrapper = () => {
   const [portfolios, setPortfolios] = useState([]);
   const [stocks, setStocks] = useState([]);
   const [settings, setSettings] = useState([]);
+  const [exchangeRates, setExchangeRates] = useState([]);
 
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
@@ -62,12 +63,17 @@ const SettingsMenuWrapper = () => {
     if (res.ok) setSettings(await res.json());
   };
 
+  const getExchangeRates = async () => {
+    const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
+    if (res.ok) setExchangeRates(await res.json());
+  };
 
   useEffect(() => {
     getAllUsers();
     getAllPortfolios();
     getAllStocks();
     getSettings();
+    getExchangeRates();
   }, []);
 
   return (
@@ -80,6 +86,8 @@ const SettingsMenuWrapper = () => {
       reloadStocks={getAllStocks}
       settings={settings}
       reloadSettings={getSettings}
+      exchangeRates={exchangeRates}
+      reloadExchangeRates = {getExchangeRates}
     />
   );
 };
