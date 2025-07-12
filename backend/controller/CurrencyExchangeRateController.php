@@ -70,15 +70,22 @@ class CurrencyExchangeRateController extends BaseController
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        $id = $data["id"];
-        $newExchangeRate = $data["newRate"];
-
-        $currencyExchangeRateInstance = new CurrencyExchangeRate();
-        $currencyExchangeRateInstance->query()->where(['id', '=', $id])->first();
-        $currencyExchangeRateInstance->setRate($newExchangeRate);
+        $allocations = $data["allocations"];
 
         $db = new DbManipulation();
-        $db->add($currencyExchangeRateInstance);
+        foreach ($allocations as $currencyExchangeRateid => $rate) {
+            $stock = new CurrencyExchangeRate();
+            $stock->query()->where(["id", "=", $currencyExchangeRateid])->first();
+
+            // if the price is same, you don`t need to update
+            if ($stock->getRate() == $rate) {
+                continue;
+            }
+            $stock->setRate($rate);
+
+            $db->add($stock);
+        }
+
         $db->commit();
 
         return new Response("OK");

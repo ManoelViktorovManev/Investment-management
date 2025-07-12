@@ -25,7 +25,6 @@ const HomeComponent = () => {
     transactionDate: '',
     isStock: false
   });
-  const [showUpdatePrices, setShowUpdatePrices] = useState(false);
   const [updatedStocks, setUpdatedStocks] = useState([]);
   const [deletedStock, setDeletedStock] = useState(false);
   const [entireCashValue, setEntireCashValue] = useState(1);
@@ -259,7 +258,7 @@ const HomeComponent = () => {
           currentMarketCap: parseFloat((stock.price * numStocks).toFixed(2)),
           returnOfInvestment: ((stock.price * numStocks - valueOfStock) / valueOfStock * 100).toFixed(2),
           percentage: 0,
-          idOfDB: item.id // optional for updates/deletes
+          idOfDB: item.id
         };
       }).filter(Boolean); // remove nulls
       setStockData(mapped);
@@ -275,9 +274,6 @@ const HomeComponent = () => {
         ))}
       </select>
 
-      <button type="button" onClick={() => setShowUpdatePrices(prev => !prev)}>
-        {showUpdatePrices ? 'Hide Price Update' : 'Update the stock prices'}
-      </button>
 
       {selectedPortfolio !== '' && (
 
@@ -331,16 +327,6 @@ const HomeComponent = () => {
         )
       }
 
-      {showUpdatePrices && (
-        <PriceUpdateTable
-          title="Edit Stock Prices"
-          items={updatedStocks}
-          onChange={handlePriceChange}
-          onConfirm={updateAllStocksPrice}
-        />
-      )}
-
-
       {selectedStockId ? (
         <StockDistributionView
           stock={stockData.find(s => s.stockId === selectedStockId)}
@@ -370,14 +356,17 @@ export { HomeComponent };
   TASKS TO DO:
     TOP PRIORITY!
     Exchange rate - DONE
+    добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.
     fixing form input field!
     Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
-    добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.
     Individual Profile of user (How much profit he has) -> друга база ще ни трябва
+    Calculate individual taxes to the goverment.
+    Stock split implementation.
 
     MID!
     Оправяне на менютата
     Optimization of time and memory of the code!
+    bug опитвайки да купя примерно биткойн - 25к за 0.0034 => не мога да разпределя дяловете между хората.
   
     LOW!
     документиране на кода

@@ -19,6 +19,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [buttonForUpdatePrices, setbuttonForUpdatePrices] = useState(false);
   const [buttonForSetDefaultCurrency, setButtonForSetDefaultCurrency] = useState(false);
   const [buttonForSetCurrencyRates, setButtonForSetCurrencyRates] = useState(false);
+  const [buttonForSetCashTransaction, setButtonForSetCashTransaction] = useState(false);
 
   //states for every stock price change
   const [updatedStocks, setUpdatedStocks] = useState([]);
@@ -31,11 +32,18 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   // ExchangeRate state
   const [editedExchangeRates, setEditedExchangeRates] = useState([]);
 
+  const [isDividend, setIsDividend] = useState(false);
+  const [isFees, setIsFees] = useState(false);
+  const [buySellFees, setBuySellFees] = useState(false);
+  const [maintenanceFee, setMaintenanceFee] = useState(false);
+
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
+
   useEffect(() => {
     setUpdatedStocks([...stocks]);
     setCurrentDefaultCurrency(settings.defaultCurrency);
     setEditedExchangeRates([...exchangeRates]);
-  }, [stocks, settings,exchangeRates]);
+  }, [stocks, settings, exchangeRates]);
 
   // USER FUNCTIONS
   async function addNewUser() {
@@ -180,19 +188,27 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     );
   };
 
-  async function updateExchangeRate(id, rate) {
-    const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id:id, newRate:rate })
+  const saveAllExchangeRates = async () => {
+    const allocations = {};
+
+    editedExchangeRates.forEach(rate => {
+      allocations[rate.id] = rate.rate;
     });
 
-    if (!response.ok) {
-      alert("Failed to update exchange rate");
-    } else {
-      reloadSettings(); 
+    try {
+      const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ allocations })
+      });
+
+    } catch (error) {
+      console.error("Error updating exchange rates:", error);
     }
-  }
+  };
+
 
   return (
     <div className="p-6">
@@ -349,6 +365,10 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
             {buttonForSetCurrencyRates ? 'Hide currency rates' : 'Set currency rates'}
           </button>
 
+          <button type="button" onClick={() => setButtonForSetCashTransaction(prev => !prev)}>
+            {buttonForSetCashTransaction ? 'Hide cash transaction' : 'Set cash transaction (dividend, fees)'}
+          </button>
+
           {buttonForUpdatePrices && (
             <PriceUpdateTable
               title="Edit Stock Prices"
@@ -389,30 +409,105 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
               {editedExchangeRates.length === 0 ? (
                 <p>No exchange rates available.</p>
               ) : (
-                <div className="space-y-3">
-                  {editedExchangeRates.map(rate => (
-                    <div key={rate.id} className="flex items-center gap-2">
-                      <span className="w-24">{rate.Symbol} → {rate.symbol}</span>
-                      <input
-                        type="number"
-                        step="0.0001"
-                        className="border px-2 py-1 w-32"
-                        value={rate.rate}
-                        onChange={(e) => handleRateChange(rate.id, e.target.value)}
-                      />
-                      <button
-                        onClick={() => updateExchangeRate(rate.id, rate.rate)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-3">
+                    {editedExchangeRates.map(rate => (
+                      <div key={rate.id} className="flex items-center gap-2">
+                        <span className="w-24">{rate.Symbol} → {rate.symbol}</span>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          className="border px-2 py-1 w-32"
+                          value={rate.rate}
+                          onChange={(e) => handleRateChange(rate.id, parseFloat(e.target.value))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={saveAllExchangeRates}
+                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Save All
+                  </button>
+                </>
               )}
             </div>
           )}
 
+
+          {buttonForSetCashTransaction && (
+            <div className="mt-6 p-4 border rounded shadow bg-white space-y-4">
+              <h3 className="text-lg font-semibold">Set Cash Transaction</h3>
+
+              {/* Dropdown to select portfolio */}
+              <div>
+                <label className="block mb-1 font-medium">Select Portfolio</label>
+                <select
+                  value={selectedPortfolioId || ""}
+                  onChange={(e) => setSelectedPortfolioId(e.target.value)}
+                  className="border rounded px-3 py-2 w-full"
+                >
+                  <option value="" disabled>
+                    -- Choose a portfolio --
+                  </option>
+                  {portfolios.map((portfolio) => (
+                    <option key={portfolio.id} value={portfolio.id}>
+                      {portfolio.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Dividend Checkbox */}
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={isDividend}
+                  onChange={() => setIsDividend(!isDividend)}
+                />
+                <span>Is Dividend?</span>
+              </label>
+
+              {/* Fees Checkbox */}
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={isFees}
+                  onChange={() => {
+                    setIsFees(!isFees);
+                    if (!isFees) {
+                      setBuySellFees(false);
+                      setMaintenanceFee(false);
+                    }
+                  }}
+                />
+                <span>Is Fees?</span>
+              </label>
+
+              {/* Conditional Sub-options */}
+              {isFees && (
+                <div className="ml-6 space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={buySellFees}
+                      onChange={() => setBuySellFees(!buySellFees)}
+                    />
+                    <span>Buy/Sell Fees</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={maintenanceFee}
+                      onChange={() => setMaintenanceFee(!maintenanceFee)}
+                    />
+                    <span>Maintenance Fee</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       )}

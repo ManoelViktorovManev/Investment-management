@@ -10,7 +10,7 @@ const NavbarComponent = ({ setCurrentPage }) => {
   const navItems = [
     { label: 'Home', action: () => setCurrentPage(<HomeComponent />) },
     { label: 'Users', action: () => setCurrentPage(<UserComponent />) },
-    { label: 'Portfolio', action: () => setCurrentPage(<PorfolioComponent />) },
+    // { label: 'Portfolio', action: () => setCurrentPage(<PorfolioComponent />) },
     {
       label: 'Settings',
       action: () => setCurrentPage(<SettingsMenuWrapper />)
@@ -87,7 +87,7 @@ const SettingsMenuWrapper = () => {
       settings={settings}
       reloadSettings={getSettings}
       exchangeRates={exchangeRates}
-      reloadExchangeRates = {getExchangeRates}
+      reloadExchangeRates={getExchangeRates}
     />
   );
 };
