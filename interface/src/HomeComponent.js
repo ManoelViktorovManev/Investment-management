@@ -355,10 +355,7 @@ export { HomeComponent };
 /*
   TASKS TO DO:
     TOP PRIORITY!
-    Exchange rate - DONE
     добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.
-    fixing form input field!
-    Купуването и продаването да има още 2 опций - равно разпределяне и % разпределяне
     Individual Profile of user (How much profit he has) -> друга база ще ни трябва
     Calculate individual taxes to the goverment.
     Stock split implementation.
@@ -366,9 +363,11 @@ export { HomeComponent };
     MID!
     Оправяне на менютата
     Optimization of time and memory of the code!
-    bug опитвайки да купя примерно биткойн - 25к за 0.0034 => не мога да разпределя дяловете между хората.
+    Fix if it is selling not to show fields of equal split and portfolio value split
   
     LOW!
     документиране на кода
     Transaction history!
+    Show all money that the portfolio have available in the form, so to know how much money they can use to buy stocks.
+    User can have negative number of money? 
 */
