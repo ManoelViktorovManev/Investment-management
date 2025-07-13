@@ -8,6 +8,8 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
     const [allocations, setAllocations] = useState({});
     const [userCashInfo, setUserCashInfo] = useState([]);
 
+    const [userEquityDistribution, setUserEquityDistribution] = useState([]);
+
     const totalCost = (stock.price || 0) * (stock.quantity || 0);
 
     const handleAllocationChange = (userId, value) => {
@@ -37,21 +39,56 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
         }).join(', ');
     };
 
+
     async function getEquitySplitBetweenUsers(portfolioId) {
-        const response = await fetch(`${API_BASE_URI}/getUsersFreeCashInPortfolio/${portfolioId}`, {
+        const response = await fetch(`${API_BASE_URI}/getEquityOwnedByUsersInPortfolio/${portfolioId}`, {
             method: 'GET'
         });
         if (response.status !== 200) {
             alert("Problem trying to get all Stocks");
         } else {
             const data = await response.json();
-            setUserCashInfo(data);
+            console.log(data);
+            setUserEquityDistribution(data);
         }
 
     }
+
+
     useEffect(() => {
         getAviableCashFromEveryUserFromPortfolio(portfolioId);
+        getEquitySplitBetweenUsers(portfolioId);
     }, []);
+
+    useEffect(() => {
+        if (!stock.quantity) return;
+
+        const totalQuantity = Number(stock.quantity);
+
+        if (equalSplit && listOfUsers) {
+            const numUsers = Object.keys(listOfUsers).length;
+            const splitQty = totalQuantity / numUsers;
+
+            const newAllocations = {};
+            for (const id of Object.keys(listOfUsers)) {
+                newAllocations[id] = parseFloat(splitQty.toFixed(8));
+            }
+            setAllocations(newAllocations);
+        }
+
+        if (proportionalToWalletBalance && userEquityDistribution.length > 0) {
+            const totalValue = userEquityDistribution.reduce((sum, user) => sum + user.total_value, 0);
+            const newAllocations = {};
+            for (const id of Object.keys(listOfUsers)) {
+                const userId = Number(id);
+                const userEntry = userEquityDistribution.find(entry => entry.userId === userId);
+                const userValue = userEntry ? userEntry.total_value : 0;
+                const portion = totalValue > 0 ? userValue / totalValue : 0;
+                newAllocations[userId] = parseFloat((totalQuantity * portion).toFixed(8));
+            }
+            setAllocations(newAllocations);
+        }
+    }, [stock.price, stock.quantity]);
 
 
     const totalAllocated = Object.values(allocations).reduce((sum, val) => {
@@ -120,7 +157,13 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     <input
                         type="checkbox"
                         checked={customAllocation}
-                        onChange={(e) => setCustomAllocation(e.target.checked)}
+                        onChange={(e) => {
+                            setCustomAllocation(e.target.checked);
+                            setEqualSplit(false);
+                            setProportionalToWalletBalance(false);
+                            setAllocations({});
+                        }}
+                        disabled={equalSplit || proportionalToWalletBalance}
                     />
                     Custom Allocation
                 </label>
@@ -132,7 +175,25 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                                 <input
                                     type="checkbox"
                                     checked={equalSplit}
-                                    onChange={(e) => setEqualSplit(e.target.checked)}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setEqualSplit(checked);
+                                        setProportionalToWalletBalance(false);
+                                        setCustomAllocation(false);
+
+                                        if (checked && stock.quantity && listOfUsers) {
+                                            const totalQuantity = Number(stock.quantity);
+                                            const numUsers = Object.keys(listOfUsers).length;
+                                            const splitQty = totalQuantity / numUsers;
+
+                                            const newAllocations = {};
+                                            for (const id of Object.keys(listOfUsers)) {
+                                                newAllocations[id] = parseFloat(splitQty.toFixed(8));
+                                            }
+                                            setAllocations(newAllocations);
+                                        }
+                                    }}
+                                    disabled={customAllocation || proportionalToWalletBalance}
                                 />
                                 Equal Split
                             </label>
@@ -142,7 +203,30 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                                 <input
                                     type="checkbox"
                                     checked={proportionalToWalletBalance}
-                                    onChange={(e) => setProportionalToWalletBalance(e.target.checked)}
+                                    onChange={async (e) => {
+                                        const checked = e.target.checked;
+                                        setProportionalToWalletBalance(checked);
+                                        setEqualSplit(false);
+                                        setCustomAllocation(false);
+
+                                        if (checked && stock.quantity) {
+                                            const totalQuantity = Number(stock.quantity);
+
+                                            const totalValue = userEquityDistribution.reduce((sum, user) => sum + user.total_value, 0);
+
+                                            const newAllocations = {};
+                                            for (const id of Object.keys(listOfUsers)) {
+                                                const userId = Number(id);
+                                                const userEntry = userEquityDistribution.find(entry => entry.userId === userId);
+                                                const userValue = userEntry ? userEntry.total_value : 0;
+                                                const portion = totalValue > 0 ? userValue / totalValue : 0;
+                                                newAllocations[userId] = parseFloat((totalQuantity * portion).toFixed(8));
+                                            }
+
+                                            setAllocations(newAllocations);
+                                        }
+                                    }}
+                                    disabled={customAllocation || equalSplit}
                                 />
                                 Proportional to Wallet Balance
                             </label>
@@ -152,7 +236,7 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                 )}
             </div>
 
-            {customAllocation && (
+            {(customAllocation || equalSplit || proportionalToWalletBalance) && (
 
                 <div style={{ padding: '0.5rem', border: '1px dashed #999', marginBottom: '1rem' }}>
                     {Object.entries(listOfUsers).map(([id, name]) => (
