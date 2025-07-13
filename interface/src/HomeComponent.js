@@ -370,4 +370,6 @@ export { HomeComponent };
     Transaction history!
     Show all money that the portfolio have available in the form, so to know how much money they can use to buy stocks.
     User can have negative number of money? 
+    Fix percentiage everywhere!!!, maybe 0.0001 is ok 
+    Cash out functionality?
 */
