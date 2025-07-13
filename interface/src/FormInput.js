@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId, listOfStocks }) => {
     const [customAllocation, setCustomAllocation] = useState(false);
+    const [equalSplit, setEqualSplit] = useState(false);
+    const [proportionalToWalletBalance, setProportionalToWalletBalance] = useState(false);
+
     const [allocations, setAllocations] = useState({});
     const [userCashInfo, setUserCashInfo] = useState([]);
+
+    const totalCost = (stock.price || 0) * (stock.quantity || 0);
 
     const handleAllocationChange = (userId, value) => {
         setAllocations(prev => ({ ...prev, [userId]: Number(value) }));
@@ -32,6 +37,18 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
         }).join(', ');
     };
 
+    async function getEquitySplitBetweenUsers(portfolioId) {
+        const response = await fetch(`${API_BASE_URI}/getUsersFreeCashInPortfolio/${portfolioId}`, {
+            method: 'GET'
+        });
+        if (response.status !== 200) {
+            alert("Problem trying to get all Stocks");
+        } else {
+            const data = await response.json();
+            setUserCashInfo(data);
+        }
+
+    }
     useEffect(() => {
         getAviableCashFromEveryUserFromPortfolio(portfolioId);
     }, []);
@@ -60,6 +77,19 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
 
             <h4>{title}</h4>
 
+            {/* Checkbox for Stock */}
+            <div>
+                <label>
+                    Is Stock? (not marked means Cash):
+                    <input
+                        type="checkbox"
+                        name="isStock"
+                        checked={stock.isStock || false}
+                        onChange={onChange}
+                    />
+                </label>
+            </div>
+
             {/* Basic Fields */}
             {['name', 'symbol', 'currency', 'price', 'quantity', 'transactionDate']
                 .filter(field => !(!stock.isStock && ['name', 'symbol', 'price'].includes(field)))
@@ -79,18 +109,9 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     </div>
                 ))}
 
-            {/* Checkbox for Stock */}
-            <div>
-                <label>
-                    Is Stock? (not marked means Cash):
-                    <input
-                        type="checkbox"
-                        name="isStock"
-                        checked={stock.isStock || false}
-                        onChange={onChange}
-                    />
-                </label>
-            </div>
+            {stock.isStock && (
+                <div><strong>Total Cost:</strong> {totalCost.toFixed(2)} {stock.currency || ''}</div>
+            )}
 
             {/* User & Allocation (only for cash) */}
 
@@ -103,6 +124,32 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     />
                     Custom Allocation
                 </label>
+
+                {stock.isStock && (
+                    <div>
+                        <div>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={equalSplit}
+                                    onChange={(e) => setEqualSplit(e.target.checked)}
+                                />
+                                Equal Split
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={proportionalToWalletBalance}
+                                    onChange={(e) => setProportionalToWalletBalance(e.target.checked)}
+                                />
+                                Proportional to Wallet Balance
+                            </label>
+                        </div>
+
+                    </div>
+                )}
             </div>
 
             {customAllocation && (
@@ -110,14 +157,22 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                 <div style={{ padding: '0.5rem', border: '1px dashed #999', marginBottom: '1rem' }}>
                     {Object.entries(listOfUsers).map(([id, name]) => (
                         <div key={id} style={{ marginBottom: '0.5rem' }}>
-                            <label>{name} ({getCashTextForUser(id)}): </label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={allocations[id] || ''}
-                                onChange={(e) => handleAllocationChange(id, e.target.value)}
-                            />
+                            <label>
+                                {name} ({getCashTextForUser(id)}):
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.00000001"
+                                    value={allocations[id] !== undefined ? allocations[id] : ''}
+                                    onChange={(e) => handleAllocationChange(id, e.target.value)}
+                                    style={{ marginLeft: '0.5rem' }}
+                                />
+                            </label>
+                            {stock.isStock && allocations[id] > 0 && (
+                                <small style={{ marginLeft: '1rem' }}>
+                                    Cost: {(allocations[id] * (stock.price || 0)).toFixed(2)} {stock.currency}
+                                </small>
+                            )}
                         </div>
                     ))}
                     <small>Total allocated: {totalAllocated.toFixed(2)}</small>
