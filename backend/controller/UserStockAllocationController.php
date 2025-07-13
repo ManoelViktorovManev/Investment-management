@@ -16,22 +16,48 @@ class UserStockAllocationController extends BaseController
     #[Route('/getUsersFreeCashInPortfolio/{PortfolioId}')]
     public function getUsersFreeCashInPortfolio($PortfolioId)
     {
-        $stock = new Stock();
-        $cashStocks  = $stock->query()->select("id")->where(["isCash", "=", "1"])->all();
-        $cashStockIds = array_map(fn($row) => $row['id'], $cashStocks);
-
-        if (empty($cashStockIds)) {
-            return $this->json([]); // Return early if no cash stocks
-        }
-
         $userCashs = (new UserStocksInPortfolio())->query()
             ->select("userId,stockId, stockQuantity")
+            ->join("inner", "stock s", "s.id=stockId")
             ->where(["portfolioId", "=", $PortfolioId])
             ->and()
-            ->where(["stockId", "IN", $cashStockIds])
+            ->where(["s.isCash", "=", 1])
             ->all();
 
         return $this->json($userCashs);
+    }
+
+
+    #[Route('/getEquityOwnedByUsersInPortfolio/{PortfolioId}')]
+    public function getEquityOwnedByUsersInPortfolio($PortfolioId)
+    {
+
+        $sql = "
+        WITH user_values AS (
+            SELECT 
+                usp.userId,
+                u.name AS userName,
+                SUM(CAST(usp.stockQuantity AS FLOAT) * CAST(s.price AS FLOAT)) AS total_value
+            FROM userstocksinportfolio usp
+            JOIN stock s ON usp.stockId = s.id
+            JOIN user u ON usp.userId = u.id
+            WHERE usp.portfolioId = :portfolioId
+            GROUP BY usp.userId, u.name
+        ),
+        total_sum AS (
+            SELECT SUM(total_value) AS total_portfolio_value FROM user_values
+        )
+        SELECT 
+            uv.userId,
+            uv.userName,
+            uv.total_value,
+            ROUND((uv.total_value / ts.total_portfolio_value) * 100, 2) AS equity_percent
+        FROM user_values uv, total_sum ts
+        ORDER BY uv.userId
+        ";
+
+        $usersEquity = (new UserStocksInPortfolio())->query()->raw($sql, [':portfolioId' => $PortfolioId]);
+        return $this->json($usersEquity);
     }
 
 
@@ -59,6 +85,17 @@ class UserStockAllocationController extends BaseController
         $userStocks = $query->all();
 
         return $this->json($userStocks);
+    }
+
+
+    #[Route('/getAllUsersStocksInPortfolio')]
+    public function getAllUsersStocksInPortfolio()
+    {
+
+        $stock = new UserStocksInPortfolio();
+        $allStocks = $stock->query()->all();
+
+        return $this->json($allStocks);
     }
 
     public function updateUsersStocksPositionInPortfolio($data, $action, Portfolio $portfolio, Stock $stock, bool $cashTransferAfterStockTransaction = false)
