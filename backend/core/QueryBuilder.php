@@ -180,4 +180,13 @@ class QueryBuilder
         $this->sql .= " OR ";
         return $this;
     }
+    public function raw(string $sql, array $bindings = []): array
+    {
+        $stmt = $this->db->prepare($sql);
+        foreach ($bindings as $key => $val) {
+            $stmt->bindValue($key, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 };
