@@ -20,6 +20,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [buttonForSetDefaultCurrency, setButtonForSetDefaultCurrency] = useState(false);
   const [buttonForSetCurrencyRates, setButtonForSetCurrencyRates] = useState(false);
   const [buttonForSetCashTransaction, setButtonForSetCashTransaction] = useState(false);
+  const [buttonForSetStockSplit, setButtonForSetStockSplit] = useState(false);
 
   //states for every stock price change
   const [updatedStocks, setUpdatedStocks] = useState([]);
@@ -28,6 +29,9 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [newDefaultCurrency, setNewDefaultCurrency] = useState('');
   const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState('');
 
+  // fields for stock split
+  const [selectedStockId, setSelectedStockId] = useState('');
+  const [splitRatio, setSplitRatio] = useState(''); // e.g., "1:2"
 
   // ExchangeRate state
   const [editedExchangeRates, setEditedExchangeRates] = useState([]);
@@ -38,6 +42,8 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [maintenanceFee, setMaintenanceFee] = useState(false);
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
+
+
 
   useEffect(() => {
     setUpdatedStocks([...stocks]);
@@ -209,6 +215,25 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     }
   };
 
+/*
+  Stock split method
+*/
+   const stockSplitCall = async () => {
+    
+    console.log(selectedStockId + splitRatio);
+    // try {
+    //   const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({ allocations })
+    //   });
+
+    // } catch (error) {
+    //   console.error("Error updating exchange rates:", error);
+    // }
+  };
 
   return (
     <div className="p-6">
@@ -365,9 +390,13 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
             {buttonForSetCurrencyRates ? 'Hide currency rates' : 'Set currency rates'}
           </button>
 
-          <button type="button" onClick={() => setButtonForSetCashTransaction(prev => !prev)}>
-            {buttonForSetCashTransaction ? 'Hide cash transaction' : 'Set cash transaction (dividend, fees)'}
+          <button type="button" onClick={() => setButtonForSetStockSplit(prev => !prev)}>
+            {buttonForSetStockSplit ? 'Hide cash transaction' : 'Set stock split'}
           </button>
+
+          {/* <button type="button" onClick={() => setButtonForSetCashTransaction(prev => !prev)}>
+            {buttonForSetCashTransaction ? 'Hide cash transaction' : 'Set cash transaction (dividend, fees)'}
+          </button> */}
 
           {buttonForUpdatePrices && (
             <PriceUpdateTable
@@ -434,6 +463,78 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
               )}
             </div>
           )}
+
+          {buttonForSetStockSplit && (
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px dashed #aaa' }}>
+              <h4>Set Stock Split</h4>
+
+              {/* Dropdown to select stock */}
+              <div>
+                <label>
+                  Select Stock:
+                  <select
+                    value={selectedStockId}
+                    onChange={(e) => setSelectedStockId(e.target.value)}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    <option value="">-- Select --</option>
+                    {stocks
+                    .filter(stock=>stock.isCash==0)
+                    .map(stock => (
+                      <option key={stock.id} value={stock.id}>
+                        {stock.name} ({stock.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {/* Input for split ratio */}
+              <div style={{ marginTop: '1rem' }}>
+                <label>
+                  Split Ratio (e.g., 1:2, 3:5):
+                  <input
+                    type="text"
+                    value={splitRatio}
+                    onChange={(e) => setSplitRatio(e.target.value)}
+                    placeholder="1:2"
+                    style={{ marginLeft: '0.5rem' }}
+                  />
+                </label>
+              </div>
+
+              {/* Submit button */}
+              <div style={{ marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedStockId || !splitRatio.match(/^\d+:\d+$/)) {
+                      alert("Please select a stock and enter a valid ratio (e.g., 1:2)");
+                      return;
+                    }
+
+                    const [from, to] = splitRatio.split(':').map(Number);
+
+                    if (from === 0 || to === 0) {
+                      alert("Invalid ratio values.");
+                      return;
+                    }
+
+                    stockSplitCall();
+                    setSelectedStockId('');
+                    setSplitRatio('');
+                    setButtonForSetStockSplit(false);
+                  }}
+                >
+                  Submit Split
+                </button>
+              </div>
+            </div>
+          )}
+
+
+
+
 
 
           {buttonForSetCashTransaction && (
