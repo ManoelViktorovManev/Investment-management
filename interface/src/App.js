@@ -1,13 +1,68 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import { NavbarComponent } from './NavbarComponent';
 
+import API_BASE_URI from './EnvVar.js';
+
 function App() {
-  const [currentPage, setCurrentPage] = React.useState('');
+  const [currentPage, setCurrentPage] = useState('');
+
+  const [users, setUsers] = useState([]);
+  const [portfolios, setPortfolios] = useState([]);
+  const [stocks, setStocks] = useState([]);
+  const [settings, setSettings] = useState([]);
+  const [exchangeRates, setExchangeRates] = useState([]);
+
+  const getAllUsers = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllUsers`);
+    if (res.ok) setUsers(await res.json());
+  };
+
+  const getAllPortfolios = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
+    if (res.ok) setPortfolios(await res.json());
+  };
+
+  const getAllStocks = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllStocks`);
+    if (res.ok) setStocks(await res.json());
+  };
+
+  const getSettings = async () => {
+    const res = await fetch(`${API_BASE_URI}/getSettings`);
+    if (res.ok) setSettings(await res.json());
+  };
+
+  const getExchangeRates = async () => {
+    const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
+    if (res.ok) setExchangeRates(await res.json());
+  };
+
+  // Call them all once at start
+  useEffect(() => {
+    getAllUsers();
+    getAllPortfolios();
+    getAllStocks();
+    getSettings();
+    getExchangeRates();
+  }, []);
+
+  const data = { users, portfolios, stocks, settings, exchangeRates };
+  const refreshMethods = {
+    refreshUsers: getAllUsers,
+    refreshPortfolios: getAllPortfolios,
+    refreshStocks: getAllStocks,
+    refreshSettings: getSettings,
+    refreshExchangeRates: getExchangeRates,
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <NavbarComponent setCurrentPage={setCurrentPage} />
+      <NavbarComponent
+        setCurrentPage={setCurrentPage}
+        data={data}
+        refreshMethods={refreshMethods}
+      />
 
       <main className="ml-[200px] flex-grow p-10">
         {currentPage === '' ? (
@@ -22,5 +77,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

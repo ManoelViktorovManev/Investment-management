@@ -6,7 +6,10 @@ import FormInput from './FormInput.js';
 import PriceUpdateTable from './PriceUpdateTable.js';
 import StockDistributionView from './StockDistributionView.js'
 
-const HomeComponent = () => {
+const HomeComponent = ({ data }) => {
+
+
+
   const [porfoliosNamesAndId, setPorfoliosNamesAndId] = useState({});
   const [selectedPortfolio, setSelectedPortfolio] = useState('');
   const [allUsers, setAllUsers] = useState({});
@@ -37,12 +40,15 @@ const HomeComponent = () => {
     getAllPortfolios();
     getAllStocks();
     getAllUsers();
+
+    setLoadedData();
   }, []);
+
+
 
   useEffect(() => {
     if (allStocksInfo.length > 0) {
       setUpdatedStocks([...allStocksInfo]);
-      console.log(allStocksInfo);
       getAllValueOfPortfolio(selectedPortfolio);
     }
   }, [allStocksInfo]);
@@ -53,6 +59,17 @@ const HomeComponent = () => {
       setDeletedStock(false);
     }
   }, [deletedStock]);
+
+  function setLoadedData() {
+    // console.log(data.stocks);
+
+    // setPorfoliosNamesAndId(data.portfolios.reduce((map, item) => {
+    //   map[item.id] = item.name;
+    //   return map;
+    // }, {}));
+
+  }
+
 
   async function getAllPortfolios() {
     const response = await fetch(`${API_BASE_URI}/getAllPortfolios`);
@@ -73,6 +90,7 @@ const HomeComponent = () => {
       alert("Problem trying to get all Stocks");
     } else {
       const data = await response.json();
+      console.log(data);
       const stocks = data
         .map(stock => ({
           id: stock.id,
@@ -83,6 +101,7 @@ const HomeComponent = () => {
           isCash: stock.isCash
         }));
       setAllStocksInfo(stocks);
+      console.log(stocks);
     }
   }
 
@@ -120,24 +139,7 @@ const HomeComponent = () => {
   };
 
 
-  async function updateAllStocksPrice() {
-    try {
-      for (const stock of updatedStocks) {
-        const response = await fetch(`${API_BASE_URI}/updateStock`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: stock.id, price: parseFloat(stock.price) })
-        });
 
-        if (!response.ok) {
-          throw new Error(`Failed to update stock ${stock.symbol}`);
-        }
-      }
-      getAllStocks();
-    } catch (error) {
-      console.error("Update error:", error);
-    }
-  }
 
   async function handleBuySubmit(e) {
     e.preventDefault();

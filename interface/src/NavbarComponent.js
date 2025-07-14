@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import { HomeComponent } from './HomeComponent.js';
 import { UserComponent } from './UserComponent.js';
-import { PorfolioComponent } from './PorfolioManagementComponent.js';
 import { TransactionHistoryComponent } from './TransactionHistoryComponent.js';
 import { SettingsMenuComponent } from './SettingsMenuComponent.js';
 
-const NavbarComponent = ({ setCurrentPage }) => {
+const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
   const navItems = [
-    { label: 'Home', action: () => setCurrentPage(<HomeComponent />) },
+    { label: 'Home', action: () => setCurrentPage(<HomeComponent data={data} />) },
     { label: 'Users', action: () => setCurrentPage(<UserComponent />) },
-    // { label: 'Portfolio', action: () => setCurrentPage(<PorfolioComponent />) },
     {
       label: 'Settings',
       action: () => setCurrentPage(<SettingsMenuWrapper />)

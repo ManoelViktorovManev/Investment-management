@@ -3,9 +3,6 @@ import API_BASE_URI from './EnvVar.js';
 import PortfolioChart from './PortfolioChart';
 const UserComponent = () => {
     const [users, setUsers] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [userName, setUserName] = useState("");
-
 
     const [selectedUserId, setSelectedUserId] = useState("all");
     const [chartData, setChartData] = useState([]);
@@ -20,17 +17,17 @@ const UserComponent = () => {
     }, []);
 
 
-    async function getStockInfo(stockId) {
-        const res = await fetch(`${API_BASE_URI}/getSingleStockData/${stockId}`);
-        if (!res.ok) throw new Error("Failed to get stock info");
+    // async function getStockInfo(stockId) {
+    //     const res = await fetch(`${API_BASE_URI}/getSingleStockData/${stockId}`);
+    //     if (!res.ok) throw new Error("Failed to get stock info");
 
-        const [info] = await res.json(); // We expect one-element array
-        return {
-            name: info.name,
-            price: parseFloat(info.price),
-            currency: info.currency
-        };
-    }
+    //     const [info] = await res.json(); // We expect one-element array
+    //     return {
+    //         name: info.name,
+    //         price: parseFloat(info.price),
+    //         currency: info.currency
+    //     };
+    // }
 
     async function getAllStockInfo() {
         const allStocksResponse = await fetch(`${API_BASE_URI}/getAllStocks`);
@@ -101,32 +98,6 @@ const UserComponent = () => {
             setChartData(enriched);
         }
     }
-
-    async function addNewUser() {
-
-        const response = await fetch(`${API_BASE_URI}/createNewUser`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "name": userName })
-        });
-        if (response.status != 200) {
-            alert("Problem trying to create a new User");
-        }
-        showAllUsers();
-    }
-
-    async function removeUser(id) {
-        const response = await fetch(`${API_BASE_URI}/deleteUser`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "id": id })
-        });
-        if (response.status != 200) {
-            alert("Problem trying to delete an User");
-        }
-        showAllUsers();
-    }
-
     async function showAllUsers() {
         const response = await fetch(`${API_BASE_URI}/getAllUsers`, {
             method: 'GET'
@@ -165,7 +136,6 @@ const UserComponent = () => {
                 ))}
             </select>
 
-            <button onClick={() => setShowModal(true)}>Add User</button>
 
             {isGroupByUser ? (
                 <h3>Total Combined Portfolio: USD {chartData.reduce((sum, user) => sum + user.totalValue, 0).toFixed(2)}</h3>
@@ -173,45 +143,6 @@ const UserComponent = () => {
                 <h3>Total Portfolio Value: USD {chartData.reduce((sum, stock) => sum + stock.marketValue, 0).toFixed(2)}</h3>
             )}
             <PortfolioChart data={chartData} dataKey={isGroupByUser ? "totalValue" : "stockQuantity"} />
-
-
-            {/* <ul style={{ marginTop: '20px' }}>
-                {users.map((user) => (
-                    <li key={user.id} style={{ marginBottom: '10px' }}>
-                        <strong>Name:</strong> {user.name} <br />
-                        <button onClick={() => removeUser(user.id)} style={{ marginTop: '5px' }}>
-                            Delete
-                        </button>
-                    </li>
-                ))}
-            </ul> */}
-
-
-            {/* Adding a new user */}
-            {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: '30%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    padding: '20px',
-                    backgroundColor: 'white',
-                    border: '1px solid black',
-                    borderRadius: '8px',
-                    zIndex: 1000
-                }}>
-                    <h3>New User</h3>
-                    <input
-                        type="text"
-                        placeholder="User Name"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        style={{ display: 'block', marginBottom: '10px' }}
-                    />
-                    <button onClick={addNewUser}>Submit</button>
-                    <button onClick={() => setShowModal(false)} style={{ marginLeft: '10px' }}>Cancel</button>
-                </div>
-            )}
         </div>
     );
 }
