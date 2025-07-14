@@ -168,7 +168,7 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     Custom Allocation
                 </label>
 
-                {stock.isStock && (
+                {(stock.isStock &&  title.toLowerCase().includes('buy')) && (
                     <div>
                         <div>
                             <label>
