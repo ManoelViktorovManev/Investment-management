@@ -3,21 +3,25 @@ import PortfolioChart from './PortfolioChart';
 import PortfolioList from './PortfolioList';
 import API_BASE_URI from './EnvVar.js';
 import FormInput from './FormInput.js';
-import PriceUpdateTable from './PriceUpdateTable.js';
 import StockDistributionView from './StockDistributionView.js'
 
-const HomeComponent = ({ data }) => {
+const HomeComponent = ({ data, refreshStocksMethod }) => {
 
-
-
-  const [porfoliosNamesAndId, setPorfoliosNamesAndId] = useState({});
+  // infromation about what is selected from the dropdown about the which portfolio to show infromation about.
   const [selectedPortfolio, setSelectedPortfolio] = useState('');
-  const [allUsers, setAllUsers] = useState({});
 
+  // infromation about the users and portfolios {'id'=>'name'}
+  // about stock it is all infromation {['id', 'name', 'symbol'...]}
+  const [usersNamesAndIds, setUsersNamesAndIds] = useState({});
+  const [porfoliosNamesAndIds, setPorfoliosNamesAndIds] = useState({});
+  const [stocksInfo, setStocksInfo] = useState([]);
+
+  // buttons for handle buy and sell of stocks
   const [showBuyStockForm, setShowBuyStockForm] = useState(false);
   const [showSellStockForm, setShowSellStockForm] = useState(false);
 
-  const [allStocksInfo, setAllStocksInfo] = useState([]);
+
+
   const [stockData, setStockData] = useState([]);
   const [newStock, setNewStock] = useState({
     name: '',
@@ -28,14 +32,19 @@ const HomeComponent = ({ data }) => {
     transactionDate: '',
     isStock: false
   });
-  const [updatedStocks, setUpdatedStocks] = useState([]);
+
+  // variable to handle if the user delete some stock from the portfolio
   const [deletedStock, setDeletedStock] = useState(false);
+
+  // variable to handle what is the CashValue of selected Portfolio (Stock Broker) or the entire Portfolio
   const [entireCashValue, setEntireCashValue] = useState(0);
 
-
+  // id of the stock which is selected to show more information about the ownership of this stock.
   const [selectedStockId, setSelectedStockId] = useState(null);
 
-
+  /*
+    Function that is called to load all data about the users, stocks and portfolios
+  */
   useEffect(() => {
     loadAndSetData();
   }, []);
@@ -43,12 +52,14 @@ const HomeComponent = ({ data }) => {
 
 
   useEffect(() => {
-    if (allStocksInfo.length > 0) {
-      setUpdatedStocks([...allStocksInfo]);
+    if (stocksInfo.length > 0) {
       getAllValueOfPortfolio(selectedPortfolio);
     }
-  }, [allStocksInfo]);
+  }, [stocksInfo]);
 
+  /*
+    If user click to delete some of the stocks, then to perform again the calculation of the value of the stock.
+  */
   useEffect(() => {
     if (deletedStock) {
       getAllValueOfPortfolio(selectedPortfolio);
@@ -56,24 +67,27 @@ const HomeComponent = ({ data }) => {
     }
   }, [deletedStock]);
 
+
+  /*
+    Function called when loading the page. It gets all infromation about users, portfolios and stocks and set them.
+  */
   function loadAndSetData() {
 
-    setPorfoliosNamesAndId(data.portfolios.reduce((map, item) => {
+    setPorfoliosNamesAndIds(data.portfolios.reduce((map, item) => {
       map[item.id] = item.name;
       return map;
     }, {}));
 
-    setAllStocksInfo(data.stocks);
+    setStocksInfo(data.stocks);
 
-    setAllUsers(data.users.reduce((map, item) => {
-        map[item.id] = item.name;
-        return map;
-      }, {}));
+    setUsersNamesAndIds(data.users.reduce((map, item) => {
+      map[item.id] = item.name;
+      return map;
+    }, {}));
 
   }
 
-
-
+  // here we are going to remove this shit
   async function getAllStocks() {
     const response = await fetch(`${API_BASE_URI}/getAllStocks`);
     if (response.status !== 200) {
@@ -90,15 +104,23 @@ const HomeComponent = ({ data }) => {
           price: parseFloat(stock.price),
           isCash: stock.isCash
         }));
-      setAllStocksInfo(stocks);
+      setStocksInfo(stocks);
       // console.log(stocks);
     }
   }
 
-  const handleChange = (event) => {
+  /* method that is called when user select other portfolio to show information about it. 
+     It sets and get the valuation 
+  */
+  const handleChangeofPortfolio = (event) => {
     const selected = event.target.value;
     setSelectedPortfolio(selected);
-    selected == "" ? getAllValueOfPortfolio(null) : getAllValueOfPortfolio(selected);
+    if (selected == "") {
+      getAllValueOfPortfolio(null)
+    }
+    else {
+      getAllValueOfPortfolio(selected);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -132,7 +154,9 @@ const HomeComponent = ({ data }) => {
     }
     setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
     setShowBuyStockForm(false);
-    getAllStocks();
+    refreshStocksMethod();
+    getAllValueOfPortfolio(selectedPortfolio);
+    // getAllStocks();
   }
 
   async function handleSellSubmit(e) {
@@ -160,7 +184,9 @@ const HomeComponent = ({ data }) => {
     }
     setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
     setShowSellStockForm(false);
-    getAllStocks();
+    refreshStocksMethod();
+    getAllValueOfPortfolio(selectedPortfolio);
+    // getAllStocks();
   }
 
   async function getAllValueOfPortfolio(portfolioId) {
@@ -206,7 +232,7 @@ const HomeComponent = ({ data }) => {
       setEntireCashValue(0);
       // Final mapping to UI format
       const mapped = combined.map(item => {
-        const stock = allStocksInfo.find(s => s.id === item.idStock);
+        const stock = stocksInfo.find(s => s.id === item.idStock);
         if (!stock) return null;
 
         const numStocks = parseFloat(item.numStocks);
@@ -234,9 +260,9 @@ const HomeComponent = ({ data }) => {
 
   return (
     <div>
-      <select onChange={handleChange}>
+      <select onChange={handleChangeofPortfolio}>
         <option key="0" value="">Entire portfolio</option>
-        {Object.entries(porfoliosNamesAndId).map(([id, name]) => (
+        {Object.entries(porfoliosNamesAndIds).map(([id, name]) => (
           <option key={id} value={id}>{name}</option>
         ))}
       </select>
@@ -264,11 +290,11 @@ const HomeComponent = ({ data }) => {
             <FormInput
               title="Buy Stock/Insert Cash"
               stock={newStock}
-              listOfStocks={allStocksInfo}
+              listOfStocks={stocksInfo}
               onChange={handleInputChange}
               onSubmit={handleBuySubmit}
               portfolioId={selectedPortfolio}
-              listOfUsers={allUsers}
+              listOfUsers={usersNamesAndIds}
             />
           </div>
         </div>
@@ -283,11 +309,11 @@ const HomeComponent = ({ data }) => {
               <FormInput
                 title="Sell Stock/Remove Cash"
                 stock={newStock}
-                listOfStocks={allStocksInfo}
+                listOfStocks={stocksInfo}
                 onChange={handleInputChange}
                 onSubmit={handleSellSubmit}
                 portfolioId={selectedPortfolio}
-                listOfUsers={allUsers}
+                listOfUsers={usersNamesAndIds}
               />
             </div>
           </div>
@@ -302,7 +328,7 @@ const HomeComponent = ({ data }) => {
       ) : (
         <>
           <h2 className="text-3xl font-semibold mb-6">
-            Portfolio Overview: {porfoliosNamesAndId[selectedPortfolio]}
+            Portfolio Overview: {porfoliosNamesAndIds[selectedPortfolio]}
           </h2>
           <PortfolioChart data={stockData} dataKey={"currentMarketCap"} />
           <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>

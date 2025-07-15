@@ -7,7 +7,7 @@ import { SettingsMenuComponent } from './SettingsMenuComponent.js';
 
 const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
   const navItems = [
-    { label: 'Home', action: () => setCurrentPage(<HomeComponent data={data} />) },
+    { label: 'Home', action: () => setCurrentPage(<HomeComponent data={data} refreshStocksMethod={refreshMethods.refreshStocks} />) },
     { label: 'Users', action: () => setCurrentPage(<UserComponent />) },
     {
       label: 'Settings',
