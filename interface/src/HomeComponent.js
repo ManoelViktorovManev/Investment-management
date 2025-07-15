@@ -30,18 +30,14 @@ const HomeComponent = ({ data }) => {
   });
   const [updatedStocks, setUpdatedStocks] = useState([]);
   const [deletedStock, setDeletedStock] = useState(false);
-  const [entireCashValue, setEntireCashValue] = useState(1);
+  const [entireCashValue, setEntireCashValue] = useState(0);
 
 
   const [selectedStockId, setSelectedStockId] = useState(null);
 
 
   useEffect(() => {
-    getAllPortfolios();
-    getAllStocks();
-    getAllUsers();
-
-    setLoadedData();
+    loadAndSetData();
   }, []);
 
 
@@ -60,29 +56,23 @@ const HomeComponent = ({ data }) => {
     }
   }, [deletedStock]);
 
-  function setLoadedData() {
-    // console.log(data.stocks);
+  function loadAndSetData() {
 
-    // setPorfoliosNamesAndId(data.portfolios.reduce((map, item) => {
-    //   map[item.id] = item.name;
-    //   return map;
-    // }, {}));
+    setPorfoliosNamesAndId(data.portfolios.reduce((map, item) => {
+      map[item.id] = item.name;
+      return map;
+    }, {}));
 
-  }
+    setAllStocksInfo(data.stocks);
 
-
-  async function getAllPortfolios() {
-    const response = await fetch(`${API_BASE_URI}/getAllPortfolios`);
-    if (response.status !== 200) {
-      alert("Problem trying to get all Portfolios");
-    } else {
-      const data = await response.json();
-      setPorfoliosNamesAndId(data.reduce((map, item) => {
+    setAllUsers(data.users.reduce((map, item) => {
         map[item.id] = item.name;
         return map;
       }, {}));
-    }
+
   }
+
+
 
   async function getAllStocks() {
     const response = await fetch(`${API_BASE_URI}/getAllStocks`);
@@ -90,7 +80,7 @@ const HomeComponent = ({ data }) => {
       alert("Problem trying to get all Stocks");
     } else {
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       const stocks = data
         .map(stock => ({
           id: stock.id,
@@ -101,24 +91,10 @@ const HomeComponent = ({ data }) => {
           isCash: stock.isCash
         }));
       setAllStocksInfo(stocks);
-      console.log(stocks);
+      // console.log(stocks);
     }
   }
 
-  async function getAllUsers() {
-    const response = await fetch(`${API_BASE_URI}/getAllUsers`, {
-      method: 'GET'
-    });
-    if (response.status !== 200) {
-      alert("Problem trying to get all Stocks");
-    } else {
-      const data = await response.json();
-      setAllUsers(data.reduce((map, item) => {
-        map[item.id] = item.name;
-        return map;
-      }, {}));
-    }
-  }
   const handleChange = (event) => {
     const selected = event.target.value;
     setSelectedPortfolio(selected);
@@ -129,17 +105,6 @@ const HomeComponent = ({ data }) => {
     const { name, value, type, checked } = e.target;
     setNewStock(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
-
-  const handlePriceChange = (id, newPrice) => {
-    setUpdatedStocks(prev =>
-      prev.map(stock =>
-        stock.id === id ? { ...stock, price: newPrice } : stock
-      )
-    );
-  };
-
-
-
 
   async function handleBuySubmit(e) {
     e.preventDefault();
@@ -352,26 +317,4 @@ const HomeComponent = ({ data }) => {
     </div >
   );
 };
-
 export { HomeComponent };
-/*
-  TASKS TO DO:
-    TOP PRIORITY!
-    добавяне на възможност за добавяне на дивиденти, fees от currency exchange, fees от купуване, продаване и други.
-    Individual Profile of user (How much profit he has) -> друга база ще ни трябва
-    Calculate individual taxes to the goverment.
-    Stock split implementation.
-
-    MID!
-    Оправяне на менютата
-    Optimization of time and memory of the code!
-    Fix if it is selling not to show fields of equal split and portfolio value split
-  
-    LOW!
-    документиране на кода
-    Transaction history!
-    Show all money that the portfolio have available in the form, so to know how much money they can use to buy stocks.
-    User can have negative number of money? 
-    Fix percentiage everywhere!!!, maybe 0.0001 is ok 
-    Cash out functionality?
-*/
