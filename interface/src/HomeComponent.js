@@ -47,15 +47,17 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
   */
   useEffect(() => {
     loadAndSetData();
+    getAllValueOfPortfolio(selectedPortfolio);
   }, []);
 
 
-
-  useEffect(() => {
-    if (stocksInfo.length > 0) {
-      getAllValueOfPortfolio(selectedPortfolio);
-    }
-  }, [stocksInfo]);
+  // ?
+  // useEffect(() => {
+  //   // console.log("NISAN?");
+  //   if (stocksInfo.length > 0) {
+  //     getAllValueOfPortfolio(selectedPortfolio);
+  //   }
+  // }, [stocksInfo]);
 
   /*
     If user click to delete some of the stocks, then to perform again the calculation of the value of the stock.
@@ -87,30 +89,9 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
 
   }
 
-  // here we are going to remove this shit
-  async function getAllStocks() {
-    const response = await fetch(`${API_BASE_URI}/getAllStocks`);
-    if (response.status !== 200) {
-      alert("Problem trying to get all Stocks");
-    } else {
-      const data = await response.json();
-      // console.log(data);
-      const stocks = data
-        .map(stock => ({
-          id: stock.id,
-          name: stock.name,
-          symbol: stock.symbol,
-          currency: stock.currency,
-          price: parseFloat(stock.price),
-          isCash: stock.isCash
-        }));
-      setStocksInfo(stocks);
-      // console.log(stocks);
-    }
-  }
-
-  /* method that is called when user select other portfolio to show information about it. 
-     It sets and get the valuation 
+  /* 
+    Method that is called when user select other portfolio to show information about it. 
+    It sets and get the valuation 
   */
   const handleChangeofPortfolio = (event) => {
     const selected = event.target.value;
@@ -123,18 +104,27 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     }
   };
 
+  /*
+    Method that handles user input in form
+  */
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setNewStock(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  async function handleBuySubmit(e) {
+
+
+  /*
+    Method that handles Buy stock or sell stock Submit button.
+  */
+  async function handleTransactionSubmit(e, actionType) {
     e.preventDefault();
 
-    const url = newStock.isStock == true
-      ? `${API_BASE_URI}/buyStockInPortfolio`
-      : `${API_BASE_URI}/addCashInPortfolio`;
-    const response = await fetch(url, {
+    const endpoint = newStock.isStock
+      ? `${API_BASE_URI}/${actionType}StockInPortfolio`
+      : `${API_BASE_URI}/${actionType === 'buy' ? 'addCashInPortfolio' : 'removeCashFromPortfolio'}`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -149,44 +139,24 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
         allocations: newStock.allocations
       })
     });
-    if (response.status !== 200) {
-      alert("Problem trying to add a new Stock to portfolio");
-    }
-    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
-    setShowBuyStockForm(false);
-    refreshStocksMethod();
-    getAllValueOfPortfolio(selectedPortfolio);
-    // getAllStocks();
-  }
 
-  async function handleSellSubmit(e) {
-    e.preventDefault();
-    const url = newStock.isStock == true
-      ? `${API_BASE_URI}/sellStockInPortfolio`
-      : `${API_BASE_URI}/removeCashFromPortfolio`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: newStock.name,
-        symbol: newStock.symbol,
-        currency: newStock.currency,
-        price: newStock.price,
-        quantity: newStock.quantity,
-        portfolioId: selectedPortfolio,
-        date: newStock.transactionDate,
-        isStock: newStock.isStock,
-        allocations: newStock.allocations
-      })
-    });
     if (response.status !== 200) {
-      alert("Problem trying to add a new Stock to portfolio");
+      alert(`Problem trying to ${actionType === 'buy' ? 'add' : 'remove'} ${newStock.isStock ? 'Stock' : 'Cash'} in portfolio`);
+      return;
     }
-    setNewStock({ name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: '' });
-    setShowSellStockForm(false);
+
+    setNewStock({
+      name: '', symbol: '', currency: '', price: '', quantity: '', isStock: false, allocation: ''
+    });
+
+    if (actionType === 'buy') {
+      setShowBuyStockForm(false);
+    } else {
+      setShowSellStockForm(false);
+    }
+
     refreshStocksMethod();
     getAllValueOfPortfolio(selectedPortfolio);
-    // getAllStocks();
   }
 
   async function getAllValueOfPortfolio(portfolioId) {
@@ -199,10 +169,10 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
       alert("Problem trying to get Portfolio stocks");
     } else {
       const result = await response.json();
-
       // Filter out 0-stock entries
       const filtered = result.filter(item => parseFloat(item.numStocks) !== 0);
       let combined = [];
+      // if we didn`t select any portfolio (we get all stocks from every portfolio)
       if (portfolioId == null) {
         // Group by idStock and combine quantities and values
         const grouped = {};
@@ -217,7 +187,7 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
               valueOfStock: parseFloat(item.valueOfStock)
             };
           }
-          // if we already have added the id => EXample i have USD in one account and now it is found in another one.
+          // if we already have added the id => Example i have USD in one account and now it is found in another one.
           else {
             grouped[id].numStocks += parseFloat(item.numStocks);
             grouped[id].valueOfStock += parseFloat(item.valueOfStock);
@@ -228,15 +198,22 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
       } else {
         combined = filtered;
       }
+
       let entireCashValue = 0;
       setEntireCashValue(0);
       // Final mapping to UI format
       const mapped = combined.map(item => {
         const stock = stocksInfo.find(s => s.id === item.idStock);
         if (!stock) return null;
-
+        
+        if(stock.currency!=data.settings.defaultCurrency){
+          console.log(stock.name);
+          console.log(data.exchangeRates);
+          // trybwa da wzema id na tozi, kojto si suwpada s id na акцията с ид na drugata akciya primer !!!id=1!!! pri idStock=1 i idStock=2
+        }
         const numStocks = parseFloat(item.numStocks);
         const valueOfStock = parseFloat(item.valueOfStock);
+
         entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)));
         setEntireCashValue(entireCashValue);
         return {
@@ -284,41 +261,39 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
 
       {/* Buying stock */}
       {showBuyStockForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
-            <FormInput
-              title="Buy Stock/Insert Cash"
-              stock={newStock}
-              listOfStocks={stocksInfo}
-              onChange={handleInputChange}
-              onSubmit={handleBuySubmit}
-              portfolioId={selectedPortfolio}
-              listOfUsers={usersNamesAndIds}
-            />
-          </div>
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
+          <FormInput
+            title="Buy Stock/Insert Cash"
+            stock={newStock}
+            listOfStocks={stocksInfo}
+            onChange={handleInputChange}
+            onSubmit={(e) => handleTransactionSubmit(e, 'buy')}
+            portfolioId={selectedPortfolio}
+            listOfUsers={usersNamesAndIds}
+          />
         </div>
-      )}
+      </div>
+    )}
+    {/* Selling stock */}
+    {showSellStockForm && (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
+          <FormInput
+            title="Sell Stock/Remove Cash"
+            stock={newStock}
+            listOfStocks={stocksInfo}
+            onChange={handleInputChange}
+            onSubmit={(e) => handleTransactionSubmit(e, 'sell')}
+            portfolioId={selectedPortfolio}
+            listOfUsers={usersNamesAndIds}
+          />
+        </div>
+      </div>
+    )}
 
-      {/* Selling a stock */}
-      {
-        showSellStockForm && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
-              <FormInput
-                title="Sell Stock/Remove Cash"
-                stock={newStock}
-                listOfStocks={stocksInfo}
-                onChange={handleInputChange}
-                onSubmit={handleSellSubmit}
-                portfolioId={selectedPortfolio}
-                listOfUsers={usersNamesAndIds}
-              />
-            </div>
-          </div>
-        )
-      }
 
       {selectedStockId ? (
         <StockDistributionView
