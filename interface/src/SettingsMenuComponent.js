@@ -215,11 +215,11 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     }
   };
 
-/*
-  Stock split method
-*/
-   const stockSplitCall = async () => {
-    
+  /*
+    Stock split method
+  */
+  const stockSplitCall = async () => {
+
     console.log(selectedStockId + splitRatio);
     // try {
     //   const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
@@ -442,7 +442,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
                   <div className="space-y-3">
                     {editedExchangeRates.map(rate => (
                       <div key={rate.id} className="flex items-center gap-2">
-                        <span className="w-24">{rate.Symbol} → {rate.symbol}</span>
+                        <span className="w-24">{rate.firstSymbol} → {rate.secoundSymbol}</span>
                         <input
                           type="number"
                           step="0.0001"
@@ -479,12 +479,12 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
                   >
                     <option value="">-- Select --</option>
                     {stocks
-                    .filter(stock=>stock.isCash==0)
-                    .map(stock => (
-                      <option key={stock.id} value={stock.id}>
-                        {stock.name} ({stock.symbol})
-                      </option>
-                    ))}
+                      .filter(stock => stock.isCash == 0)
+                      .map(stock => (
+                        <option key={stock.id} value={stock.id}>
+                          {stock.name} ({stock.symbol})
+                        </option>
+                      ))}
                   </select>
                 </label>
               </div>

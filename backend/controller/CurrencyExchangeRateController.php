@@ -38,7 +38,7 @@ class CurrencyExchangeRateController extends BaseController
         $currencyExchangeRateInstance = new CurrencyExchangeRate();
         $currencyExchangeRateInstanceArray = $currencyExchangeRateInstance
             ->query()
-            ->select(" currencyexchangerate.id, Stock.Symbol, S.symbol, currencyexchangerate.rate")
+            ->select(" currencyexchangerate.id, Stock.Symbol as firstSymbol, S.symbol as secondSymbol, currencyexchangerate.rate")
             ->join("INNER", "STOCK", "currencyexchangerate.idFirstCurrency=Stock.id")
             ->join("INNER", "STOCK as S", "currencyexchangerate.idSecondCurrency=S.id")
             ->all();

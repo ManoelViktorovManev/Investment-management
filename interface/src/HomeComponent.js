@@ -112,8 +112,6 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     setNewStock(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-
-
   /*
     Method that handles Buy stock or sell stock Submit button.
   */
@@ -159,6 +157,25 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     getAllValueOfPortfolio(selectedPortfolio);
   }
 
+
+  function getConversionRate(fromSymbol, toSymbol, exchangeRates) {
+
+    if (fromSymbol === toSymbol) return 1;
+
+    const direct = exchangeRates.find(
+      r => r.firstSymbol == fromSymbol && r.secondSymbol == toSymbol
+    );
+    if (direct) return parseFloat(direct.rate);
+
+
+    const reverse = exchangeRates.find(
+      r => r.firstSymbol == toSymbol && r.secondSymbol == fromSymbol
+    );
+    if (reverse) return 1 / parseFloat(reverse.rate);
+
+    return null;
+  }
+
   async function getAllValueOfPortfolio(portfolioId) {
     const url = portfolioId == null
       ? `${API_BASE_URI}/getAllStockToPortfolio/`
@@ -200,21 +217,23 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
       }
 
       let entireCashValue = 0;
-      setEntireCashValue(0);
+
       // Final mapping to UI format
       const mapped = combined.map(item => {
         const stock = stocksInfo.find(s => s.id === item.idStock);
         if (!stock) return null;
-        
-        if(stock.currency!=data.settings.defaultCurrency){
-          console.log(stock.name);
-          console.log(data.exchangeRates);
-          // trybwa da wzema id na tozi, kojto si suwpada s id na акцията с ид na drugata akciya primer !!!id=1!!! pri idStock=1 i idStock=2
-        }
+
         const numStocks = parseFloat(item.numStocks);
         const valueOfStock = parseFloat(item.valueOfStock);
 
-        entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)));
+        var rate = null;
+        if (stock.currency != data.settings.defaultCurrency) {
+          rate = getConversionRate(data.settings.defaultCurrency, stock.currency, data.exchangeRates);
+          entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)) * rate);
+        }
+        else {
+          entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)));
+        }
         setEntireCashValue(entireCashValue);
         return {
           stockId: stock.id,
@@ -261,38 +280,38 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
 
       {/* Buying stock */}
       {showBuyStockForm && (
-      <div className="modal-overlay">
-        <div className="modal-content">
-          <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
-          <FormInput
-            title="Buy Stock/Insert Cash"
-            stock={newStock}
-            listOfStocks={stocksInfo}
-            onChange={handleInputChange}
-            onSubmit={(e) => handleTransactionSubmit(e, 'buy')}
-            portfolioId={selectedPortfolio}
-            listOfUsers={usersNamesAndIds}
-          />
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
+            <FormInput
+              title="Buy Stock/Insert Cash"
+              stock={newStock}
+              listOfStocks={stocksInfo}
+              onChange={handleInputChange}
+              onSubmit={(e) => handleTransactionSubmit(e, 'buy')}
+              portfolioId={selectedPortfolio}
+              listOfUsers={usersNamesAndIds}
+            />
+          </div>
         </div>
-      </div>
-    )}
-    {/* Selling stock */}
-    {showSellStockForm && (
-      <div className="modal-overlay">
-        <div className="modal-content">
-          <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
-          <FormInput
-            title="Sell Stock/Remove Cash"
-            stock={newStock}
-            listOfStocks={stocksInfo}
-            onChange={handleInputChange}
-            onSubmit={(e) => handleTransactionSubmit(e, 'sell')}
-            portfolioId={selectedPortfolio}
-            listOfUsers={usersNamesAndIds}
-          />
+      )}
+      {/* Selling stock */}
+      {showSellStockForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
+            <FormInput
+              title="Sell Stock/Remove Cash"
+              stock={newStock}
+              listOfStocks={stocksInfo}
+              onChange={handleInputChange}
+              onSubmit={(e) => handleTransactionSubmit(e, 'sell')}
+              portfolioId={selectedPortfolio}
+              listOfUsers={usersNamesAndIds}
+            />
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
 
       {selectedStockId ? (
@@ -307,7 +326,7 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
           </h2>
           <PortfolioChart data={stockData} dataKey={"currentMarketCap"} />
           <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>
-          <h3>Current value: {entireCashValue}</h3>
+          <h3>Current value: {entireCashValue} {data.settings.defaultCurrency}</h3>
           <PortfolioList
             stocks={stockData}
             setDelete={setDeletedStock}
