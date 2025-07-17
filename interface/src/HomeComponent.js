@@ -46,18 +46,19 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     Function that is called to load all data about the users, stocks and portfolios
   */
   useEffect(() => {
-    loadAndSetData();
-    getAllValueOfPortfolio(selectedPortfolio);
+    async function init() {
+      const parsedData = await loadAndSetData();
+      setPorfoliosNamesAndIds(parsedData.portfoliosMap);
+      setStocksInfo(parsedData.stocks);
+      setUsersNamesAndIds(parsedData.usersMap);
+
+      // Now call it after the data is available
+      getAllValueOfPortfolio(null, parsedData.stocks);
+    }
+
+    init();
   }, []);
 
-
-  // ?
-  // useEffect(() => {
-  //   // console.log("NISAN?");
-  //   if (stocksInfo.length > 0) {
-  //     getAllValueOfPortfolio(selectedPortfolio);
-  //   }
-  // }, [stocksInfo]);
 
   /*
     If user click to delete some of the stocks, then to perform again the calculation of the value of the stock.
@@ -73,20 +74,22 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
   /*
     Function called when loading the page. It gets all infromation about users, portfolios and stocks and set them.
   */
-  function loadAndSetData() {
-
-    setPorfoliosNamesAndIds(data.portfolios.reduce((map, item) => {
+  async function loadAndSetData() {
+    // pretend data comes from somewhere (you can adjust this part if needed)
+    const portfoliosMap = data.portfolios.reduce((map, item) => {
       map[item.id] = item.name;
       return map;
-    }, {}));
+    }, {});
 
-    setStocksInfo(data.stocks);
-
-    setUsersNamesAndIds(data.users.reduce((map, item) => {
+    const usersMap = data.users.reduce((map, item) => {
       map[item.id] = item.name;
       return map;
-    }, {}));
-
+    }, {});
+    return {
+      portfoliosMap,
+      stocks: data.stocks,
+      usersMap
+    };
   }
 
   /* 
@@ -176,7 +179,7 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     return null;
   }
 
-  async function getAllValueOfPortfolio(portfolioId) {
+  async function getAllValueOfPortfolio(portfolioId, stocksList = null) {
     const url = portfolioId == null
       ? `${API_BASE_URI}/getAllStockToPortfolio/`
       : `${API_BASE_URI}/getAllStockToPortfolio/${portfolioId}`;
@@ -185,6 +188,7 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
     if (response.status !== 200) {
       alert("Problem trying to get Portfolio stocks");
     } else {
+
       const result = await response.json();
       // Filter out 0-stock entries
       const filtered = result.filter(item => parseFloat(item.numStocks) !== 0);
@@ -220,7 +224,13 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
 
       // Final mapping to UI format
       const mapped = combined.map(item => {
-        const stock = stocksInfo.find(s => s.id === item.idStock);
+        var stock;
+        if (stocksList == null) {
+          stock = stocksInfo.find(s => s.id === item.idStock);
+        }
+        else {
+          stock = stocksList.find(s => s.id === item.idStock);
+        }
         if (!stock) return null;
 
         const numStocks = parseFloat(item.numStocks);
@@ -245,6 +255,8 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
           currentPrice: stock.price,
           averagePricePerStock: (valueOfStock / numStocks).toFixed(2),
           currentMarketCap: parseFloat((stock.price * numStocks).toFixed(2)),
+          valueInSelectedCurrency: rate != null ? (parseFloat((stock.price * numStocks).toFixed(2)) * rate) : parseFloat((stock.price * numStocks).toFixed(2)),
+          selectedCurrency: data.settings.defaultCurrency,
           returnOfInvestment: ((stock.price * numStocks - valueOfStock) / valueOfStock * 100).toFixed(2),
           percentage: 0,
           idOfDB: item.id

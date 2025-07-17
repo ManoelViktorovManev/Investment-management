@@ -13,6 +13,8 @@ function App() {
   const [settings, setSettings] = useState([]);
   const [exchangeRates, setExchangeRates] = useState([]);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
     if (res.ok) setUsers(await res.json());
@@ -40,11 +42,20 @@ function App() {
 
   // Call them all once at start
   useEffect(() => {
-    getAllUsers();
-    getAllPortfolios();
-    getAllStocks();
-    getSettings();
-    getExchangeRates();
+    const loadAllData = async () => {
+      await Promise.all([
+        getAllUsers(),
+        getAllPortfolios(),
+        getAllStocks(),
+        getSettings(),
+        getExchangeRates()
+      ]);
+      setIsLoading(false);
+
+
+    };
+
+    loadAllData();
   }, []);
 
   const data = { users, portfolios, stocks, settings, exchangeRates };
@@ -55,6 +66,17 @@ function App() {
     refreshSettings: getSettings,
     refreshExchangeRates: getExchangeRates,
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="loader mb-4" />
+          <p className="text-xl text-gray-700">Loading portfolio data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-100">

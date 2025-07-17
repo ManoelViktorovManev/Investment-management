@@ -24,6 +24,7 @@ const PortfolioList = ({ stocks, setDelete, onStockClick }) => {
           <th style={cellStyle}>Avg Cost/Share</th>
           <th style={cellStyle}>Total Money Invested</th>
           <th style={cellStyle}>Current Market CAP</th>
+          <th style={cellStyle}>Value by selected Currency - {stocks[0]?.selectedCurrency}</th>
           <th style={cellStyle}>Return on Investment</th>
           <th style={cellStyle}>% of Portfolio</th>
           <th style={cellStyle}></th>
@@ -33,7 +34,6 @@ const PortfolioList = ({ stocks, setDelete, onStockClick }) => {
         {stocks.map((stock, index) => {
           const roi = stock.returnOfInvestment;
           const roiColor = roi >= 0 ? 'green' : 'red';
-
           return (
             <tr key={index}>
               {/* Clickable symbol */}
@@ -56,6 +56,7 @@ const PortfolioList = ({ stocks, setDelete, onStockClick }) => {
               <td style={cellStyle}>${stock.averagePricePerStock}</td>
               <td style={cellStyle}>${stock.value}</td>
               <td style={cellStyle}>${stock.currentMarketCap}</td>
+              <td style={cellStyle}>{stock.valueInSelectedCurrency}</td>
               <td style={{ ...cellStyle, color: roiColor }}>{roi}%</td>
               <td style={cellStyle}>{stock.percentage.toFixed(2)}%</td>
               <td style={cellStyle}>
