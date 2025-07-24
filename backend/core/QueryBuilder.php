@@ -189,4 +189,17 @@ class QueryBuilder
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+    public function multiQuery(array $queries): array
+    {
+        $sql = implode('; ', $queries) . ';';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        $results = [];
+        do {
+            $results[] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } while ($stmt->nextRowset());
+
+        return $results;
+    }
 };
