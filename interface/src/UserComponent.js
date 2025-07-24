@@ -66,10 +66,18 @@ const UserComponent = ({ data }) => {
             });
             setChartData(finalChartData);
         } else {
-            // Show per-stock breakdown for selected user
-            const enriched = raw.map(({ stockId, stockQuantity }) => {
-                const stock = allStockInfo[stockId];
+            const combinedStocks = {};
+            for (const { stockId, stockQuantity } of raw) {
                 const quantity = parseFloat(stockQuantity);
+                if (!combinedStocks[stockId]) {
+                    combinedStocks[stockId] = 0;
+                }
+                combinedStocks[stockId] += quantity;
+            }
+
+            // Step 2: Enrich for chart
+            const enriched = Object.entries(combinedStocks).map(([stockId, quantity]) => {
+                const stock = allStockInfo[stockId];
                 return {
                     name: stock?.name ?? `Stock ${stockId}`,
                     stockQuantity: quantity,
