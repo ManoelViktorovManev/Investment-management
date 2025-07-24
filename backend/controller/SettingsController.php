@@ -6,6 +6,7 @@ use App\Core\BaseController;
 use App\Core\Response;
 use App\Core\Route;
 use App\Core\DbManipulation;
+use App\Core\QueryBuilder;
 use App\Model\Settings;
 
 class SettingsController extends BaseController
@@ -56,5 +57,35 @@ class SettingsController extends BaseController
         $db->commit();
 
         return new Response("OK");
+    }
+
+    #[Route('/getAllInfromation')]
+    public function getAllInfromation()
+    {
+
+        $results = (new Settings())->query()->multiQuery([
+            "SELECT * FROM stock",
+            "SELECT * FROM portfolio",
+            "SELECT * FROM user",
+            "SELECT defaultCurrency FROM settings",
+            "SELECT  currencyexchangerate.id, Stock.Symbol as firstSymbol, S.symbol as secondSymbol, currencyexchangerate.rate 
+            FROM currencyexchangerate 
+            INNER JOIN STOCK ON currencyexchangerate.idFirstCurrency=Stock.id  
+            INNER JOIN STOCK as S ON currencyexchangerate.idSecondCurrency=S.id"
+        ]);
+
+        $stocks = $results[0];
+        $portfolios = $results[1];
+        $users = $results[2];
+        $settings = $results[3][0];
+        $exchangeRate = $results[4];
+
+        return $this->json([
+            "stocks" => $stocks,
+            "portfolios" => $portfolios,
+            "users" => $users,
+            "settings" => $settings,
+            "exchangeRates" => $exchangeRate
+        ]);
     }
 }
