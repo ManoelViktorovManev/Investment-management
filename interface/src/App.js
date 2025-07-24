@@ -15,46 +15,66 @@ function App() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  // ок
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
     if (res.ok) setUsers(await res.json());
   };
 
+  // ок
   const getAllPortfolios = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
     if (res.ok) setPortfolios(await res.json());
   };
 
+  //ok
   const getAllStocks = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllStocks`);
     if (res.ok) setStocks(await res.json());
   };
 
+  //ok
   const getSettings = async () => {
     const res = await fetch(`${API_BASE_URI}/getSettings`);
-    if (res.ok) setSettings(await res.json());
+    setSettings(await res.json());
   };
 
+  //ok
   const getExchangeRates = async () => {
     const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
+    // if (res.ok) {
+    //   var result = await res.json();
+    //   setExchangeRates(result);
+    //   console.log(result);
+    // }
     if (res.ok) setExchangeRates(await res.json());
   };
 
+  const getAllNeededInfromation = async () => {
+    const res = await fetch(`${API_BASE_URI}/getAllInfromation`);
+    if (res.ok) {
+      var result = await res.json();
+      // console.log(result["exchangeRates"])
+      setUsers(result["users"]);
+      setPortfolios(result["portfolios"]);
+      setStocks(result["stocks"]);
+      setSettings(result["settings"]);
+      setExchangeRates(result["exchangeRates"]);
+    }
+  };
   // Call them all once at start
   useEffect(() => {
     const loadAllData = async () => {
       await Promise.all([
-        getAllUsers(),
-        getAllPortfolios(),
-        getAllStocks(),
-        getSettings(),
-        getExchangeRates()
+        // getAllUsers(),
+        // getAllPortfolios(),
+        // getAllStocks(),
+        // getSettings(),
+        // getExchangeRates(),
+        getAllNeededInfromation()
       ]);
       setIsLoading(false);
-
-
     };
-
     loadAllData();
   }, []);
 
