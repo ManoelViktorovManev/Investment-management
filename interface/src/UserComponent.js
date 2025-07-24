@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import PortfolioChart from './PortfolioChart';
-const UserComponent = () => {
+const UserComponent = ({ data }) => {
     const [users, setUsers] = useState([]);
 
     const [selectedUserId, setSelectedUserId] = useState("all");
@@ -11,32 +11,10 @@ const UserComponent = () => {
     const [allStockInfo, setAllStockInfo] = useState([]);
 
     useEffect(() => {
-        showAllUsers();
-        getAllStockInfo();
-        getAllStocksOwnedByUser(null);
-    }, []);
+        setUsers(data.users);
 
-
-    // async function getStockInfo(stockId) {
-    //     const res = await fetch(`${API_BASE_URI}/getSingleStockData/${stockId}`);
-    //     if (!res.ok) throw new Error("Failed to get stock info");
-
-    //     const [info] = await res.json(); // We expect one-element array
-    //     return {
-    //         name: info.name,
-    //         price: parseFloat(info.price),
-    //         currency: info.currency
-    //     };
-    // }
-
-    async function getAllStockInfo() {
-        const allStocksResponse = await fetch(`${API_BASE_URI}/getAllStocks`);
-        if (!allStocksResponse.ok) throw new Error("Failed to get all stock info");
-        const allStocks = await allStocksResponse.json(); // full stock metadata
-
-        // Create map for fast access: { stockId: stockInfo }
         const stockMap = {};
-        for (const stock of allStocks) {
+        for (const stock of data.stocks) {
             stockMap[stock.id] = {
                 name: stock.name,
                 price: parseFloat(stock.price),
@@ -45,7 +23,15 @@ const UserComponent = () => {
         }
         setAllStockInfo(stockMap);
 
-    }
+    }, [data]);
+
+    // Trigger fetch only after both users and allStockInfo are set
+    useEffect(() => {
+        if (Object.keys(allStockInfo).length > 0 && users.length > 0) {
+            getAllStocksOwnedByUser(null);
+        }
+    }, [allStockInfo, users]);
+
     async function getAllStocksOwnedByUser(userId) {
         // OPTIMIZE THIS BECAUSE IT IS SOOO SLOW
         const isAll = userId === null || userId === "all";
@@ -63,15 +49,14 @@ const UserComponent = () => {
         if (isAll) {
             // Group total value per user
             const groupedByUser = {};
-
+            // here down there is an bug
             for (const { userId, stockId, stockQuantity } of raw) {
+                // ok
                 const quantity = parseFloat(stockQuantity);
                 const price = allStockInfo[stockId]?.price || 0;
-
                 if (!groupedByUser[userId]) groupedByUser[userId] = 0;
                 groupedByUser[userId] += quantity * price;
             }
-
             const finalChartData = Object.entries(groupedByUser).map(([userId, totalValue]) => {
                 const user = users.find(u => u.id === parseInt(userId));
                 return {
@@ -79,7 +64,6 @@ const UserComponent = () => {
                     totalValue: parseFloat(totalValue.toFixed(2)),
                 };
             });
-
             setChartData(finalChartData);
         } else {
             // Show per-stock breakdown for selected user
@@ -96,18 +80,6 @@ const UserComponent = () => {
             });
 
             setChartData(enriched);
-        }
-    }
-    async function showAllUsers() {
-        const response = await fetch(`${API_BASE_URI}/getAllUsers`, {
-            method: 'GET'
-        });
-        if (response.status != 200) {
-            alert("Problem trying to get all Users");
-        }
-        else {
-            const data = await response.json();
-            setUsers(data);
         }
     }
 

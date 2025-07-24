@@ -220,19 +220,33 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   */
   const stockSplitCall = async () => {
 
-    console.log(selectedStockId + splitRatio);
-    // try {
-    //   const response = await fetch(`${API_BASE_URI}/updateExchangeRate`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json"
-    //     },
-    //     body: JSON.stringify({ allocations })
-    //   });
+    if (!selectedStockId || !splitRatio.match(/^\d+:\d+$/)) {
+      alert("Please select a stock and enter a valid ratio (e.g., 1:2)");
+      return;
+    }
+    const [from, to] = splitRatio.split(':').map(Number);
 
-    // } catch (error) {
-    //   console.error("Error updating exchange rates:", error);
-    // }
+    if (from === 0 || to === 0) {
+      alert("Invalid ratio values.");
+      return;
+    }
+
+    console.log("NISAN");
+    try {
+      const response = await fetch(`${API_BASE_URI}/stockSplit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ stockId: selectedStockId, from: from, to: to })
+      });
+
+    } catch (error) {
+      console.error("Error updating exchange rates:", error);
+    }
+    setSelectedStockId('');
+    setSplitRatio('');
+    setButtonForSetStockSplit(false);
   };
 
   return (
@@ -507,24 +521,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
               <div style={{ marginTop: '1rem' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!selectedStockId || !splitRatio.match(/^\d+:\d+$/)) {
-                      alert("Please select a stock and enter a valid ratio (e.g., 1:2)");
-                      return;
-                    }
-
-                    const [from, to] = splitRatio.split(':').map(Number);
-
-                    if (from === 0 || to === 0) {
-                      alert("Invalid ratio values.");
-                      return;
-                    }
-
-                    stockSplitCall();
-                    setSelectedStockId('');
-                    setSplitRatio('');
-                    setButtonForSetStockSplit(false);
-                  }}
+                  onClick={stockSplitCall}
                 >
                   Submit Split
                 </button>

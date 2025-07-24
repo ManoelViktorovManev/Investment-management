@@ -88,14 +88,16 @@ class UserStockAllocationController extends BaseController
     }
 
 
-    #[Route('/getAllUsersStocksInPortfolio')]
-    public function getAllUsersStocksInPortfolio()
+    public function stockSplitUpdate(Stock $stock, $from, $to)
     {
-
-        $stock = new UserStocksInPortfolio();
-        $allStocks = $stock->query()->all();
-
-        return $this->json($allStocks);
+        $db = new DbManipulation();
+        $instance = new UserStocksInPortfolio();
+        $array = $instance->query()->where(["stockId", "=", $stock->getId()])->all(true);
+        foreach ($array as $elements) {
+            $elements->setStockQuantity($elements->getStockQuantity() * (float)($to / $from));
+            $db->add($elements);
+        }
+        $db->commit();
     }
 
     public function updateUsersStocksPositionInPortfolio($data, $action, Portfolio $portfolio, Stock $stock, bool $cashTransferAfterStockTransaction = false)

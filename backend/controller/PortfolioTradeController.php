@@ -9,6 +9,7 @@ use App\Model\User;
 use App\Model\Stock;
 use App\Model\StockPortfolioManagement;
 use App\Model\StockTransactions;
+use App\Core\DbManipulation;
 
 class PortfolioTradeController extends BaseController
 {
@@ -105,6 +106,22 @@ class PortfolioTradeController extends BaseController
     {
         $data = json_decode(file_get_contents("php://input"), true);
         $this->handleCashTransaction('SELL', $data);
+    }
+    /*
+        Update from stock split
+    */
+
+    public function stockSplitUpdate(Stock $stock, $from, $to)
+    {
+        $db = new DbManipulation();
+        $instance = new StockPortfolioManagement();
+        $array = $instance->query()->where(["idStock", "=", $stock->getId()])->all(true);
+        foreach ($array as $elements) {
+            $elements->setNumStocks($elements->getNumStocks() * (float)($to / $from));
+            $elements->setPrice($elements->getPrice() / (float)($to / $from));
+            $db->add($elements);
+        }
+        $db->commit();
     }
 
     private function handleCashTransaction(string $action, array $data)
