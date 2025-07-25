@@ -36,10 +36,14 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   // ExchangeRate state
   const [editedExchangeRates, setEditedExchangeRates] = useState([]);
 
+  //Dividend and maintenanceFee fees
   const [isDividend, setIsDividend] = useState(false);
   const [isFees, setIsFees] = useState(false);
-  const [buySellFees, setBuySellFees] = useState(false);
-  const [maintenanceFee, setMaintenanceFee] = useState(false);
+  const [selectedDividendStockId, setSelectedDividendStockId] = useState("");
+  const [selectedCashStockId, setSelectedCashStockId] = useState("");
+  const [cashTransactionAmount, setCashTransactionAmount] = useState("");
+  const [taxPercentage, setTaxPercentage] = useState(0);
+
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
 
@@ -249,6 +253,45 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     setButtonForSetStockSplit(false);
   };
 
+  /*
+    DIVIDEND AND FEES METHODS
+  */
+
+  const [transactionDate, setTransactionDate] = useState(() => {
+    // default to today's date as YYYY-MM-DD
+    return new Date().toISOString().split("T")[0];
+  });
+
+  const handleSubmit = async () => {
+    // Prepare your payload
+    const payload = {
+      portfolioId: selectedPortfolioId,
+      isDividend,
+      isFees,
+      stockId: isDividend ? selectedDividendStockId : null,
+      currencyStockId: selectedCashStockId,
+      amount: parseFloat(cashTransactionAmount),
+      taxPercentage: isDividend ? parseFloat(taxPercentage) : null,
+      transactionDate,
+    };
+
+    try {
+      // Replace with your actual API call
+      const response = await fetch("/api/your-endpoint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit");
+
+      alert("Transaction submitted successfully!");
+      // Optionally reset form here
+    } catch (error) {
+      alert("Error submitting transaction: " + error.message);
+    }
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
@@ -408,9 +451,9 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
             {buttonForSetStockSplit ? 'Hide cash transaction' : 'Set stock split'}
           </button>
 
-          {/* <button type="button" onClick={() => setButtonForSetCashTransaction(prev => !prev)}>
+          <button type="button" onClick={() => setButtonForSetCashTransaction(prev => !prev)}>
             {buttonForSetCashTransaction ? 'Hide cash transaction' : 'Set cash transaction (dividend, fees)'}
-          </button> */}
+          </button>
 
           {buttonForUpdatePrices && (
             <PriceUpdateTable
@@ -533,36 +576,22 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
 
 
 
-
           {buttonForSetCashTransaction && (
             <div className="mt-6 p-4 border rounded shadow bg-white space-y-4">
               <h3 className="text-lg font-semibold">Set Cash Transaction</h3>
-
-              {/* Dropdown to select portfolio */}
-              <div>
-                <label className="block mb-1 font-medium">Select Portfolio</label>
-                <select
-                  value={selectedPortfolioId || ""}
-                  onChange={(e) => setSelectedPortfolioId(e.target.value)}
-                  className="border rounded px-3 py-2 w-full"
-                >
-                  <option value="" disabled>
-                    -- Choose a portfolio --
-                  </option>
-                  {portfolios.map((portfolio) => (
-                    <option key={portfolio.id} value={portfolio.id}>
-                      {portfolio.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
               {/* Dividend Checkbox */}
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={isDividend}
-                  onChange={() => setIsDividend(!isDividend)}
+                  onChange={() => {
+                    setIsDividend(!isDividend);
+                    if (!isDividend) {
+                      setIsFees(false);
+                    }
+                  }}
+                  disabled={isFees}
                 />
                 <span>Is Dividend?</span>
               </label>
@@ -575,35 +604,181 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
                   onChange={() => {
                     setIsFees(!isFees);
                     if (!isFees) {
-                      setBuySellFees(false);
-                      setMaintenanceFee(false);
+                      setIsDividend(false);
                     }
                   }}
+                  disabled={isDividend}
                 />
-                <span>Is Fees?</span>
+                <span>Is Maintenance Fee?</span>
               </label>
 
-              {/* Conditional Sub-options */}
-              {isFees && (
-                <div className="ml-6 space-y-2">
-                  <label className="flex items-center space-x-2">
+              {/* Dividend Section */}
+              {isDividend && (
+                <div className="ml-6 space-y-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Select Stock for Dividend</label>
+                    <select
+                      value={selectedDividendStockId || ""}
+                      onChange={(e) => setSelectedDividendStockId(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                    >
+                      <option value="" disabled>
+                        -- Choose a stock --
+                      </option>
+                      {stocks
+                        .filter(stock => stock.isCash === 0)
+                        .map(stock => (
+                          <option key={stock.id} value={stock.id}>
+                            {stock.name} ({stock.symbol})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Select Currency</label>
+                    <select
+                      value={selectedCashStockId || ""}
+                      onChange={(e) => setSelectedCashStockId(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                    >
+                      <option value="" disabled>
+                        -- Choose currency (cash stock) --
+                      </option>
+                      {stocks
+                        .filter(stock => stock.isCash === 1)
+                        .map(stock => (
+                          <option key={stock.id} value={stock.id}>
+                            {stock.name} ({stock.symbol})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Dividend Amount per Stock</label>
                     <input
-                      type="checkbox"
-                      checked={buySellFees}
-                      onChange={() => setBuySellFees(!buySellFees)}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={cashTransactionAmount}
+                      onChange={(e) => setCashTransactionAmount(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                      placeholder="Enter dividend amount"
                     />
-                    <span>Buy/Sell Fees</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Taxes (%)</label>
                     <input
-                      type="checkbox"
-                      checked={maintenanceFee}
-                      onChange={() => setMaintenanceFee(!maintenanceFee)}
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={taxPercentage}
+                      onChange={(e) => setTaxPercentage(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                      placeholder="Enter tax percentage"
                     />
-                    <span>Maintenance Fee</span>
-                  </label>
+                  </div>
+
+                  {cashTransactionAmount && taxPercentage !== undefined && (
+                    <div className="mt-2 p-2 bg-gray-100 rounded">
+                      <strong>Final Dividend per Stock after Tax:</strong>{" "}
+                      {(
+                        cashTransactionAmount * (1 - taxPercentage / 100)
+                      ).toFixed(2)}{" "}
+                      {selectedCashStockId ? stocks.find(s => s.id === selectedCashStockId)?.symbol : ""}
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Fees Section */}
+              {isFees && (
+                <div className="ml-6 space-y-4">
+                  {/* Portfolio Select */}
+                  <div>
+                    <label className="block mb-1 font-medium">Select Portfolio</label>
+                    <select
+                      value={selectedPortfolioId || ""}
+                      onChange={(e) => setSelectedPortfolioId(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                    >
+                      <option value="" disabled>
+                        -- Choose a portfolio --
+                      </option>
+                      {portfolios.map((portfolio) => (
+                        <option key={portfolio.id} value={portfolio.id}>
+                          {portfolio.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Select Currency</label>
+                    <select
+                      value={selectedCashStockId || ""}
+                      onChange={(e) => setSelectedCashStockId(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                    >
+                      <option value="" disabled>
+                        -- Choose currency (cash stock) --
+                      </option>
+                      {stocks
+                        .filter(stock => stock.isCash === 1)
+                        .map(stock => (
+                          <option key={stock.id} value={stock.id}>
+                            {stock.name} ({stock.symbol})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Maintenance Fee Amount</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={cashTransactionAmount}
+                      onChange={(e) => setCashTransactionAmount(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                      placeholder="Enter fee amount"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Date Picker */}
+              <div className="mt-4">
+                <label className="block mb-1 font-medium">Transaction Date</label>
+                <input
+                  type="date"
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  className="border rounded px-3 py-2 w-full"
+                  max={new Date().toISOString().split("T")[0]} // Optional: Prevent future dates
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="mt-6">
+                <button
+                  onClick={handleSubmit}
+                  disabled={
+                    !selectedCashStockId ||
+                    !cashTransactionAmount ||
+                    (isDividend && (!selectedDividendStockId || taxPercentage === undefined)) ||
+                    (isFees && (!selectedPortfolioId)) ||
+                    !transactionDate
+                  }
+                  className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50"
+                >
+                  Submit
+                </button>
+              </div>
             </div>
           )}
 
