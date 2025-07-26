@@ -48,7 +48,6 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
             alert("Problem trying to get all Stocks");
         } else {
             const data = await response.json();
-            console.log(data);
             setUserEquityDistribution(data);
         }
 
@@ -60,35 +59,37 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
         getEquitySplitBetweenUsers(portfolioId);
     }, []);
 
-    useEffect(() => {
-        if (!stock.quantity) return;
+    // maybe we don`t need this
+    // useEffect(() => {
+    //     if (!stock.quantity) return;
 
-        const totalQuantity = Number(stock.quantity);
+    //     const totalQuantity = Number(stock.quantity);
 
-        if (equalSplit && listOfUsers) {
-            const numUsers = Object.keys(listOfUsers).length;
-            const splitQty = totalQuantity / numUsers;
+    //     if (equalSplit && listOfUsers) {
+    //         const numUsers = Object.keys(listOfUsers).length;
+    //         const splitQty = totalQuantity / numUsers;
 
-            const newAllocations = {};
-            for (const id of Object.keys(listOfUsers)) {
-                newAllocations[id] = parseFloat(splitQty.toFixed(8));
-            }
-            setAllocations(newAllocations);
-        }
+    //         const newAllocations = {};
+    //         for (const id of Object.keys(listOfUsers)) {
+    //             newAllocations[id] = parseFloat(splitQty.toFixed(8));
+    //         }
+    //         setAllocations(newAllocations);
+    //     }
 
-        if (proportionalToWalletBalance && userEquityDistribution.length > 0) {
-            const totalValue = userEquityDistribution.reduce((sum, user) => sum + user.total_value, 0);
-            const newAllocations = {};
-            for (const id of Object.keys(listOfUsers)) {
-                const userId = Number(id);
-                const userEntry = userEquityDistribution.find(entry => entry.userId === userId);
-                const userValue = userEntry ? userEntry.total_value : 0;
-                const portion = totalValue > 0 ? userValue / totalValue : 0;
-                newAllocations[userId] = parseFloat((totalQuantity * portion).toFixed(8));
-            }
-            setAllocations(newAllocations);
-        }
-    }, [stock.price, stock.quantity]);
+    //     if (proportionalToWalletBalance && userEquityDistribution.length > 0) {
+    //         const totalValue = userEquityDistribution.reduce((sum, user) => sum + user.total_value, 0);
+    //         const newAllocations = {};
+    //         for (const id of Object.keys(listOfUsers)) {
+    //             const userId = Number(id);
+    //             const userEntry = userEquityDistribution.find(entry => entry.userId === userId);
+    //             const userValue = userEntry ? userEntry.total_value : 0;
+    //             const portion = totalValue > 0 ? userValue / totalValue : 0;
+    //             newAllocations[userId] = parseFloat((totalQuantity * portion).toFixed(8));
+    //         }
+    //         console.log(newAllocations);
+    //         setAllocations(newAllocations);
+    //     }
+    // }, [stock.price, stock.quantity]);
 
 
     const totalAllocated = Object.values(allocations).reduce((sum, val) => {
@@ -108,6 +109,7 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     return;
                 }
             }
+            console.log(allocations);
             stock.allocations = allocations;
             onSubmit(e);
         }} style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ccc' }}>
@@ -168,7 +170,7 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     Custom Allocation
                 </label>
 
-                {(stock.isStock &&  title.toLowerCase().includes('buy')) && (
+                {(stock.isStock && title.toLowerCase().includes('buy')) && (
                     <div>
                         <div>
                             <label>
@@ -188,8 +190,12 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
 
                                             const newAllocations = {};
                                             for (const id of Object.keys(listOfUsers)) {
-                                                newAllocations[id] = parseFloat(splitQty.toFixed(8));
+                                                const allocation = parseFloat(splitQty.toFixed(8));
+                                                if (allocation > 0) {
+                                                    newAllocations[id] = allocation;
+                                                }
                                             }
+                                            console.log(newAllocations);
                                             setAllocations(newAllocations);
                                         }
                                     }}
@@ -220,9 +226,12 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                                                 const userEntry = userEquityDistribution.find(entry => entry.userId === userId);
                                                 const userValue = userEntry ? userEntry.total_value : 0;
                                                 const portion = totalValue > 0 ? userValue / totalValue : 0;
-                                                newAllocations[userId] = parseFloat((totalQuantity * portion).toFixed(8));
+                                                const allocation = parseFloat((totalQuantity * portion).toFixed(8));
+                                                if (allocation > 0) {
+                                                    newAllocations[userId] = allocation;
+                                                }
                                             }
-
+                                            console.log(newAllocations);
                                             setAllocations(newAllocations);
                                         }
                                     }}
@@ -235,6 +244,33 @@ const FormInput = ({ onSubmit, onChange, stock, title, listOfUsers, portfolioId,
                     </div>
                 )}
             </div>
+            <div>
+                {(stock.isStock) && (
+                    <div>
+                        {/* field for input the value for what commisison it will take */}
+                        <div>
+                            <label>Commisison:</label>
+                            <input
+                                type="number"
+                                name="commission"
+                                step="0.01"
+                                onChange={onChange}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label>Currency for commisison:</label>
+                            <input
+                                type="text"
+                                name="currencyCommission"
+                                onChange={onChange}
+                                required
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+
 
             {(customAllocation || equalSplit || proportionalToWalletBalance) && (
 

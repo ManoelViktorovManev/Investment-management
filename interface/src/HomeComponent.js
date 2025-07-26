@@ -137,7 +137,9 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
         portfolioId: selectedPortfolio,
         date: newStock.transactionDate,
         isStock: newStock.isStock,
-        allocations: newStock.allocations
+        allocations: newStock.allocations,
+        commission: newStock.commission,
+        currencyCommission: newStock.currencyCommission
       })
     });
 
