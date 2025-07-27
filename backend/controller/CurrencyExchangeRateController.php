@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * File: CurrencyExchangeRateController.php
+ * Description: Provides functionality for creating, retrieving, and updating currency exchange rates.
+ * Author: Manoel Manev
+ * Created: 2025-07-08
+ */
+
 namespace App\Controller;
 
 use App\Core\BaseController;
@@ -9,9 +16,32 @@ use App\Model\CurrencyExchangeRate;
 use App\Core\DbManipulation;
 use App\Model\Stock;
 
+/**
+ * Class CurrencyExchangeRateController
+ *
+ * Controller responsible for managing currency exchange rates in the system.
+ * Includes methods for creating new exchange rates, retrieving existing ones,
+ * and updating rates between currency pairs.
+ *
+ * @package App\Controller
+ */
 class CurrencyExchangeRateController extends BaseController
 {
 
+    /**
+     * Endpoint: POST /createNewCurrencyExchangeRate
+     *
+     * Creates a new currency exchange rate record in the database.
+     *
+     * Expected JSON payload:
+     * {
+     *   "rate": float,
+     *   "idFirstCurrency": int,
+     *   "idSecondCurrency": int
+     * }
+     *
+     * @return Response Returns "OK" upon successful creation.
+     */
     #[Route('/createNewCurrencyExchangeRate', methods: ['POST'])]
     public function createNewCurrencyExchangeRate()
     {
@@ -32,6 +62,14 @@ class CurrencyExchangeRateController extends BaseController
         return new Response("OK");
     }
 
+    /**
+     * Endpoint: GET /getExchangeRates
+     *
+     * Retrieves a list of all exchange rates with their associated currency symbols.
+     * Joins the currency exchange rate table with the stock table (for names/symbols).
+     *
+     * @return Response JSON response with an array of exchange rate data.
+     */
     #[Route('/getExchangeRates')]
     public function getExchangeRates()
     {
@@ -45,6 +83,15 @@ class CurrencyExchangeRateController extends BaseController
 
         return $this->json($currencyExchangeRateInstanceArray);
     }
+
+    /**
+     * Creates default exchange rates (value = 1) from a new currency to all other existing cash currencies.
+     *
+     * This method is not routed as an endpoint but may be called internally after adding a new currency.
+     *
+     * @param int $newCurrencyId ID of the newly added currency - Stock
+     * @return Response Returns "OK" after successful insertion of default rates
+     */
     public function createNewCurrencyExchangeRatebyMethod($newCurrencyId)
     {
         $currencys = new Stock();
@@ -62,7 +109,22 @@ class CurrencyExchangeRateController extends BaseController
         return new Response("OK");
     }
 
-
+    /**
+     * Endpoint: POST /updateExchangeRate
+     *
+     * Updates multiple exchange rates in the database.
+     * Avoids updating rows where the rate has not changed.
+     *
+     * Expected JSON payload:
+     * {
+     *   "allocations": {
+     *     "1": 1.05,
+     *     "2": 0.95,
+     *     ...
+     *   }
+     *
+     * @return Response Returns "OK" after updating the exchange rates.
+     */
     #[Route('/updateExchangeRate', methods: ['POST'])]
     public function updateExchangeRate()
     {
@@ -73,23 +135,32 @@ class CurrencyExchangeRateController extends BaseController
         $allocations = $data["allocations"];
 
         $db = new DbManipulation();
+
         foreach ($allocations as $currencyExchangeRateid => $rate) {
-            $stock = new CurrencyExchangeRate();
-            $stock->query()->where(["id", "=", $currencyExchangeRateid])->first();
+            $CERModel = new CurrencyExchangeRate();
+            $CERModel->query()->where(["id", "=", $currencyExchangeRateid])->first();
 
             // if the price is same, you don`t need to update
-            if ($stock->getRate() == $rate) {
+            if ($CERModel->getRate() == $rate) {
                 continue;
             }
-            $stock->setRate($rate);
+            $CERModel->setRate($rate);
 
-            $db->add($stock);
+            $db->add($CERModel);
         }
 
         $db->commit();
 
         return new Response("OK");
     }
+
+    /**
+     * Endpoint: GET /getAllCurrencyExchangeRates
+     *
+     * Returns all exchange rate records directly from the database.
+     *
+     * @return Response JSON response with all currency exchange rate entries.
+     */
     #[Route('/getAllCurrencyExchangeRates')]
     public function getAllCurrencyExchangeRates()
     {

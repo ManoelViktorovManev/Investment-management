@@ -1,27 +1,58 @@
 <?php
 
+/**
+ * File: SettingsController.php
+ * Description: Controller responsible for managing global application settings such as default currency.
+ * Author: Manoel Manev
+ * Created: 2025-07-08
+ */
+
 namespace App\Controller;
 
 use App\Core\BaseController;
 use App\Core\Response;
 use App\Core\Route;
 use App\Core\DbManipulation;
-use App\Core\QueryBuilder;
 use App\Model\Settings;
 
+/**
+ * Class SettingsController
+ *
+ * Handles operations related to application-wide settings such as:
+ * - Default currency
+ * - Aggregated data for initialization (stocks, users, portfolios, exchange rates)
+ *
+ * @package App\Controller
+ */
 class SettingsController extends BaseController
 {
 
 
-    public function createSettings()
+    /**
+     * Internal method for creating a default Settings instance if none exists.
+     *
+     * @return Settings Returns empty $settings instance.
+     */
+    public function createSettings(): Settings
     {
         $settings = new Settings();
         $db = new DbManipulation();
         $db->add($settings);
         $db->commit();
 
-        return new Response("OK");
+        return $settings;
     }
+
+    /**
+     * Endpoint: GET /getSettings
+     *
+     * Retrieves the current global settings. If settings do not exist, they are created with default values.
+     *
+     * @return Response JSON response containing:
+     * {
+     *   "defaultCurrency": int
+     * }
+     */
     #[Route('/getSettings')]
     public function getSettings()
     {
@@ -29,12 +60,24 @@ class SettingsController extends BaseController
         $ifExists = $settings->query()->first();
 
         if ($ifExists == null) {
-            $this->createSettings();
-            $settings->query()->first();
+            $settings = $this->createSettings();
         }
         return $this->json(['defaultCurrency' => $settings->getDefaultCurrency()]);
     }
 
+    /**
+     * Endpoint: POST /updateSettings
+     *
+     * Updates application settings, particularly the default currency ID.
+     * If no settings entry exists, a new one is created.
+     *
+     * Expected JSON payload:
+     * {
+     *   "defaultCurrency": int
+     * }
+     *
+     * @return Response Returns "OK" upon successful update.
+     */
     #[Route('/updateSettings', methods: ['POST'])]
     public function updateSettings()
     {
@@ -45,10 +88,11 @@ class SettingsController extends BaseController
 
         $db = new DbManipulation();
         $settings = new Settings();
+
         $ifExists = $settings->query()->first();
+
         if ($ifExists == null) {
-            $this->createSettings();
-            $settings->query()->first();
+            $settings = $this->createSettings();
         }
 
         $settings->setDefaultCurrency($newDefaultCurrency);
@@ -59,6 +103,26 @@ class SettingsController extends BaseController
         return new Response("OK");
     }
 
+    /**
+     * Endpoint: GET /getAllInfromation
+     *
+     * Retrieves all essential application data for front-end bootstrapping or dashboard display.
+     * Returns information about:
+     * - Stocks
+     * - Portfolios
+     * - Users
+     * - Settings (default currency)
+     * - Currency exchange rates
+     *
+     * @return Response JSON structured as:
+     * {
+     *   "stocks": array,
+     *   "portfolios": array,
+     *   "users": array,
+     *   "settings": { "defaultCurrency": int },
+     *   "exchangeRates": array
+     * }
+     */
     #[Route('/getAllInfromation')]
     public function getAllInfromation()
     {
