@@ -202,4 +202,10 @@ class QueryBuilder
 
         return $results;
     }
+    public function limit(int $numberOfElements, int $pageNumber): QueryBuilder
+    {
+        $calculateOffset = $pageNumber * $numberOfElements;
+        $this->sql .= " LIMIT {$numberOfElements} OFFSET {$calculateOffset}; ";
+        return $this;
+    }
 };
