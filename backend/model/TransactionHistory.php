@@ -4,23 +4,25 @@ namespace App\Model;
 
 use App\Core\BaseModel;
 
-class StockPortfolioManagement extends BaseModel
+class TransactionHistory extends BaseModel
 {
     private ?int $id;
     private int $idPortfolio;
     private int $idStock;
-    private float $numStocks;
+    private int $numStocks;
     private float $price;
-    private float $valueOfStock;
+    private string $date;
+    private string $transaction;
 
-    public function __construct(?int $id = null, int $idPortfolio = 0, int $idStock = 0, float $numStocks = 0, float $price = 0, float $valueOfStock = 0)
+    public function __construct(?int $id = null, int $idPortfolio = 0, int $idStock = 0, int $numStocks = 0, float $price = 0, string $date = "", string $transaction = "")
     {
         $this->id = $id;
         $this->idPortfolio = $idPortfolio;
         $this->idStock = $idStock;
         $this->numStocks = $numStocks;
         $this->price = $price;
-        $this->valueOfStock = $valueOfStock;
+        $this->date = $date;
+        $this->transaction = $transaction;
     }
 
     public function getId(): ?int
@@ -53,12 +55,12 @@ class StockPortfolioManagement extends BaseModel
         $this->idStock = $idStock;
     }
 
-    public function getNumStocks(): float
+    public function getNumStocks(): int
     {
         return $this->numStocks;
     }
 
-    public function setNumStocks(float $numStocks): void
+    public function setNumStocks(int $numStocks): void
     {
         $this->numStocks = $numStocks;
     }
@@ -73,13 +75,23 @@ class StockPortfolioManagement extends BaseModel
         $this->price = $price;
     }
 
-    public function getValueOfStock(): float
+    public function getDate(): string
     {
-        return $this->valueOfStock;
+        return $this->date;
     }
 
-    public function setValueOfStock(float $valueOfStock): void
+    public function setDate(string $date): void
     {
-        $this->valueOfStock = $valueOfStock;
+        $this->date = $date;
+    }
+
+    public function getTransaction(): string
+    {
+        return $this->transaction;
+    }
+
+    public function setTransaction(string $transaction): void
+    {
+        $this->transaction = $transaction;
     }
 }

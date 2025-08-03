@@ -4,27 +4,23 @@ namespace App\Model;
 
 use App\Core\BaseModel;
 
-class IndividualUserTransactions extends BaseModel
+class PortfolioStock extends BaseModel
 {
     private ?int $id;
-    private int $userId;
     private int $idPortfolio;
     private int $idStock;
-    private int $numStocks;
+    private float $numStocks;
     private float $price;
-    private string $date;
-    private string $transaction;
+    private float $valueOfStock;
 
-    public function __construct(?int $id = null, int $userId = 0, int $idPortfolio = 0, int $idStock = 0, int $numStocks = 0, float $price = 0, string $date = "", string $transaction = "")
+    public function __construct(?int $id = null, int $idPortfolio = 0, int $idStock = 0, float $numStocks = 0, float $price = 0, float $valueOfStock = 0)
     {
         $this->id = $id;
-        $this->userId = $userId;
         $this->idPortfolio = $idPortfolio;
         $this->idStock = $idStock;
         $this->numStocks = $numStocks;
         $this->price = $price;
-        $this->date = $date;
-        $this->transaction = $transaction;
+        $this->valueOfStock = $valueOfStock;
     }
 
     public function getId(): ?int
@@ -35,16 +31,6 @@ class IndividualUserTransactions extends BaseModel
     public function setId(?int $id): void
     {
         $this->id = $id;
-    }
-
-    public function getUserId(): int
-    {
-        return $this->userId;
-    }
-
-    public function setUserId(int $userId): void
-    {
-        $this->userId = $userId;
     }
 
     public function getIdPortfolio(): int
@@ -67,12 +53,12 @@ class IndividualUserTransactions extends BaseModel
         $this->idStock = $idStock;
     }
 
-    public function getNumStocks(): int
+    public function getNumStocks(): float
     {
         return $this->numStocks;
     }
 
-    public function setNumStocks(int $numStocks): void
+    public function setNumStocks(float $numStocks): void
     {
         $this->numStocks = $numStocks;
     }
@@ -87,23 +73,13 @@ class IndividualUserTransactions extends BaseModel
         $this->price = $price;
     }
 
-    public function getDate(): string
+    public function getValueOfStock(): float
     {
-        return $this->date;
+        return $this->valueOfStock;
     }
 
-    public function setDate(string $date): void
+    public function setValueOfStock(float $valueOfStock): void
     {
-        $this->date = $date;
-    }
-
-    public function getTransaction(): string
-    {
-        return $this->transaction;
-    }
-
-    public function setTransaction(string $transaction): void
-    {
-        $this->transaction = $transaction;
+        $this->valueOfStock = $valueOfStock;
     }
 }

@@ -4,7 +4,7 @@ namespace App\Model;
 
 use App\Core\BaseModel;
 
-class UserStocksInPortfolio extends BaseModel
+class UserPortfolioStock extends BaseModel
 {
     private ?int $id;
     private int $stockId;

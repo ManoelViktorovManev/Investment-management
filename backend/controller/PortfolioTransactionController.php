@@ -5,15 +5,16 @@ namespace App\Controller;
 use App\Core\BaseController;
 use App\Core\Route;
 use App\Model\Portfolio;
-use App\Model\User;
 use App\Model\Stock;
-use App\Model\StockPortfolioManagement;
-use App\Model\StockTransactions;
+// use App\Model\StockPortfolioManagement;
+use App\Model\PortfolioStock;
 use App\Core\DbManipulation;
+use App\Service\StockTradeService;
 
-class PortfolioTradeController extends BaseController
+
+class PortfolioTransactionController extends BaseController
 {
-
+    // old name: PortfolioTradeController
     /*
 
         STOCK MANIPULATION
@@ -23,95 +24,82 @@ class PortfolioTradeController extends BaseController
     public function buyStockInPortfolio()
     {
         $data = json_decode(file_get_contents("php://input"), true);
-        $this->handleStockTransaction('BUY', $data);
+        $stockTradeService = new StockTradeService();
+        $stockTradeService->handleStockTrade('BUY', $data);
+
+        // $this->handleStockTransaction('BUY', $data);
     }
 
     #[Route('/sellStockInPortfolio', methods: ["POST"])]
     public function sellStockInPortfolio()
     {
         $data = json_decode(file_get_contents("php://input"), true);
-        $this->handleStockTransaction('SELL', $data);
+        $stockTradeService = new StockTradeService();
+        $stockTradeService->handleStockTrade('BUY', $data);
+
+        // $this->handleStockTransaction('SELL', $data);
     }
 
 
-    private function handleStockTransaction(string $action, array $data)
-    {
-        $stockName     = $data["name"];
-        $stockSymbol   = $data["symbol"];
-        $stockPrice    = $data["price"];
-        $stockCurrency = $data["currency"];
-        $portfolioId   = $data["portfolioId"];
-        $stockQuantity = $data["quantity"];
-        $transactionDate = $data['date'];
+    // private function handleStockTransaction(string $action, array $data)
+    // {
+    //     $stockName     = $data["name"];
+    //     $stockSymbol   = $data["symbol"];
+    //     $stockPrice    = $data["price"];
+    //     $stockCurrency = $data["currency"];
+    //     $portfolioId   = $data["portfolioId"];
+    //     $stockQuantity = $data["quantity"];
+    //     $transactionDate = $data['date'];
 
-        // Fetch core instances
-        $portfolio = $this->getPortfolioInstance($portfolioId);
+    //     // Fetch core instances
+    //     $portfolio = $this->getPortfolioInstance($portfolioId);
 
-        // Cash stock instance
-        $cash = $this->getStockInstance("$stockCurrency cash", $stockCurrency, $stockCurrency, 1, true);
-        $spmInstanceCash = $this->getStockPortfolioManagementInstance($cash, $portfolio);
+    //     // Cash stock instance
+    //     $cash = $this->getStockInstance("$stockCurrency cash", $stockCurrency, $stockCurrency, 1, true);
+    //     $spmInstanceCash = $this->getStockPortfolioManagementInstance($cash, $portfolio);
 
-        // Target stock instance
-        $stock = $this->getStockInstance($stockName, $stockSymbol, $stockCurrency, $stockPrice);
-        $spmInstanceStock = $this->getStockPortfolioManagementInstance($stock, $portfolio);
+    //     // Target stock instance
+    //     $stock = $this->getStockInstance($stockName, $stockSymbol, $stockCurrency, $stockPrice);
+    //     $spmInstanceStock = $this->getStockPortfolioManagementInstance($stock, $portfolio);
 
-        // handle connection between STOCK, CASH and Portfolio
-        $stockPortfolio = new StockTradeLogic();
-        $stockPortfolio->handleStockTransaction($data, $action, $portfolio, $stock, $spmInstanceStock, $cash, $spmInstanceCash);
+    //     // handle connection between STOCK, CASH and Portfolio
+    //     $stockPortfolio = new StockTradeLogic();
+    //     $stockPortfolio->handleStockTransaction($data, $action, $portfolio, $stock, $spmInstanceStock, $cash, $spmInstanceCash);
 
-        // handle Transaction History
-        $transactionHistory = new TransactionHistoryController();
-        // stock transaction history
-        $transactionHistory->createNewStockTransactionsInstance(
-            $stock,
-            $portfolio,
-            $stockQuantity,
-            $stockPrice,
-            $transactionDate,
-            $action
-        );
+    //     // handle Transaction History
+    //     $transactionHistory = new TransactionHistoryController();
 
-        $reverseAction = $action === "BUY" ? "SELL" : "BUY";
-        // cash transaction history
-        $transactionHistory->createNewStockTransactionsInstance(
-            $cash,
-            $portfolio,
-            $stockQuantity * $stockPrice,
-            1,
-            $transactionDate,
-            $reverseAction
-        );
+    //     // handle stock transaction
+    //     $transactionHistory->createNewTransactionHistory(
+    //         $data['allocations'],
+    //         $stock,
+    //         $portfolio,
+    //         $stockQuantity,
+    //         $stockPrice,
+    //         $transactionDate,
+    //         $action
+    //     );
 
-        //handle individual transaction history for stock
-        $transactionHistory->createNewIndividualUserTransactions(
-            $data["allocations"],
-            $stock,
-            $portfolio,
-            $stockPrice,
-            $transactionDate,
-            $action
-        );
+    //     $reverseAction = $action === "BUY" ? "SELL" : "BUY";
 
-        //handle individual transaction history for cash
-        /*
-            allocations => {1:2.3, 3:2.1}
-        */
-        $transactionHistory->createNewIndividualUserTransactions(
-            $data["allocations"],
-            $cash,
-            $portfolio,
-            1,
-            $transactionDate,
-            $reverseAction
-        );
+    //     // handle cash transaction
+    //     $transactionHistory->createNewTransactionHistory(
+    //         $data['allocations'],
+    //         $cash,
+    //         $portfolio,
+    //         $stockQuantity,
+    //         $stockPrice,
+    //         $transactionDate,
+    //         $reverseAction,
+    //         true
+    //     );
 
-
-        // handle Stock, User and Portfolio interaction
-        $usac = new UserStockAllocationController();
-        $usac->updateUsersStocksPositionInPortfolio($data, $action, $portfolio, $stock);
-        //remove the cash
-        $usac->updateUsersStocksPositionInPortfolio($data, $reverseAction, $portfolio, $cash, true);
-    }
+    //     // handle Stock, User and Portfolio interaction
+    //     $usac = new UserStockAllocationController();
+    //     $usac->updateUsersStocksPositionInPortfolio($data, $action, $portfolio, $stock);
+    //     //remove the cash
+    //     $usac->updateUsersStocksPositionInPortfolio($data, $reverseAction, $portfolio, $cash, true);
+    // }
 
     /*
 
@@ -155,21 +143,11 @@ class PortfolioTradeController extends BaseController
 
         // handle Transaction History
         $transactionHistory = new TransactionHistoryController();
-        // cash transaction history
-        $transactionHistory->createNewStockTransactionsInstance(
-            $cash,
-            $portfolio,
-            $stockQuantity,
-            1,
-            $transactionDate,
-            $action
-        );
-
-        //handle individual transaction history
-        $transactionHistory->createNewIndividualUserTransactions(
+        $transactionHistory->createNewTransactionHistory(
             $data['allocations'],
             $cash,
             $portfolio,
+            $stockQuantity,
             1,
             $transactionDate,
             $action
@@ -181,8 +159,6 @@ class PortfolioTradeController extends BaseController
     }
 
 
-
-
     /*
         Update from stock split
     */
@@ -190,7 +166,7 @@ class PortfolioTradeController extends BaseController
     public function stockSplitUpdate(Stock $stock, $from, $to)
     {
         $db = new DbManipulation();
-        $instance = new StockPortfolioManagement();
+        $instance = new PortfolioStock();
         $array = $instance->query()->where(["idStock", "=", $stock->getId()])->all(true);
         foreach ($array as $elements) {
             $elements->setNumStocks($elements->getNumStocks() * (float)($to / $from));
@@ -214,7 +190,7 @@ class PortfolioTradeController extends BaseController
         //creating a new stock
         if (!$existingStock) {
             $newStock = new StockController();
-            $newStock->createNewStock($stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
+            $newStock->createNewStockByMethod($stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
             $stock->query()->where(['symbol', '=', $stockSymbol])->first();
 
             // create a new currency exchange rate instance
@@ -226,9 +202,9 @@ class PortfolioTradeController extends BaseController
         return $stock;
     }
 
-    private function getStockPortfolioManagementInstance(Stock $stockInstance, Portfolio $portfolioInstance): ?StockPortfolioManagement
+    private function getStockPortfolioManagementInstance(Stock $stockInstance, Portfolio $portfolioInstance): ?PortfolioStock
     {
-        $spm = new StockPortfolioManagement();
+        $spm = new PortfolioStock();
         $existing = $spm->query()
             ->where(["idPortfolio", "=", $portfolioInstance->getId()])
             ->and()

@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Core\BaseController;
 use App\Core\Response;
 use App\Core\Route;
-use App\Model\UserStocksInPortfolio;
+use App\Model\UserPortfolioStock;
 use App\Model\Stock;
 use App\Core\DbManipulation;
 use App\Model\Portfolio;
@@ -16,7 +16,7 @@ class UserStockAllocationController extends BaseController
     #[Route('/getUsersFreeCashInPortfolio/{PortfolioId}')]
     public function getUsersFreeCashInPortfolio($PortfolioId)
     {
-        $userCashs = (new UserStocksInPortfolio())->query()
+        $userCashs = (new UserPortfolioStock())->query()
             ->select("userId,stockId, stockQuantity")
             ->join("inner", "stock s", "s.id=stockId")
             ->where(["portfolioId", "=", $PortfolioId])
@@ -38,7 +38,7 @@ class UserStockAllocationController extends BaseController
                 usp.userId,
                 u.name AS userName,
                 SUM(CAST(usp.stockQuantity AS FLOAT) * CAST(s.price AS FLOAT)) AS total_value
-            FROM userstocksinportfolio usp
+            FROM userportfoliostock usp
             JOIN stock s ON usp.stockId = s.id
             JOIN user u ON usp.userId = u.id
             WHERE usp.portfolioId = :portfolioId
@@ -56,7 +56,7 @@ class UserStockAllocationController extends BaseController
         ORDER BY uv.userId
         ";
 
-        $usersEquity = (new UserStocksInPortfolio())->query()->raw($sql, [':portfolioId' => $PortfolioId]);
+        $usersEquity = (new UserPortfolioStock())->query()->raw($sql, [':portfolioId' => $PortfolioId]);
         return $this->json($usersEquity);
     }
 
@@ -64,7 +64,7 @@ class UserStockAllocationController extends BaseController
     #[Route('/getAllOwnersOfStock/{StockId}')]
     public function getAllOwnersOfStock($StockId)
     {
-        $userCashs = (new UserStocksInPortfolio())->query()
+        $userCashs = (new UserPortfolioStock())->query()
             ->select("userId, stockQuantity")
             ->where(["stockId", "=", $StockId])
             ->all();
@@ -75,7 +75,7 @@ class UserStockAllocationController extends BaseController
     #[Route('/getAllStocksOneUserOwns/{UserId?}')]
     public function getAllStocksOneUserOwns($UserId = null)
     {
-        $query = (new UserStocksInPortfolio())->query();
+        $query = (new UserPortfolioStock())->query();
 
         $UserId == null ?
             $query->select("stockId, userId, stockQuantity") :
@@ -91,7 +91,7 @@ class UserStockAllocationController extends BaseController
     public function stockSplitUpdate(Stock $stock, $from, $to)
     {
         $db = new DbManipulation();
-        $instance = new UserStocksInPortfolio();
+        $instance = new UserPortfolioStock();
         $array = $instance->query()->where(["stockId", "=", $stock->getId()])->all(true);
         foreach ($array as $elements) {
             $elements->setStockQuantity($elements->getStockQuantity() * (float)($to / $from));
@@ -107,7 +107,7 @@ class UserStockAllocationController extends BaseController
 
         $db = new DbManipulation();
         foreach ($allocations as $userId => $quantity) {
-            $instance = new UserStocksInPortfolio();
+            $instance = new UserPortfolioStock();
             $instanceOfUserStocks = $instance->query()
                 ->where(["portfolioId", "=", $portfolio->getId()])
                 ->and()

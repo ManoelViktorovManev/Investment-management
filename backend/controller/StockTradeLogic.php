@@ -7,11 +7,10 @@ use App\Core\Response;
 use App\Core\Route;
 
 use App\Core\DbManipulation;
-use App\Controller\StockController;
-use App\Model\StockPortfolioManagement;
+use App\Model\PortfolioStock;
 use App\Model\Stock;
 use App\Model\Portfolio;
-use App\Model\StockTransactions;
+use App\Model\TransactionHistory;
 
 
 class StockTradeLogic extends BaseController
@@ -19,7 +18,7 @@ class StockTradeLogic extends BaseController
     #[Route('/getAllStockToPortfolio/{PortfolioID?}')]
     public function getAllStockToPortfolio($PortfolioID)
     {
-        $portfolio = new StockPortfolioManagement();
+        $portfolio = new PortfolioStock();
         if ($PortfolioID == null) {
             $array = $portfolio->query()->all();
             return $this->json($array);
@@ -32,11 +31,11 @@ class StockTradeLogic extends BaseController
     #[Route('/deleteStockPorfolio/{id}')]
     public function deleteStockPorfolio($id)
     {
-        $stockInPortfolio = new StockPortfolioManagement();
+        $stockInPortfolio = new PortfolioStock();
         $stockInPortfolio->query()->where(["id", "=", $id])->first();
 
 
-        $stockTransactions = new StockTransactions();
+        $stockTransactions = new TransactionHistory();
         $array = $stockTransactions->query()->where(["idPortfolio", "=", $stockInPortfolio->getIdPortfolio()])->and()->where(["idStock", "=", $stockInPortfolio->getIdStock()])->all(true);
 
         $db = new DbManipulation();
@@ -54,7 +53,7 @@ class StockTradeLogic extends BaseController
         Stock Transaction logic handle
 
     */
-    public function handleStockTransaction($data, string $action, Portfolio $portfolio, Stock $stock, ?StockPortfolioManagement $spmStock, Stock $cash, ?StockPortfolioManagement $spmCash)
+    public function handleStockTransaction($data, string $action, Portfolio $portfolio, Stock $stock, ?PortfolioStock $spmStock, Stock $cash, ?PortfolioStock $spmCash)
     {
 
         $stockPrice = $data["price"];
@@ -104,7 +103,7 @@ class StockTradeLogic extends BaseController
         Cash Transaction logic handle
 
     */
-    public function handleCashTransaction($data, string $action, Portfolio $portfolio, Stock $cash, ?StockPortfolioManagement $spmCash)
+    public function handleCashTransaction($data, string $action, Portfolio $portfolio, Stock $cash, ?PortfolioStock $spmCash)
     {
         $stockQuantity = $data["quantity"];
 
@@ -123,7 +122,7 @@ class StockTradeLogic extends BaseController
         $db->commit();
     }
 
-    private function getStockPortfolioManagementInstance(?StockPortfolioManagement $spm, Stock $stockInstance, Portfolio $portfolioInstance, float $stockQuantity, float $stockPrice, string $transactionType): ?StockPortfolioManagement
+    private function getStockPortfolioManagementInstance(?PortfolioStock $spm, Stock $stockInstance, Portfolio $portfolioInstance, float $stockQuantity, float $stockPrice, string $transactionType): ?PortfolioStock
     {
         $isBuy = strtolower($transactionType) === 'buy';
 
@@ -154,7 +153,7 @@ class StockTradeLogic extends BaseController
         }
         // if there is NO StockPortfolioManagement instance
         else {
-            $spm = new StockPortfolioManagement();
+            $spm = new PortfolioStock();
             // Set common identifiers
             $spm->setIdPortfolio($portfolioInstance->getId());
             $spm->setIdStock($stockInstance->getId());
@@ -173,7 +172,7 @@ class StockTradeLogic extends BaseController
 
     private function getCurrentAmountOfMoneyInPortfolio(Stock $stockInstance, Portfolio $portfolioInstance): float
     {
-        $spm = new StockPortfolioManagement();
+        $spm = new PortfolioStock();
 
         $existing = $spm->query()
             ->where(["idPortfolio", "=", $portfolioInstance->getId()])
