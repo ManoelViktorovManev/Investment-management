@@ -82,6 +82,30 @@ class PortfolioTradeController extends BaseController
             $reverseAction
         );
 
+        //handle individual transaction history for stock
+        $transactionHistory->createNewIndividualUserTransactions(
+            $data["allocations"],
+            $stock,
+            $portfolio,
+            $stockPrice,
+            $transactionDate,
+            $action
+        );
+
+        //handle individual transaction history for cash
+        /*
+            allocations => {1:2.3, 3:2.1}
+        */
+        $transactionHistory->createNewIndividualUserTransactions(
+            $data["allocations"],
+            $cash,
+            $portfolio,
+            1,
+            $transactionDate,
+            $reverseAction
+        );
+
+
         // handle Stock, User and Portfolio interaction
         $usac = new UserStockAllocationController();
         $usac->updateUsersStocksPositionInPortfolio($data, $action, $portfolio, $stock);
@@ -98,31 +122,16 @@ class PortfolioTradeController extends BaseController
     public function addCashInPortfolio()
     {
         $data = json_decode(file_get_contents("php://input"), true);
-        $this->handleCashTransaction('BUY', $data);
+        $this->handleCashTransaction('DEPOSIT', $data);
     }
 
     #[Route('/removeCashFromPortfolio', methods: ["POST"])]
     public function removeCashFromPortfolio()
     {
         $data = json_decode(file_get_contents("php://input"), true);
-        $this->handleCashTransaction('SELL', $data);
+        $this->handleCashTransaction('WITHDRAWAL', $data);
     }
-    /*
-        Update from stock split
-    */
 
-    public function stockSplitUpdate(Stock $stock, $from, $to)
-    {
-        $db = new DbManipulation();
-        $instance = new StockPortfolioManagement();
-        $array = $instance->query()->where(["idStock", "=", $stock->getId()])->all(true);
-        foreach ($array as $elements) {
-            $elements->setNumStocks($elements->getNumStocks() * (float)($to / $from));
-            $elements->setPrice($elements->getPrice() / (float)($to / $from));
-            $db->add($elements);
-        }
-        $db->commit();
-    }
 
     private function handleCashTransaction(string $action, array $data)
     {
@@ -156,10 +165,41 @@ class PortfolioTradeController extends BaseController
             $action
         );
 
+        //handle individual transaction history
+        $transactionHistory->createNewIndividualUserTransactions(
+            $data['allocations'],
+            $cash,
+            $portfolio,
+            1,
+            $transactionDate,
+            $action
+        );
+
         // update the amount of cash individualy to the users
         $usac = new UserStockAllocationController();
         $usac->updateUsersStocksPositionInPortfolio($data, $action, $portfolio, $cash);
     }
+
+
+
+
+    /*
+        Update from stock split
+    */
+
+    public function stockSplitUpdate(Stock $stock, $from, $to)
+    {
+        $db = new DbManipulation();
+        $instance = new StockPortfolioManagement();
+        $array = $instance->query()->where(["idStock", "=", $stock->getId()])->all(true);
+        foreach ($array as $elements) {
+            $elements->setNumStocks($elements->getNumStocks() * (float)($to / $from));
+            $elements->setPrice($elements->getPrice() / (float)($to / $from));
+            $db->add($elements);
+        }
+        $db->commit();
+    }
+
 
     private function getPortfolioInstance($portfolioId): Portfolio
     {
