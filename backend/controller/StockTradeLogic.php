@@ -63,6 +63,7 @@ class StockTradeLogic extends BaseController
 
         // Check for sufficient cash only on BUY
         if ($action === "BUY") {
+            // this is shit!!!
             $availableCash = $this->getCurrentAmountOfMoneyInPortfolio($cash, $portfolio);
             if ($availableCash < $totalPrice) {
                 return new Response("Not enough Cash", 404);
@@ -151,20 +152,20 @@ class StockTradeLogic extends BaseController
                 $spm->setValueOfStock($newVal);
             }
         }
-        // if there is NO StockPortfolioManagement instance
-        else {
-            $spm = new PortfolioStock();
-            // Set common identifiers
-            $spm->setIdPortfolio($portfolioInstance->getId());
-            $spm->setIdStock($stockInstance->getId());
+        // // WE DONT NEED THIS ANYMORE
+        // else {
+        //     $spm = new PortfolioStock();
+        //     // Set common identifiers
+        //     $spm->setIdPortfolio($portfolioInstance->getId());
+        //     $spm->setIdStock($stockInstance->getId());
 
-            $signedQty = $isBuy ? $stockQuantity : -$stockQuantity;
-            $signedValue = $isBuy ? $stockPrice * $stockQuantity : -$stockPrice * $stockQuantity;
+        //     $signedQty = $isBuy ? $stockQuantity : -$stockQuantity;
+        //     $signedValue = $isBuy ? $stockPrice * $stockQuantity : -$stockPrice * $stockQuantity;
 
-            $spm->setNumStocks($signedQty);
-            $spm->setPrice($stockPrice);
-            $spm->setValueOfStock($signedValue);
-        }
+        //     $spm->setNumStocks($signedQty);
+        //     $spm->setPrice($stockPrice);
+        //     $spm->setValueOfStock($signedValue);
+        // }
 
         return $spm;
     }
