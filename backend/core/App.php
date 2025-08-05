@@ -11,13 +11,12 @@ class App
 {
     private Router $router;
     private DataBaseComponent $dbComponent;
-    private EntityManipulation $entity;
 
     public function __construct()
     {
         try {
             $this->dbComponent = DataBaseComponent::getInstance();
-            $this->entity = EntityManipulation::getInstance($this->dbComponent);
+            EntityManipulation::getInstance($this->dbComponent);
             $this->router = new Router();
             $this->checkForExistingResponse();
         } catch (Exception $e) {
@@ -100,18 +99,19 @@ class App
 
             // We check if it returns Response object always
             if ($response instanceof Response) {
-                // $this->log->setMessage('info', "Successfully executet $controller_name::$functionToBeCalled() for route $path");
                 $this->executeResponse($response);
             } else {
                 // HANDLE IF RESPONSE IS NOT RESPONSE OBJECT
-                // $this->log->setMessage('error', "Class method $controller_name::$functionToBeCalled() for route $path is not returning Response object");
-                throw new \Exception("Class method $controller_name::$functionToBeCalled() for route $path is not returning Response object");
+
+                error_log("\033[31mClass method $controller_name::$functionToBeCalled() for route $path is not returning Response object\033[0m");
+                $this->executeResponse(new Response("Class method $controller_name::$functionToBeCalled() for route $path is not returning Response object", 404));
             }
             return;
         }
         // IF THERE IS NO SUCH FILE FINDED
-        // $this->log->setMessage('error', "Error 404: Not existing route $userRequestUrl");
-        throw new \Exception("Error 404: Not existing route $userRequestUrl");
+
+        error_log("\033[31mNot existing route $userRequestUrl\033[0m");
+        $this->executeResponse(new Response("Error 404: Not existing route $userRequestUrl", 404));
     }
 
 
