@@ -88,18 +88,6 @@ class UserStockAllocationController extends BaseController
     }
 
 
-    public function stockSplitUpdate(Stock $stock, $from, $to)
-    {
-        $db = new DbManipulation();
-        $instance = new UserPortfolioStock();
-        $array = $instance->query()->where(["stockId", "=", $stock->getId()])->all(true);
-        foreach ($array as $elements) {
-            $elements->setStockQuantity($elements->getStockQuantity() * (float)($to / $from));
-            $db->add($elements);
-        }
-        $db->commit();
-    }
-
     public function updateUsersStocksPositionInPortfolio($data, $action, Portfolio $portfolio, Stock $stock, bool $cashTransferAfterStockTransaction = false)
     {
         // it is form like this {"1":2,"3":8}, where first element is id of User and secound element is amount to add for his account

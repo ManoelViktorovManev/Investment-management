@@ -46,7 +46,6 @@ class StockTradeService
     public function handleStockTradeLogic()
     {
         // setting the same parameters
-
         $stockCurrency = $this->data["currency"];
         $portfolioId   = $this->data["portfolioId"];
         $stockQuantity = $this->data["quantity"];
@@ -58,8 +57,6 @@ class StockTradeService
         // Cash stock instance
         $this->cash = $this->getStockModelInstance("$stockCurrency cash", $stockCurrency, $stockCurrency, 1, true);
         $this->PSModelCash = $this->getPortfolioStockModelInstance($this->cash, $this->portfolio);
-
-
 
         // if it is only cash transaction => withdraw or depositing money
         if ($this->isCashOnly) {
@@ -81,7 +78,6 @@ class StockTradeService
                 $this->action
             );
 
-
             // handle Stock, User and Portfolio interaction
             $usac = new UserStockAllocationController();
             $usac->updateUsersStocksPositionInPortfolio($this->data, $this->action, $this->portfolio, $this->cash);
@@ -90,11 +86,9 @@ class StockTradeService
             $stockSymbol   = $this->data["symbol"];
             $stockPrice    = $this->data["price"];
 
-
             // Target stock instance
             $this->stock = $this->getStockModelInstance($stockName, $stockSymbol, $stockCurrency, $stockPrice);
             $this->PSModelStock = $this->getPortfolioStockModelInstance($this->stock, $this->portfolio);
-
 
             // handle connection between STOCK, CASH and Portfolio
             $this->handleStockTransaction();
@@ -186,8 +180,6 @@ class StockTradeService
         return $spm;
     }
 
-
-
     private function getCurrentAmountOfMoneyInPortfolio(PortfolioStock $PSInstance): float
     {
         return $PSInstance->getValueOfStock();
@@ -253,7 +245,8 @@ class StockTradeService
 
     private function updatePortfolioStockBalance(PortfolioStock $PSInstance, float $stockQuantity, float $stockPrice, string $transactionType)
     {
-        $isBuy = strtolower($transactionType) === 'buy';
+        // we don`t handle deposit and withdraw
+        $isBuy = strtolower($transactionType) === 'buy' || strtolower($transactionType) === "deposit";
 
         $currentQty = $PSInstance->getNumStocks();
         $currentVal = $PSInstance->getValueOfStock();

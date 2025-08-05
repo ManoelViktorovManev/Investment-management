@@ -14,6 +14,7 @@ use App\Core\Response;
 use App\Core\Route;
 use App\Core\DbManipulation;
 use App\Model\Stock;
+use App\Service\StockSplitService;
 
 /**
  * Class StockController
@@ -185,11 +186,8 @@ class StockController extends BaseController
         $stock->query()->where(["id", "=", $stockId])->first();
         $stock->setPrice($stock->getPrice() / ($toStock / $fromStock));
 
-        $USAC = new UserStockAllocationController();
-        $USAC->stockSplitUpdate($stock, $fromStock, $toStock);
-
-        $PTC = new PortfolioTradeController();
-        $PTC->stockSplitUpdate($stock, $fromStock, $toStock);
+        $asdf = new StockSplitService($stock, $fromStock, $toStock);
+        $asdf->handleStockSplit();
 
         $db = new DbManipulation();
         $db->add($stock);

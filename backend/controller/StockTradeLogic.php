@@ -8,8 +8,6 @@ use App\Core\Route;
 
 use App\Core\DbManipulation;
 use App\Model\PortfolioStock;
-use App\Model\Stock;
-use App\Model\Portfolio;
 use App\Model\TransactionHistory;
 
 
@@ -48,142 +46,155 @@ class StockTradeLogic extends BaseController
     }
 
 
+
+
+
+
+
+
+
+
+
+    /*
+    DONT NEED THIS
+    */
     /*
 
         Stock Transaction logic handle
 
     */
-    public function handleStockTransaction($data, string $action, Portfolio $portfolio, Stock $stock, ?PortfolioStock $spmStock, Stock $cash, ?PortfolioStock $spmCash)
-    {
+    // public function handleStockTransaction($data, string $action, Portfolio $portfolio, Stock $stock, ?PortfolioStock $spmStock, Stock $cash, ?PortfolioStock $spmCash)
+    // {
 
-        $stockPrice = $data["price"];
-        $stockQuantity = $data["quantity"];
+    //     $stockPrice = $data["price"];
+    //     $stockQuantity = $data["quantity"];
 
-        $totalPrice = $stockPrice * $stockQuantity;
+    //     $totalPrice = $stockPrice * $stockQuantity;
 
-        // Check for sufficient cash only on BUY
-        if ($action === "BUY") {
-            // this is shit!!!
-            $availableCash = $this->getCurrentAmountOfMoneyInPortfolio($cash, $portfolio);
-            if ($availableCash < $totalPrice) {
-                return new Response("Not enough Cash", 404);
-            }
-        }
+    //     // Check for sufficient cash only on BUY
+    //     if ($action === "BUY") {
+    //         // this is shit!!!
+    //         $availableCash = $this->getCurrentAmountOfMoneyInPortfolio($cash, $portfolio);
+    //         if ($availableCash < $totalPrice) {
+    //             return new Response("Not enough Cash", 404);
+    //         }
+    //     }
 
-        //getting StockPortfolioManagement
-        $stockPortfolioManagementInstance = $this->getStockPortfolioManagementInstance(
-            $spmStock,
-            $stock,
-            $portfolio,
-            $stockQuantity,
-            $stockPrice,
-            $action
-        );
+    //     //getting StockPortfolioManagement
+    //     $stockPortfolioManagementInstance = $this->getStockPortfolioManagementInstance(
+    //         $spmStock,
+    //         $stock,
+    //         $portfolio,
+    //         $stockQuantity,
+    //         $stockPrice,
+    //         $action
+    //     );
 
-        //updating The Cash in The portfolio, which is reverse action
-        $reverseAction = $action === "BUY" ? "SELL" : "BUY";
-        $stockPortfolioManagementInstanceForCash = $this->getStockPortfolioManagementInstance(
-            $spmCash,
-            $cash,
-            $portfolio,
-            $stockPrice * $stockQuantity,
-            1,
-            $reverseAction
-        );
+    //     //updating The Cash in The portfolio, which is reverse action
+    //     $reverseAction = $action === "BUY" ? "SELL" : "BUY";
+    //     $stockPortfolioManagementInstanceForCash = $this->getStockPortfolioManagementInstance(
+    //         $spmCash,
+    //         $cash,
+    //         $portfolio,
+    //         $stockPrice * $stockQuantity,
+    //         1,
+    //         $reverseAction
+    //     );
 
-        $db = new DbManipulation();
-        $db->add($stockPortfolioManagementInstance);
-        $db->add($stockPortfolioManagementInstanceForCash);
-        $db->commit();
-    }
-
-
-
-    /*
-
-        Cash Transaction logic handle
-
-    */
-    public function handleCashTransaction($data, string $action, Portfolio $portfolio, Stock $cash, ?PortfolioStock $spmCash)
-    {
-        $stockQuantity = $data["quantity"];
-
-        //getting StockPortfolioManagement
-        $stockPortfolioManagementInstance = $this->getStockPortfolioManagementInstance(
-            $spmCash,
-            $cash,
-            $portfolio,
-            $stockQuantity,
-            1,
-            $action
-        );
-
-        $db = new DbManipulation();
-        $db->add($stockPortfolioManagementInstance);
-        $db->commit();
-    }
-
-    private function getStockPortfolioManagementInstance(?PortfolioStock $spm, Stock $stockInstance, Portfolio $portfolioInstance, float $stockQuantity, float $stockPrice, string $transactionType): ?PortfolioStock
-    {
-        $isBuy = strtolower($transactionType) === 'buy';
-
-        // check if there is StockPortfolioManagement instance.
-        if ($spm) {
-            $currentQty = $spm->getNumStocks();
-            $currentVal = $spm->getValueOfStock();
-
-            // if we are buying stocks
-            if ($isBuy) {
-                $newQty = $currentQty + $stockQuantity;
-                $newVal = $currentVal + ($stockPrice * $stockQuantity);
-                $avgPrice = $newVal / $newQty;
-
-                $spm->setNumStocks($newQty);
-                $spm->setPrice($avgPrice);
-                $spm->setValueOfStock($newVal);
-            }
-            // if we are selling stocks or removing cash
-            else {
-
-                $newQty = $currentQty - $stockQuantity;
-                $newVal = $newQty * $spm->getPrice();
-
-                $spm->setNumStocks($newQty);
-                $spm->setValueOfStock($newVal);
-            }
-        }
-        // // WE DONT NEED THIS ANYMORE
-        // else {
-        //     $spm = new PortfolioStock();
-        //     // Set common identifiers
-        //     $spm->setIdPortfolio($portfolioInstance->getId());
-        //     $spm->setIdStock($stockInstance->getId());
-
-        //     $signedQty = $isBuy ? $stockQuantity : -$stockQuantity;
-        //     $signedValue = $isBuy ? $stockPrice * $stockQuantity : -$stockPrice * $stockQuantity;
-
-        //     $spm->setNumStocks($signedQty);
-        //     $spm->setPrice($stockPrice);
-        //     $spm->setValueOfStock($signedValue);
-        // }
-
-        return $spm;
-    }
+    //     $db = new DbManipulation();
+    //     $db->add($stockPortfolioManagementInstance);
+    //     $db->add($stockPortfolioManagementInstanceForCash);
+    //     $db->commit();
+    // }
 
 
-    private function getCurrentAmountOfMoneyInPortfolio(Stock $stockInstance, Portfolio $portfolioInstance): float
-    {
-        $spm = new PortfolioStock();
 
-        $existing = $spm->query()
-            ->where(["idPortfolio", "=", $portfolioInstance->getId()])
-            ->and()
-            ->where(["idStock", "=", $stockInstance->getId()])
-            ->first();
+    // /*
 
-        if ($existing) {
-            return $spm->getValueOfStock();
-        }
-        return 0;
-    }
+    //     Cash Transaction logic handle
+
+    // */
+    // public function handleCashTransaction($data, string $action, Portfolio $portfolio, Stock $cash, ?PortfolioStock $spmCash)
+    // {
+    //     $stockQuantity = $data["quantity"];
+
+    //     //getting StockPortfolioManagement
+    //     $stockPortfolioManagementInstance = $this->getStockPortfolioManagementInstance(
+    //         $spmCash,
+    //         $cash,
+    //         $portfolio,
+    //         $stockQuantity,
+    //         1,
+    //         $action
+    //     );
+
+    //     $db = new DbManipulation();
+    //     $db->add($stockPortfolioManagementInstance);
+    //     $db->commit();
+    // }
+
+
+    // private function getStockPortfolioManagementInstance(?PortfolioStock $spm, Stock $stockInstance, Portfolio $portfolioInstance, float $stockQuantity, float $stockPrice, string $transactionType): ?PortfolioStock
+    // {
+    //     $isBuy = strtolower($transactionType) === 'buy';
+
+    //     // check if there is StockPortfolioManagement instance.
+    //     if ($spm) {
+    //         $currentQty = $spm->getNumStocks();
+    //         $currentVal = $spm->getValueOfStock();
+
+    //         // if we are buying stocks
+    //         if ($isBuy) {
+    //             $newQty = $currentQty + $stockQuantity;
+    //             $newVal = $currentVal + ($stockPrice * $stockQuantity);
+    //             $avgPrice = $newVal / $newQty;
+
+    //             $spm->setNumStocks($newQty);
+    //             $spm->setPrice($avgPrice);
+    //             $spm->setValueOfStock($newVal);
+    //         }
+    //         // if we are selling stocks or removing cash
+    //         else {
+
+    //             $newQty = $currentQty - $stockQuantity;
+    //             $newVal = $newQty * $spm->getPrice();
+
+    //             $spm->setNumStocks($newQty);
+    //             $spm->setValueOfStock($newVal);
+    //         }
+    //     }
+    //     // // WE DONT NEED THIS ANYMORE
+    //     // else {
+    //     //     $spm = new PortfolioStock();
+    //     //     // Set common identifiers
+    //     //     $spm->setIdPortfolio($portfolioInstance->getId());
+    //     //     $spm->setIdStock($stockInstance->getId());
+
+    //     //     $signedQty = $isBuy ? $stockQuantity : -$stockQuantity;
+    //     //     $signedValue = $isBuy ? $stockPrice * $stockQuantity : -$stockPrice * $stockQuantity;
+
+    //     //     $spm->setNumStocks($signedQty);
+    //     //     $spm->setPrice($stockPrice);
+    //     //     $spm->setValueOfStock($signedValue);
+    //     // }
+
+    //     return $spm;
+    // }
+
+
+    // private function getCurrentAmountOfMoneyInPortfolio(Stock $stockInstance, Portfolio $portfolioInstance): float
+    // {
+    //     $spm = new PortfolioStock();
+
+    //     $existing = $spm->query()
+    //         ->where(["idPortfolio", "=", $portfolioInstance->getId()])
+    //         ->and()
+    //         ->where(["idStock", "=", $stockInstance->getId()])
+    //         ->first();
+
+    //     if ($existing) {
+    //         return $spm->getValueOfStock();
+    //     }
+    //     return 0;
+    // }
 }
