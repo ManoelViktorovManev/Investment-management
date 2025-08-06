@@ -23,6 +23,7 @@ class PortfolioTransactionController extends BaseController
 
         $stockTradeService = new StockTradeService('BUY', $data);
         $stockTradeService->handleStockTradeLogic();
+        return new Response("OK", 200);
     }
 
     #[Route('/sellStockInPortfolio', methods: ["POST"])]
@@ -32,6 +33,7 @@ class PortfolioTransactionController extends BaseController
 
         $stockTradeService = new StockTradeService('SELL', $data);
         $stockTradeService->handleStockTradeLogic();
+        return new Response("OK", 200);
     }
 
     /*
@@ -42,12 +44,11 @@ class PortfolioTransactionController extends BaseController
     #[Route('/addCashInPortfolio')]
     public function addCashInPortfolio()
     {
-        $test = 0;
-        // $data = json_decode(file_get_contents("php://input"), true);
+        $data = json_decode(file_get_contents("php://input"), true);
 
-        // $stockTradeService = new StockTradeService('DEPOSIT', $data, true);
-        // $stockTradeService->handleStockTradeLogic();
-        return new Response("OK", 404);
+        $stockTradeService = new StockTradeService('DEPOSIT', $data, true);
+        $stockTradeService->handleStockTradeLogic();
+        return new Response("OK", 200);
     }
 
     #[Route('/removeCashFromPortfolio', methods: ["POST"])]
@@ -57,5 +58,6 @@ class PortfolioTransactionController extends BaseController
 
         $stockTradeService = new StockTradeService('WITHDRAWAL', $data, true);
         $stockTradeService->handleStockTradeLogic();
+        return new Response("OK", 200);
     }
 }
