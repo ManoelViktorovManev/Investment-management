@@ -78,6 +78,11 @@ class App
 
         $userRequestUrl = $this->getServerRoute();
         $userRequestMethod = $this->getServerMethod();
+
+        if ($userRequestMethod == "OPTIONS") {
+            http_response_code(200);
+            exit;
+        }
         $route = $this->router->match($userRequestUrl, $userRequestMethod);
         /*
             $route can be:
@@ -94,15 +99,19 @@ class App
             // Call the controller method
             $response = call_user_func_array([$controller, $functionToBeCalled], $route['params']);
 
-            $controller_name = $route['route']['controller'];
-            $path = $route['route']['path'];
-
             // We check if it returns Response object always
             if ($response instanceof Response) {
+
+                // it is not succsessfull
+                if ($response->getStatusCode() >= 400) {
+                    $message = $response->getContent();
+                    error_log("\033[31m$message\033[0m");
+                }
                 $this->executeResponse($response);
             } else {
                 // HANDLE IF RESPONSE IS NOT RESPONSE OBJECT
-
+                $controller_name = $route['route']['controller'];
+                $path = $route['route']['path'];
                 error_log("\033[31mClass method $controller_name::$functionToBeCalled() for route $path is not returning Response object\033[0m");
                 $this->executeResponse(new Response("Class method $controller_name::$functionToBeCalled() for route $path is not returning Response object", 404));
             }
