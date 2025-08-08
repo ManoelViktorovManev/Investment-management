@@ -1,7 +1,7 @@
 <?php
 
 /**
- * File: UserStockAllocationController.php
+ * File: UserPortfolioStockController.php
  * Description:  Look down for description.
  * Author: Manoel Manev
  * Created: 2025-08-08
@@ -14,7 +14,7 @@ use App\Core\Route;
 use App\Model\UserPortfolioStock;
 
 /**
- * Class UserStockAllocationController
+ * Class UserPortfolioStockController
  *
  * Handles portfolio-related allocation queries for users, including:
  * - Available free cash in a portfolio
@@ -24,7 +24,7 @@ use App\Model\UserPortfolioStock;
  *
  * @package App\Controller
  */
-class UserStockAllocationController extends BaseController
+class UserPortfolioStockController extends BaseController
 {
 
     /**
