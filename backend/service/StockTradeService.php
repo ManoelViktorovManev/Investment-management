@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * File: StockTradeService.php
+ * Description: Provide handle of stock buy/sell stock and deposit and withdraw money.
+ * Author: Manoel Manev
+ * Created: 2025-08-08
+ */
+
 namespace App\Service;
 
 use App\Model\Portfolio;
@@ -9,32 +16,96 @@ use App\Controller\CurrencyExchangeRateController;
 use App\Model\PortfolioStock;
 use App\Core\DbManipulation;
 use App\Controller\TransactionHistoryController;
-use App\Controller\UserStockAllocationController;
 use App\Core\Response;
+use App\Service\StockUserPositionService;
 
-
-/*
-    Not ok:
-
-    Portfolio Trade Controller 
-    Stock Trade Logic 
-    User Stock Allocation Controller
-*/
-
+/**
+ * Class StockTradeService
+ *
+ * Encapsulates the business logic for stock and cash transactions.
+ * This includes both direct cash operations (deposit/withdraw) and
+ * trades involving both a stock and its cash equivalent.
+ *
+ * Example workflows:
+ * - Deposit cash into a portfolio.
+ * - Buy a stock, deducting cash from the portfolio.
+ * - Sell a stock, adding cash to the portfolio.
+ *
+ * @package App\Service
+ */
 class StockTradeService
 {
-    private $action;
-    private $data;
-    private $isCashOnly;
+    /**
+     * The action to perform (e.g., "BUY", "SELL", "DEPOSIT", "WITHDRAW").
+     *
+     * @var string
+     */
+    private string $action;
 
+    /**
+     * Transaction-related data including:
+     * - currency
+     * - portfolioId
+     * - quantity
+     * - price
+     * - name
+     * - symbol
+     * - allocations
+     * - date
+     *
+     * @var array
+     */
+    private array $data;
+
+    /**
+     * Whether the transaction involves cash only (true) or stock + cash (false).
+     *
+     * @var bool
+     */
+    private bool $isCashOnly;
+
+    /**
+     * Portfolio involved in the transaction.
+     *
+     * @var Portfolio
+     */
     private Portfolio $portfolio;
 
+    /**
+     * Target stock involved in the trade.
+     *
+     * @var Stock
+     */
     private Stock $stock;
+
+    /**
+     * Cash-equivalent "stock" entity.
+     *
+     * @var Stock
+     */
     private Stock $cash;
 
+    /**
+     * PortfolioStock model for the stock being traded.
+     *
+     * @var PortfolioStock
+     */
     private PortfolioStock $PSModelStock;
+
+    /**
+     * PortfolioStock model for the cash equivalent.
+     *
+     * @var PortfolioStock
+     */
     private PortfolioStock $PSModelCash;
 
+    /**
+     * StockTradeService constructor.
+     *
+     * @param string $action     Action type (BUY, SELL, DEPOSIT, WITHDRAW).
+     * @param array  $data       Associative array containing transaction details.
+     * @param bool   $isCashOnly Whether transaction is cash-only.
+     */
     public function __construct(string $action, array $data, bool $isCashOnly = false)
     {
         $this->action = $action;
@@ -42,32 +113,45 @@ class StockTradeService
         $this->isCashOnly = $isCashOnly;
     }
 
-    // handle same logic for buying/ selling stock and deposit and withdraw money.
-    public function handleStockTradeLogic()
+    /**
+     * Main entry point for handling a trade.
+     *
+     * Steps:
+     * 1. Load portfolio.
+     * 2. Ensure cash record exists in portfolio.
+     * 3. If cash-only:
+     *    - Update cash balance.
+     *    - Create transaction history.
+     *    - Update user position.
+     * 4. If stock trade:
+     *    - Ensure stock record exists.
+     *    - Update stock and cash balances.
+     *    - Create transaction history for both stock and cash.
+     *    - Update user positions for both stock and cash.
+     *
+     * @return void
+     */
+    public function handleStockTradeLogic(): void
     {
-        // setting the same parameters
-        $stockCurrency = $this->data["currency"];
-        $portfolioId   = $this->data["portfolioId"];
-        $stockQuantity = $this->data["quantity"];
+        // Extract transaction details
+        $stockCurrency   = $this->data["currency"];
+        $portfolioId     = $this->data["portfolioId"];
+        $stockQuantity   = $this->data["quantity"];
         $transactionDate = $this->data['date'];
 
-        // get portfolio and setting 
+        // Load portfolio
         $this->portfolio = $this->getPortfolioModelInstance($portfolioId);
 
-        // Cash stock instance
+        // Ensure cash "stock" exists
         $this->cash = $this->getStockModelInstance("$stockCurrency cash", $stockCurrency, $stockCurrency, 1, true);
         $this->PSModelCash = $this->getPortfolioStockModelInstance($this->cash, $this->portfolio);
 
-        // if it is only cash transaction => withdraw or depositing money
         if ($this->isCashOnly) {
-
-            // handle connection between  CASH and Portfolio
+            // Update cash balance
             $this->handleStockTransaction();
 
-            // handle Transaction History
+            // Record cash transaction
             $transactionHistory = new TransactionHistoryController();
-
-            // handle stock transaction
             $transactionHistory->createNewTransactionHistory(
                 $this->data['allocations'],
                 $this->cash,
@@ -78,25 +162,29 @@ class StockTradeService
                 $this->action
             );
 
-            // handle Stock, User and Portfolio interaction
-            $usac = new UserStockAllocationController();
-            $usac->updateUsersStocksPositionInPortfolio($this->data, $this->action, $this->portfolio, $this->cash);
+            // Update user portfolio positions
+            $sups = new StockUserPositionService(
+                $this->data["allocations"],
+                $this->data["price"],
+                $this->action,
+                $this->cash,
+                $this->portfolio
+            );
+            $sups->updateUsersStocksPositionInPortfolio();
         } else {
-            $stockName     = $this->data["name"];
-            $stockSymbol   = $this->data["symbol"];
-            $stockPrice    = $this->data["price"];
+            // Prepare stock entity
+            $stockName   = $this->data["name"];
+            $stockSymbol = $this->data["symbol"];
+            $stockPrice  = $this->data["price"];
 
-            // Target stock instance
             $this->stock = $this->getStockModelInstance($stockName, $stockSymbol, $stockCurrency, $stockPrice);
             $this->PSModelStock = $this->getPortfolioStockModelInstance($this->stock, $this->portfolio);
 
-            // handle connection between STOCK, CASH and Portfolio
+            // Process trade between stock and cash
             $this->handleStockTransaction();
 
-            // handle Transaction History
+            // Record stock transaction
             $transactionHistory = new TransactionHistoryController();
-
-            // handle stock transaction
             $transactionHistory->createNewTransactionHistory(
                 $this->data['allocations'],
                 $this->stock,
@@ -107,9 +195,8 @@ class StockTradeService
                 $this->action
             );
 
+            // Record cash transaction (reverse action)
             $reverseAction = $this->action === "BUY" ? "SELL" : "BUY";
-
-            // handle cash transaction
             $transactionHistory->createNewTransactionHistory(
                 $this->data['allocations'],
                 $this->cash,
@@ -121,33 +208,64 @@ class StockTradeService
                 true
             );
 
-            // handle Stock, User and Portfolio interaction
-            $usac = new UserStockAllocationController();
-            $usac->updateUsersStocksPositionInPortfolio($this->data, $this->action, $this->portfolio, $this->stock);
-            //remove the cash
-            $usac->updateUsersStocksPositionInPortfolio($this->data, $reverseAction, $this->portfolio, $this->cash, true);
+            // Update stock position
+            $sups = new StockUserPositionService(
+                $this->data["allocations"],
+                $this->data["price"],
+                $this->action,
+                $this->stock,
+                $this->portfolio
+            );
+            $sups->updateUsersStocksPositionInPortfolio();
+
+            // Update cash position
+            $sups->setAction($reverseAction);
+            $sups->setStock($this->cash);
+            $sups->setCashTransferAfterStockTransaction(true);
+            $sups->updateUsersStocksPositionInPortfolio();
         }
     }
 
-
-    private function getPortfolioModelInstance($portfolioId): Portfolio
+    /**
+     * Retrieves a portfolio model by its ID.
+     *
+     * @param int $portfolioId Portfolio ID.
+     * @return Portfolio
+     */
+    private function getPortfolioModelInstance(int $portfolioId): Portfolio
     {
         return (new Portfolio())->query()->where(['id', '=', $portfolioId])->first();
     }
 
-    private function getStockModelInstance(string $stockName, string $stockSymbol, string $stockCurrency, float $stockPrice, bool $isCash = false): Stock
-    {
+    /**
+     * Retrieves or creates a Stock model.
+     *
+     * @param string $stockName     Stock name.
+     * @param string $stockSymbol   Stock symbol.
+     * @param string $stockCurrency Stock currency code.
+     * @param float  $stockPrice    Stock price.
+     * @param bool   $isCash        Whether this is a cash-equivalent stock.
+     * @return Stock
+     */
+    private function getStockModelInstance(
+        string $stockName,
+        string $stockSymbol,
+        string $stockCurrency,
+        float $stockPrice,
+        bool $isCash = false
+    ): Stock {
         $stock = new Stock();
         $existingStock = $stock->query()->where(['symbol', '=', $stockSymbol])->first();
 
-        //creating a new stock
         if (!$existingStock) {
+            // Create stock record
             $newStock = new StockController();
             $newStock->createNewStockByMethod($stockName, $stockSymbol, $stockCurrency, $stockPrice, $isCash);
+
             $stock->query()->where(['symbol', '=', $stockSymbol])->first();
 
-            // create a new currency exchange rate instance
-            if ($isCash == true) {
+            // Create currency exchange rate if cash stock
+            if ($isCash) {
                 $newCurrencyConnections = new CurrencyExchangeRateController();
                 $newCurrencyConnections->createNewCurrencyExchangeRatebyMethod($stock->getId());
             }
@@ -155,6 +273,13 @@ class StockTradeService
         return $stock;
     }
 
+    /**
+     * Retrieves or creates a PortfolioStock entry for the given portfolio and stock.
+     *
+     * @param Stock     $stockInstance     Stock instance.
+     * @param Portfolio $portfolioInstance Portfolio instance.
+     * @return PortfolioStock
+     */
     private function getPortfolioStockModelInstance(Stock $stockInstance, Portfolio $portfolioInstance): PortfolioStock
     {
         $spm = new PortfolioStock();
@@ -165,33 +290,43 @@ class StockTradeService
             ->first();
 
         if (!$existing) {
-            // Set new instance if it not exists.
             $db = new DbManipulation();
-
             $spm->setIdPortfolio($portfolioInstance->getId());
             $spm->setIdStock($stockInstance->getId());
             $spm->setNumStocks(0);
             $spm->setPrice(0);
             $spm->setValueOfStock(0);
-
             $db->add($spm);
             $db->commit();
         }
         return $spm;
     }
 
+    /**
+     * Gets the current monetary value of a portfolio's holding for a given stock.
+     *
+     * @param PortfolioStock $PSInstance PortfolioStock instance.
+     * @return float
+     */
     private function getCurrentAmountOfMoneyInPortfolio(PortfolioStock $PSInstance): float
     {
         return $PSInstance->getValueOfStock();
     }
 
+    /**
+     * Handles the core stock and/or cash balance adjustments for the transaction.
+     *
+     * - For cash-only: adjusts the cash balance.
+     * - For stock trades: adjusts both stock and cash balances.
+     *
+     * @return Response|void
+     */
     private function handleStockTransaction()
     {
         $stockQuantity = $this->data["quantity"];
 
-        // HANDLE LOGIC FOR ONLY CASH TRANSACTION
         if ($this->isCashOnly) {
-
+            // Update cash-only balance
             $stockPortfolioManagementInstance = $this->updatePortfolioStockBalance(
                 $this->PSModelCash,
                 $stockQuantity,
@@ -202,16 +337,11 @@ class StockTradeService
             $db = new DbManipulation();
             $db->add($stockPortfolioManagementInstance);
             $db->commit();
-        }
-
-        // HANDLE STOCK AND CASH TRANSACTION
-        else {
-
+        } else {
             $stockPrice = $this->data["price"];
-
             $totalPrice = $stockPrice * $stockQuantity;
 
-            // Check for sufficient cash only on BUY
+            // Ensure enough cash for BUY
             if ($this->action === "BUY") {
                 $availableCash = $this->getCurrentAmountOfMoneyInPortfolio($this->PSModelCash);
                 if ($availableCash < $totalPrice) {
@@ -219,7 +349,7 @@ class StockTradeService
                 }
             }
 
-            //getting StockPortfolioManagement
+            // Update stock balance
             $stockPortfolioManagementInstance = $this->updatePortfolioStockBalance(
                 $this->PSModelStock,
                 $stockQuantity,
@@ -227,7 +357,7 @@ class StockTradeService
                 $this->action
             );
 
-            //updating The Cash in The portfolio, which is reverse action
+            // Update cash balance (reverse action)
             $reverseAction = $this->action === "BUY" ? "SELL" : "BUY";
             $stockPortfolioManagementInstanceForCash = $this->updatePortfolioStockBalance(
                 $this->PSModelCash,
@@ -243,15 +373,26 @@ class StockTradeService
         }
     }
 
-    private function updatePortfolioStockBalance(PortfolioStock $PSInstance, float $stockQuantity, float $stockPrice, string $transactionType)
-    {
-        // we don`t handle deposit and withdraw
+    /**
+     * Adjusts the quantity, value, and average price for a portfolio stock.
+     *
+     * @param PortfolioStock $PSInstance       PortfolioStock to update.
+     * @param float          $stockQuantity    Quantity of stock.
+     * @param float          $stockPrice       Price per unit.
+     * @param string         $transactionType  "BUY", "SELL", "DEPOSIT", "WITHDRAW".
+     * @return PortfolioStock Updated PortfolioStock instance.
+     */
+    private function updatePortfolioStockBalance(
+        PortfolioStock $PSInstance,
+        float $stockQuantity,
+        float $stockPrice,
+        string $transactionType
+    ): PortfolioStock {
         $isBuy = strtolower($transactionType) === 'buy' || strtolower($transactionType) === "deposit";
 
         $currentQty = $PSInstance->getNumStocks();
         $currentVal = $PSInstance->getValueOfStock();
 
-        // if we are buying stocks
         if ($isBuy) {
             $newQty = $currentQty + $stockQuantity;
             $newVal = $currentVal + ($stockPrice * $stockQuantity);
@@ -260,10 +401,7 @@ class StockTradeService
             $PSInstance->setNumStocks($newQty);
             $PSInstance->setPrice($avgPrice);
             $PSInstance->setValueOfStock($newVal);
-        }
-        // if we are selling stocks or removing cash
-        else {
-
+        } else {
             $newQty = $currentQty - $stockQuantity;
             $newVal = $newQty * $PSInstance->getPrice();
 
@@ -272,33 +410,4 @@ class StockTradeService
         }
         return $PSInstance;
     }
-
-    // private handleTransactionHistory(){
-    //     $transactionHistory = new TransactionHistoryController();
-
-    //     // handle stock transaction
-    //     $transactionHistory->createNewTransactionHistory(
-    //         $this->data['allocations'],
-    //         $this->stock,
-    //         $this->portfolio,
-    //         $stockQuantity,
-    //         $stockPrice,
-    //         $transactionDate,
-    //         $this->action
-    //     );
-
-    //     $reverseAction = $this->action === "BUY" ? "SELL" : "BUY";
-
-    //     // handle cash transaction
-    //     $transactionHistory->createNewTransactionHistory(
-    //         $this->data['allocations'],
-    //         $this->cash,
-    //         $this->portfolio,
-    //         $stockQuantity,
-    //         $stockPrice,
-    //         $transactionDate,
-    //         $reverseAction,
-    //         true
-    //     );
-    // }
 }

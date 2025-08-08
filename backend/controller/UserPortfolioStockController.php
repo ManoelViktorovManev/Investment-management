@@ -1,18 +1,43 @@
 <?php
 
+/**
+ * File: UserStockAllocationController.php
+ * Description:  Look down for description.
+ * Author: Manoel Manev
+ * Created: 2025-08-08
+ */
+
 namespace App\Controller;
 
 use App\Core\BaseController;
-use App\Core\Response;
 use App\Core\Route;
 use App\Model\UserPortfolioStock;
-use App\Model\Stock;
-use App\Core\DbManipulation;
-use App\Model\Portfolio;
 
+/**
+ * Class UserStockAllocationController
+ *
+ * Handles portfolio-related allocation queries for users, including:
+ * - Available free cash in a portfolio
+ * - Percentage equity owned by each user
+ * - All owners of a specific stock
+ * - All stocks owned by a specific user
+ *
+ * @package App\Controller
+ */
 class UserStockAllocationController extends BaseController
 {
 
+    /**
+     * Gets all available cash held by users in a specific portfolio.
+     *
+     * This can return cash in different currencies (USD, EUR, JPY, etc.),
+     * depending on the `stock` table’s `isCash` flag.
+     *
+     * Route: GET /getUsersFreeCashInPortfolio/{PortfolioId}
+     *
+     * @param int $PortfolioId The ID of the portfolio.
+     * @return \App\Core\Response JSON list of user cash holdings.
+     */
     #[Route('/getUsersFreeCashInPortfolio/{PortfolioId}')]
     public function getUsersFreeCashInPortfolio($PortfolioId)
     {
@@ -28,6 +53,19 @@ class UserStockAllocationController extends BaseController
     }
 
 
+    /**
+     * Gets the percentage of equity ownership for each user in a portfolio.
+     *
+     * This method calculates each user's equity share by:
+     * 1. Multiplying stock quantity by stock price for each user.
+     * 2. Summing all user values to get the total portfolio value.
+     * 3. Calculating each user’s percentage of ownership.
+     *
+     * Route: GET /getEquityOwnedByUsersInPortfolio/{PortfolioId}
+     *
+     * @param int $PortfolioId The ID of the portfolio.
+     * @return \App\Core\Response JSON list of users with their total value and equity percentage.
+     */
     #[Route('/getEquityOwnedByUsersInPortfolio/{PortfolioId}')]
     public function getEquityOwnedByUsersInPortfolio($PortfolioId)
     {
@@ -60,7 +98,14 @@ class UserStockAllocationController extends BaseController
         return $this->json($usersEquity);
     }
 
-
+    /**
+     * Gets all owners of a specific stock.
+     *
+     * Route: GET /getAllOwnersOfStock/{StockId}
+     *
+     * @param int $StockId The ID of the stock.
+     * @return \App\Core\Response JSON list of users with their stock quantity.
+     */
     #[Route('/getAllOwnersOfStock/{StockId}')]
     public function getAllOwnersOfStock($StockId)
     {
@@ -72,6 +117,14 @@ class UserStockAllocationController extends BaseController
         return $this->json($userCashs);
     }
 
+    /**
+     * Gets all stocks owned by one user, or by all users if no user ID is provided.
+     *
+     * Route: GET /getAllStocksOneUserOwns/{UserId?}
+     *
+     * @param int|null $UserId Optional user ID. If null, returns all stocks for all users.
+     * @return \App\Core\Response JSON list of stocks and quantities.
+     */
     #[Route('/getAllStocksOneUserOwns/{UserId?}')]
     public function getAllStocksOneUserOwns($UserId = null)
     {
@@ -85,59 +138,5 @@ class UserStockAllocationController extends BaseController
         $userStocks = $query->all();
 
         return $this->json($userStocks);
-    }
-
-
-    public function updateUsersStocksPositionInPortfolio($data, $action, Portfolio $portfolio, Stock $stock, bool $cashTransferAfterStockTransaction = false)
-    {
-        // it is form like this {"1":2,"3":8}, where first element is id of User and secound element is amount to add for his account
-        $allocations = $data["allocations"];
-
-        $db = new DbManipulation();
-        foreach ($allocations as $userId => $quantity) {
-            $instance = new UserPortfolioStock();
-            $instanceOfUserStocks = $instance->query()
-                ->where(["portfolioId", "=", $portfolio->getId()])
-                ->and()
-                ->where(["userId", "=", $userId])
-                ->and()
-                ->where(["stockId", "=", $stock->getId()])
-                ->first();
-
-            if (!$instanceOfUserStocks) {
-                // create a new one
-                $instance->setStockId($stock->getId());
-                $instance->setUserId($userId);
-                $instance->setPortfolioId($portfolio->getId());
-                $instance->setStockQuantity($quantity);
-            } else {
-                // update existing one
-
-                // there are two options: STOCK OR CASH
-                // {1:10, 2:2.5, 3:2.5}
-                if ($action == "BUY") {
-
-
-                    if ($stock->getIsCash() && $cashTransferAfterStockTransaction) {
-                        $instance->setStockQuantity($instance->getStockQuantity() + ($quantity * $data["price"]));
-                    } else {
-                        // it is stocks
-                        $instance->setStockQuantity($instance->getStockQuantity() + $quantity);
-                    }
-                } else {
-                    // it is cash
-                    if ($stock->getIsCash() && $cashTransferAfterStockTransaction) {
-                        $instance->setStockQuantity($instance->getStockQuantity() - ($quantity * $data["price"]));
-                    } else {
-                        // it is stocks
-                        $instance->setStockQuantity($instance->getStockQuantity() - $quantity);
-                    }
-                }
-            }
-
-            $db->add($instance);
-        }
-        $db->commit();
-        return new Response("OK");
     }
 }
