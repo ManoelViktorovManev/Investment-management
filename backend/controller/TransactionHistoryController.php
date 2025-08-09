@@ -122,7 +122,7 @@ class TransactionHistoryController extends BaseController
         $stockTransaction = new TransactionHistory();
         $array = $stockTransaction
             ->query()
-            ->select("stocktransactions.id, portfolio.name as portfolioName, stock.name as stockName, stocktransactions.numStocks, stocktransactions.price, stocktransactions.date, stocktransactions.transaction")
+            ->select("transactionhistory.id, portfolio.name as portfolioName, stock.name as stockName, transactionhistory.numStocks, transactionhistory.price, transactionhistory.date, transactionhistory.transaction")
             ->join("Inner", "stock", "stock.id = idStock")
             ->join("Inner", "portfolio", "portfolio.id=idPortfolio")
             ->limit(10, $id)
