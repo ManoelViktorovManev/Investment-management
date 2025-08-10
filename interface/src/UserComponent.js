@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import PortfolioChart from './PortfolioChart';
+import { TransactionHistoryComponent } from './TransactionHistoryComponent.js';
+import PortfolioList from './PortfolioList';
 const UserComponent = ({ data }) => {
     const [users, setUsers] = useState([]);
 
@@ -10,9 +12,10 @@ const UserComponent = ({ data }) => {
     const [isGroupByUser, setIsGroupByUser] = useState(false);
     const [allStockInfo, setAllStockInfo] = useState([]);
 
+    const [deletedStock, setDeletedStock] = useState(false);
+
     useEffect(() => {
         setUsers(data.users);
-
         const stockMap = {};
         for (const stock of data.stocks) {
             stockMap[stock.id] = {
@@ -25,12 +28,20 @@ const UserComponent = ({ data }) => {
 
     }, [data]);
 
+
     // Trigger fetch only after both users and allStockInfo are set
     useEffect(() => {
         if (Object.keys(allStockInfo).length > 0 && users.length > 0) {
             getAllStocksOwnedByUser(null);
         }
     }, [allStockInfo, users]);
+
+    useEffect(() => {
+        if (deletedStock) {
+            // getAllValueOfPortfolio(selectedPortfolio);
+            setDeletedStock(false);
+        }
+    }, [deletedStock]);
 
     async function getAllStocksOwnedByUser(userId) {
         // OPTIMIZE THIS BECAUSE IT IS SOOO SLOW
@@ -79,11 +90,13 @@ const UserComponent = ({ data }) => {
             const enriched = Object.entries(combinedStocks).map(([stockId, quantity]) => {
                 const stock = allStockInfo[stockId];
                 return {
+                    // symbol, percantage, profit
                     name: stock?.name ?? `Stock ${stockId}`,
-                    stockQuantity: quantity,
-                    marketValue: quantity * (stock?.price || 0),
-                    price: stock?.price ?? 0,
                     currency: stock?.currency ?? "N/A",
+                    stockQuantity: quantity,
+                    price: stock?.price ?? 0,
+                    marketValue: quantity * (stock?.price || 0),
+
                 };
             });
 
@@ -123,6 +136,27 @@ const UserComponent = ({ data }) => {
                 <h3>Total Portfolio Value: USD {chartData.reduce((sum, stock) => sum + stock.marketValue, 0).toFixed(2)}</h3>
             )}
             <PortfolioChart data={chartData} dataKey={isGroupByUser ? "totalValue" : "stockQuantity"} />
+            {/* Individual transaction history */}
+            {selectedUserId == "all" ? (
+                <TransactionHistoryComponent key="all" title={"Transaction User History"}
+                    fields={["Id", "User", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} />
+            ) : (
+                <>
+                    <TransactionHistoryComponent key={selectedUserId} title={"Transaction History on " + (data.users.find(u => u.id === parseInt(selectedUserId))?.name ?? "Unknown User")}
+                        fields={["Id", "User", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} individualTransactionHisory={selectedUserId} />
+
+                    <PortfolioList
+                        stocks={chartData}
+                        setDelete={setDeletedStock}
+                        fields={["Name", "Currency", "Num Shares", "Current Stock Price",
+                            "Current Market CAP", ""
+                        ]}
+                    />
+                </>
+
+            )}
+
+
         </div>
     );
 }

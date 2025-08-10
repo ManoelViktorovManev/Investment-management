@@ -116,18 +116,57 @@ class TransactionHistoryController extends BaseController
      *   ...
      * ]
      */
-    #[Route('/getTransactionHistory/{id}')]
-    public function getTransactionHistory($id)
+    #[Route('/getTransactionHistory/{tableName}/{pageNumber}/{userId?}')]
+    public function getTransactionHistory($tableName, $pageNumber, $userId)
     {
-        $stockTransaction = new TransactionHistory();
-        $array = $stockTransaction
-            ->query()
-            ->select("transactionhistory.id, portfolio.name as portfolioName, stock.name as stockName, transactionhistory.numStocks, transactionhistory.price, transactionhistory.date, transactionhistory.transaction")
-            ->join("Inner", "stock", "stock.id = idStock")
-            ->join("Inner", "portfolio", "portfolio.id=idPortfolio")
-            ->limit(10, $id)
-            ->all();
-        return $this->json($array);
+        $transactionInstance = null;
+        $withUser = false;
+        if ($tableName == 'transaction') {
+            $transactionInstance  = new TransactionHistory();
+        } else {
+            $transactionInstance  = new UserTransactionHistory();
+            if ($userId != null) {
+                $withUser = true;
+            }
+        }
+
+        if ($transactionInstance instanceof TransactionHistory) {
+            $array = $transactionInstance
+                ->query()
+                ->select("transactionhistory.id, portfolio.name as portfolioName, stock.name as stockName, transactionhistory.numStocks, transactionhistory.price, transactionhistory.date, transactionhistory.transaction")
+                ->join("Inner", "stock", "stock.id = idStock")
+                ->join("Inner", "portfolio", "portfolio.id=idPortfolio")
+                ->limit(10, $pageNumber)
+                ->all();
+
+            return $this->json($array);
+        } else {
+            if ($withUser) {
+                $array = $transactionInstance
+                    ->query()
+                    ->select("usertransactionhistory.id, portfolio.name as portfolioName, stock.name as stockName, 
+                    usertransactionhistory.numStocks, usertransactionhistory.price, usertransactionhistory.date, 
+                    usertransactionhistory.transaction")
+                    ->join("Inner", "stock", "stock.id = idStock")
+                    ->join("Inner", "portfolio", "portfolio.id=idPortfolio")
+                    ->where(["userId", "=", $userId])
+                    ->limit(10, $pageNumber)
+                    ->all();
+                return $this->json($array);
+            } else {
+                $array = $transactionInstance
+                    ->query()
+                    ->select("usertransactionhistory.id, user.name as userName, portfolio.name as portfolioName, 
+                    stock.name as stockName, usertransactionhistory.numStocks, usertransactionhistory.price, 
+                    usertransactionhistory.date, usertransactionhistory.transaction")
+                    ->join("Inner", "stock", "stock.id = idStock")
+                    ->join("Inner", "portfolio", "portfolio.id=idPortfolio")
+                    ->join("Inner", "user", "user.id=userId")
+                    ->limit(10, $pageNumber)
+                    ->all();
+                return $this->json($array);
+            }
+        }
     }
 
     /**
@@ -140,14 +179,30 @@ class TransactionHistoryController extends BaseController
      * Example response:
      * 42
      */
-    #[Route('/getTransactionHistoryCountResults')]
-    public function getCountResults()
+    #[Route('/getTransactionHistoryCountResults/{tableName}/{userId?}')]
+    public function getCountResults($tableName, $userId)
     {
-        $stockTransaction = new TransactionHistory();
-        $result = $stockTransaction
+        $transactionInstance = null;
+        $withUser = false;
+        if ($tableName == 'transaction') {
+            $transactionInstance  = new TransactionHistory();
+        } else {
+            $transactionInstance  = new UserTransactionHistory();
+            if ($userId != null) {
+                $withUser = true;
+            }
+        }
+
+        $result = $withUser == true ? $transactionInstance
+            ->query()
+            ->select("Count(*) as count")
+            ->where(["userId", "=", $userId])
+            ->all()
+            : $transactionInstance
             ->query()
             ->select("Count(*) as count")
             ->all();
+
         return $this->json($result[0]["count"]);
     }
 }

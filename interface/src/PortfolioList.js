@@ -1,7 +1,7 @@
 import React from 'react';
 import API_BASE_URI from './EnvVar.js';
 
-const PortfolioList = ({ stocks, setDelete, onStockClick }) => {
+const PortfolioList = ({ stocks, setDelete, onStockClick, fields }) => {
 
   async function onDelete(index) {
     const response = await fetch(`${API_BASE_URI}/deleteStockPorfolio/${index}`);
@@ -11,72 +11,73 @@ const PortfolioList = ({ stocks, setDelete, onStockClick }) => {
       setDelete(true);
     }
   }
-
+  console.log(stocks);
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Arial' }}>
       <thead>
         <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-          <th style={cellStyle}>Symbol</th>
-          <th style={cellStyle}>Name</th>
-          <th style={cellStyle}>Num Shares</th>
-          <th style={cellStyle}>Currency</th>
-          <th style={cellStyle}>Current Stock Price</th>
-          <th style={cellStyle}>Avg Cost/Share</th>
-          <th style={cellStyle}>Total Money Invested</th>
-          <th style={cellStyle}>Current Market CAP</th>
-          <th style={cellStyle}>Value by selected Currency - {stocks[0]?.selectedCurrency}</th>
-          <th style={cellStyle}>Return on Investment</th>
-          <th style={cellStyle}>% of Portfolio</th>
-          <th style={cellStyle}></th>
+
+          {fields.map((element, index) => (
+            <th key={index} style={cellStyle}>{element}</th>
+          ))}
         </tr>
       </thead>
       <tbody>
-        {stocks.map((stock, index) => {
-          const roi = stock.returnOfInvestment;
-          const roiColor = roi >= 0 ? 'green' : 'red';
-          return (
-            <tr key={index}>
-              {/* Clickable symbol */}
-              <td
-                style={{ ...cellStyle, color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => onStockClick(stock.stockId)}
-              >
-                {stock.symbol}
-              </td>
-              <td
-                style={{ ...cellStyle, color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => onStockClick(stock.stockId)}
-              >
-                {stock.name}
-              </td>
+        {stocks.map((stock, index) => (
+          <tr key={index}>
+            {Object.entries(stock).map(([key, value], i) => {
+              // Special case: Clickable fields
+              if ((key === 'symbol' || key === 'name') && onStockClick != null) {
+                return (
+                  <td
+                    key={i}
+                    style={{ ...cellStyle, color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+                    onClick={() => onStockClick(stock.stockId)}
+                  >
+                    {value}
+                  </td>
+                );
+              }
 
-              <td style={cellStyle}>{stock.numShares}</td>
-              <td style={cellStyle}>{stock.stockCurrency}</td>
-              <td style={cellStyle}>${stock.currentPrice}</td>
-              <td style={cellStyle}>${stock.averagePricePerStock}</td>
-              <td style={cellStyle}>${stock.value}</td>
-              <td style={cellStyle}>${stock.currentMarketCap}</td>
-              <td style={cellStyle}>{stock.valueInSelectedCurrency}</td>
-              <td style={{ ...cellStyle, color: roiColor }}>{roi}%</td>
-              <td style={cellStyle}>{stock.percentage.toFixed(2)}%</td>
-              <td style={cellStyle}>
-                <button
-                  onClick={() => onDelete(stock.idOfDB)}
-                  title="Remove stock"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1.2rem',
-                    color: 'red',
-                  }}
-                >
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          );
-        })}
+              // Special case: ROI color
+              if (key === 'returnOfInvestment') {
+                const roiColor = value >= 0 ? 'green' : 'red';
+                return (
+                  <td key={i} style={{ ...cellStyle, color: roiColor }}>
+                    {value}%
+                  </td>
+                );
+              }
+
+              // Regular case
+              if (key != "stockId" && key != "selectedCurrency" && key != "idOfDB") {
+                return (
+                  <td key={i} style={cellStyle}>
+                    {value}
+                  </td>
+                );
+              }
+
+            })}
+
+            {/* Last column: Delete button */}
+            <td style={cellStyle}>
+              <button
+                onClick={() => onDelete(stock.idOfDB)}
+                title="Remove stock"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  color: 'red',
+                }}
+              >
+                🗑️
+              </button>
+            </td>
+          </tr>
+        ))}
       </tbody>
     </table>
   );

@@ -13,7 +13,10 @@ const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
       label: 'Settings',
       action: () => setCurrentPage(<SettingsMenuWrapper />)
     },
-    { label: 'Transaction History', action: () => setCurrentPage(<TransactionHistoryComponent />) },
+    {
+      label: 'Transaction History', action: () => setCurrentPage(<TransactionHistoryComponent title={"Transaction History"}
+        fields={["Id", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"transaction"} />)
+    },
   ];
 
   return (

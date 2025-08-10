@@ -253,9 +253,9 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
           name: stock.name,
           stockCurrency: stock.currency,
           numShares: numStocks,
-          value: valueOfStock,
           currentPrice: stock.price,
           averagePricePerStock: (valueOfStock / numStocks).toFixed(2),
+          value: valueOfStock,
           currentMarketCap: parseFloat((stock.price * numStocks).toFixed(2)),
           valueInSelectedCurrency: rate != null ? (parseFloat((stock.price * numStocks).toFixed(2)) * rate) : parseFloat((stock.price * numStocks).toFixed(2)),
           selectedCurrency: data.settings.defaultCurrency,
@@ -345,6 +345,10 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
             stocks={stockData}
             setDelete={setDeletedStock}
             onStockClick={(stockId) => setSelectedStockId(stockId)}
+            fields={["Symbol", "Name", "Currency", "Num Shares", "Current Stock Price", "Avg Cost/Share",
+              "Total Money Invested", "Current Market CAP", "Value by selected Currency", "Return on Investment",
+              "% of Portfolio", ""
+            ]}
           />
         </>
       )}
