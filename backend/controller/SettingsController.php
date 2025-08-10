@@ -50,7 +50,8 @@ class SettingsController extends BaseController
      *
      * @return Response JSON response containing:
      * {
-     *   "defaultCurrency": int
+     *   "defaultCurrency": string,
+     *   "managmentSuperAdmin": int
      * }
      */
     #[Route('/getSettings')]
@@ -62,7 +63,7 @@ class SettingsController extends BaseController
         if ($ifExists == null) {
             $settings = $this->createSettings();
         }
-        return $this->json(['defaultCurrency' => $settings->getDefaultCurrency()]);
+        return $this->json(['defaultCurrency' => $settings->getDefaultCurrency(), 'managmentSuperAdmin' => $settings->getManagingSuperAdmin()]);
     }
 
     /**
@@ -85,6 +86,7 @@ class SettingsController extends BaseController
         $data = json_decode($rawInput, true);
 
         $newDefaultCurrency = $data["defaultCurrency"];
+        $newSuperAdminManager = $data["idSuperAdmin"];
 
         $db = new DbManipulation();
         $settings = new Settings();
@@ -94,14 +96,56 @@ class SettingsController extends BaseController
         if ($ifExists == null) {
             $settings = $this->createSettings();
         }
-
-        $settings->setDefaultCurrency($newDefaultCurrency);
+        if ($newDefaultCurrency != null) {
+            $settings->setDefaultCurrency($newDefaultCurrency);
+        }
+        if ($newSuperAdminManager != null) {
+            $settings->setManagingSuperAdmin($newSuperAdminManager);
+        }
 
         $db->add($settings);
         $db->commit();
 
         return new Response("OK");
     }
+
+    // /**
+    //  * Endpoint: POST /updateSettings
+    //  *
+    //  * Updates application settings, particularly the default currency ID.
+    //  * If no settings entry exists, a new one is created.
+    //  *
+    //  * Expected JSON payload:
+    //  * {
+    //  *   "defaultCurrency": int
+    //  * }
+    //  *
+    //  * @return Response Returns "OK" upon successful update.
+    //  */
+    // #[Route('/updateManagingSuperAdminSettings', methods: ['POST'])]
+    // public function updateManagingSuperAdminSettings()
+    // {
+    //     $rawInput = file_get_contents("php://input");
+    //     $data = json_decode($rawInput, true);
+
+    //     $newSuperAdminId = $data["idSuperAdmin"];
+
+    //     $db = new DbManipulation();
+    //     $settings = new Settings();
+
+    //     $ifExists = $settings->query()->first();
+
+    //     if ($ifExists == null) {
+    //         $settings = $this->createSettings();
+    //     }
+
+    //     $settings->setManagingSuperAdmin($newSuperAdminId);
+
+    //     $db->add($settings);
+    //     $db->commit();
+
+    //     return new Response("OK");
+    // }
 
     /**
      * Endpoint: GET /getAllInfromation

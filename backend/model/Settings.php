@@ -8,11 +8,13 @@ class Settings extends BaseModel
 {
     private ?int $id;
     private string $defaultCurrency;
+    private ?int $managingSuperAdmin;
 
-    public function __construct(?int $id = null, string $defaultCurrency = '')
+    public function __construct(?int $id = null, string $defaultCurrency = '', ?int $managingSuperAdmin = null)
     {
         $this->id = $id;
         $this->defaultCurrency = $defaultCurrency;
+        $this->managingSuperAdmin = $managingSuperAdmin;
     }
 
     public function getId(): ?int
@@ -33,5 +35,15 @@ class Settings extends BaseModel
     public function setDefaultCurrency(string $defaultCurrency): void
     {
         $this->defaultCurrency = $defaultCurrency;
+    }
+
+    public function getManagingSuperAdmin(): ?int
+    {
+        return $this->managingSuperAdmin;
+    }
+
+    public function setManagingSuperAdmin(int $managingSuperAdmin): void
+    {
+        $this->managingSuperAdmin = $managingSuperAdmin;
     }
 }
