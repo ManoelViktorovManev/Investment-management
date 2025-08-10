@@ -9,6 +9,9 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [userName, setUserName] = useState('');
   const [editingUserId, setEditingUserId] = useState(null);
   const [editedUserName, setEditedUserName] = useState('');
+  const [buttonForSetSuperAdmin, setButtonForSuperAdmin] = useState(false);
+  const [buttonForUserManipulation, setButtonForUserManipulation] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Portfolio state
   const [portfolioName, setPortfolioName] = useState('');
@@ -162,7 +165,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   //SETTINGS METHODS
 
   async function updateSettings() {
-    if (!newDefaultCurrency.trim()) return alert("Settings name cannot be empty");
+    // if (!newDefaultCurrency.trim()) return alert("Settings name cannot be empty");
     const hasCashCurrency = stocks.some(
       stock => stock.isCash === 1 && stock.currency === newDefaultCurrency
     );
@@ -171,11 +174,17 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
     const response = await fetch(`${API_BASE_URI}/updateSettings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ defaultCurrency: newDefaultCurrency })
+      body: JSON.stringify({
+        defaultCurrency: newDefaultCurrency,
+        idSuperAdmin: selectedUserId
+      })
     });
     if (response.status !== 200) return alert("Problem updating settings");
-
+    if (!newDefaultCurrency.trim())
+      return;
+    // we create a new instance if there is non existing cash instance
     if (hasCashCurrency == false) {
+
       const response = await fetch(`${API_BASE_URI}/createStock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -303,6 +312,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
             onClick={() => setActiveSection(section)}
             className={`px-4 py-2 rounded-md ${activeSection === section ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
           >
+
             {section.charAt(0).toUpperCase() + section.slice(1)} Settings
           </button>
         ))}
@@ -312,61 +322,98 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
       {activeSection === 'user' && (
         <div className="bg-white p-4 rounded shadow">
           <h2 className="text-xl font-semibold mb-2">User Settings</h2>
-          <p className="mb-4">Add, edit, or remove users.</p>
+          <button type="button" onClick={() => setButtonForSuperAdmin(prev => !prev)}>
+            {buttonForSetSuperAdmin ? 'Hide Set Super User' : 'Set super user'}
+          </button>
+          <button type="button" onClick={() => setButtonForUserManipulation(prev => !prev)}>
+            {buttonForUserManipulation ? 'Hide User manipulation' : 'User manipulation'}
+          </button>
 
-          <div className="flex gap-2 mb-4">
-            <input
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="New user name"
-              className="border px-3 py-1 flex-1"
-            />
-            <button onClick={addNewUser} className="bg-green-500 text-white px-4 py-1 rounded">
-              Create User
-            </button>
-          </div>
+          {/* Set Super Admin */}
+          {buttonForSetSuperAdmin && (
+            <ul>
+              {users.map((user) => (
+                <li
+                  key={user.id}
+                  className="border p-3 rounded flex items-center justify-between"
+                >
+                  <span className="font-medium">{user.name}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedUserId === user.id}
+                    onChange={() => setSelectedUserId(user.id)}
+                  />
+                </li>
+              ))}
+              <button
+                onClick={updateSettings}
+                className="bg-blue-500 text-white px-4 py-1 rounded"
+              >
+                Save
+              </button>
+            </ul>
+          )}
+          {/* Create, update or delete user */}
+          {buttonForUserManipulation && (
+            <>
 
-          <ul className="space-y-3">
-            {users.map((user) => (
-              <li key={user.id} className="border p-3 rounded flex items-center justify-between">
-                {editingUserId === user.id ? (
-                  <>
-                    <input
-                      className="border px-2 py-1 mr-2"
-                      value={editedUserName}
-                      onChange={(e) => setEditedUserName(e.target.value)}
-                    />
-                    <div className="space-x-2">
-                      <button onClick={() => updateUser(user.id)} className="bg-blue-500 text-white px-2 py-1 rounded">
-                        Save
-                      </button>
-                      <button onClick={() => setEditingUserId(null)} className="text-red-500">
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-medium">{user.name}</span>
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingUserId(user.id);
-                          setEditedUserName(user.name);
-                        }}
-                        className="text-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button onClick={() => removeUser(user.id)} className="text-red-600">
-                        Delete
-                      </button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+              <p className="mb-4">Add, edit, or remove users.</p>
+              <div className="flex gap-2 mb-4">
+                <input
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="New user name"
+                  className="border px-3 py-1 flex-1"
+                />
+                <button onClick={addNewUser} className="bg-green-500 text-white px-4 py-1 rounded">
+                  Create User
+                </button>
+              </div>
+
+              <ul className="space-y-3">
+                {users.map((user) => (
+                  <li key={user.id} className="border p-3 rounded flex items-center justify-between">
+                    {editingUserId === user.id ? (
+                      <>
+                        <input
+                          className="border px-2 py-1 mr-2"
+                          value={editedUserName}
+                          onChange={(e) => setEditedUserName(e.target.value)}
+                        />
+                        <div className="space-x-2">
+                          <button onClick={() => updateUser(user.id)} className="bg-blue-500 text-white px-2 py-1 rounded">
+                            Save
+                          </button>
+                          <button onClick={() => setEditingUserId(null)} className="text-red-500">
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium">{user.name}</span>
+                        <div className="space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingUserId(user.id);
+                              setEditedUserName(user.name);
+                            }}
+                            className="text-blue-600"
+                          >
+                            Edit
+                          </button>
+                          <button onClick={() => removeUser(user.id)} className="text-red-600">
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
         </div>
       )}
 
