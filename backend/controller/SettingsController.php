@@ -175,7 +175,7 @@ class SettingsController extends BaseController
             "SELECT * FROM stock",
             "SELECT * FROM portfolio",
             "SELECT * FROM user",
-            "SELECT defaultCurrency FROM settings",
+            "SELECT defaultCurrency, managingSuperAdmin FROM settings",
             "SELECT  currencyexchangerate.id, Stock.Symbol as firstSymbol, S.symbol as secondSymbol, currencyexchangerate.rate 
             FROM currencyexchangerate 
             INNER JOIN STOCK ON currencyexchangerate.idFirstCurrency=Stock.id  
@@ -185,7 +185,7 @@ class SettingsController extends BaseController
         $stocks = $results[0];
         $portfolios = $results[1];
         $users = $results[2];
-        $settings = $results[3][0];
+        $settings = $results[3];
         $exchangeRate = $results[4];
 
         return $this->json([

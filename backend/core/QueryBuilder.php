@@ -98,7 +98,7 @@ class QueryBuilder
     {
         [$key, $operation, $value] = $input;
 
-        $allowedOps = ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'NOT IN'];
+        $allowedOps = ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT'];
         if (!in_array($operation, $allowedOps)) {
             throw new \InvalidArgumentException("Invalid operation: $operation");
         }
