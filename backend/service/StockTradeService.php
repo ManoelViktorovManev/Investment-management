@@ -17,7 +17,9 @@ use App\Model\PortfolioStock;
 use App\Core\DbManipulation;
 use App\Controller\TransactionHistoryController;
 use App\Core\Response;
+use App\Model\ProfitAndTaxes;
 use App\Service\StockUserPositionService;
+use App\Service\ProfitAndTaxesService;
 
 /**
  * Class StockTradeService
@@ -165,7 +167,7 @@ class StockTradeService
             // Update user portfolio positions
             $sups = new StockUserPositionService(
                 $this->data["allocations"],
-                $this->data["price"],
+                0,
                 $this->action,
                 $this->cash,
                 $this->portfolio
@@ -223,6 +225,17 @@ class StockTradeService
             $sups->setStock($this->cash);
             $sups->setCashTransferAfterStockTransaction(true);
             $sups->updateUsersStocksPositionInPortfolio();
+
+            // pass portfolio, stock, users id, date, price
+            $pats = new ProfitAndTaxesService(
+                $this->stock->getId(),
+                $this->portfolio->getId(),
+                $this->data["price"],
+                $transactionDate,
+                $this->data["allocations"],
+                $this->action
+            );
+            $pats->handleshit();
         }
     }
 
