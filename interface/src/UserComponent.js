@@ -3,6 +3,8 @@ import API_BASE_URI from './EnvVar.js';
 import PortfolioChart from './PortfolioChart';
 import { TransactionHistoryComponent } from './TransactionHistoryComponent.js';
 import PortfolioList from './PortfolioList';
+import ProfitAndTaxesComponent from './ProfitAndTaxesComponent.js';
+
 const UserComponent = ({ data }) => {
     const [users, setUsers] = useState([]);
 
@@ -143,7 +145,7 @@ const UserComponent = ({ data }) => {
             ) : (
                 <>
                     <TransactionHistoryComponent key={selectedUserId} title={"Transaction History on " + (data.users.find(u => u.id === parseInt(selectedUserId))?.name ?? "Unknown User")}
-                        fields={["Id", "User", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} individualTransactionHisory={selectedUserId} />
+                        fields={["Id", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} individualTransactionHisory={selectedUserId} />
 
                     <PortfolioList
                         stocks={chartData}
@@ -152,6 +154,10 @@ const UserComponent = ({ data }) => {
                             "Current Market CAP", ""
                         ]}
                     />
+                    <ProfitAndTaxesComponent
+                        userId={selectedUserId}
+                    />
+
                 </>
 
             )}

@@ -11,7 +11,6 @@ const PortfolioList = ({ stocks, setDelete, onStockClick, fields }) => {
       setDelete(true);
     }
   }
-  console.log(stocks);
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Arial' }}>
       <thead>

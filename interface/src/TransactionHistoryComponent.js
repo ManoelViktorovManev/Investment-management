@@ -116,4 +116,5 @@ const TransactionHistoryComponent = ({ title, fields, table, individualTransacti
   );
 };
 
+
 export { TransactionHistoryComponent };

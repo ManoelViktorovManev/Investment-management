@@ -1,7 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 
-const ProfitAndTaxesComponent = () => {
+const ProfitAndTaxesComponent = ({ userId }) => {
+    const [userProfitAndTaxes, setUserProfitAndTaxes] = useState([]);
+
+    useEffect(() => {
+        getUserProfitAndTaxes();
+    }, userId);
+
+    const getUserProfitAndTaxes = async () => {
+        const res = await fetch(`${API_BASE_URI}/getProfitAndTaxesWithGrossProfit/${userId}`);
+        if (res.ok) {
+            var response = await res.json();
+            setUserProfitAndTaxes(response);
+            console.log(response)
+        }
+
+    };
+
     /* PROFIT
         Profits:
 
