@@ -47,4 +47,30 @@ class ProfitAndTaxesController extends BaseController
             ->all();
         return $this->json($allProfitAndTaxes);
     }
+
+    #[Route('/updateProfitAndTaxes', methods: ['POST'])]
+    public function updateProfitAndTaxes()
+    {
+
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+
+        $id = $data["id"];
+        // ????? look down and think about isPayed dali ni trebwa
+        // TRQBWA Ni da znaem w kakwa waluta sme demek, trqbwa da se pazi edno pole za walutata koya e
+
+        $managementFeePercent = $data["name"];
+        $managementFee = $data["name"];
+        $taxesFeePercent = $data["name"];
+        $taxesFee = $data["name"];
+        $netProfit = $data["name"];
+        $isPayed = $data["name"];
+
+        $instance = new ProfitAndTaxes();
+        $instance
+            ->query()
+            ->where(["id", "=", $id])
+            ->first();
+    }
 }

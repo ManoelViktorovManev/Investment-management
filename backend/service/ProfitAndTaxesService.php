@@ -68,15 +68,17 @@ class ProfitAndTaxesService
                 $instance->setGrossProfit($this->calculateGrossProfit($instance));
 
                 // create new instance so now we have the rest of amount of stocks 
-                $newInstance = new ProfitAndTaxes();
+                if ($rememberOldStockAllocation - $allocation != 0) {
+                    $newInstance = new ProfitAndTaxes();
 
-                $newInstance->setUserId($instance->getUserId());
-                $newInstance->setPorfolioId($instance->getPortfolioId());
-                $newInstance->setStockId($instance->getStockId());
-                $newInstance->setStockQunatity($rememberOldStockAllocation - $allocation);
-                $newInstance->setBoughtPrice($instance->getBoughtPrice());
+                    $newInstance->setUserId($instance->getUserId());
+                    $newInstance->setPorfolioId($instance->getPortfolioId());
+                    $newInstance->setStockId($instance->getStockId());
+                    $newInstance->setStockQunatity($rememberOldStockAllocation - $allocation);
+                    $newInstance->setBoughtPrice($instance->getBoughtPrice());
 
-                $this->dbm->add($newInstance);
+                    $this->dbm->add($newInstance);
+                }
             }
 
             $this->dbm->add($instance);
@@ -118,7 +120,6 @@ class ProfitAndTaxesService
     }
     private function calculateAverageBoughtPrice(ProfitAndTaxes $instance, $allocation): float
     {
-        //TODO: ROUND to four number.
         $currentValue = $instance->getStockQunatity() * $instance->getBoughtPrice();
         $addingValue = $this->price * $allocation;
         $numberOfAllStocks = $allocation + $instance->getStockQunatity();
