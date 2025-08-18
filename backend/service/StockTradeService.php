@@ -229,9 +229,10 @@ class StockTradeService
             // pass portfolio, stock, users id, date, price
             $pats = new ProfitAndTaxesService(
                 $this->stock->getId(),
+                $this->cash->getId(),
                 $this->portfolio->getId(),
                 $this->data["price"],
-                $transactionDate,
+                $transactionDate, // нз дали ни трябва
                 $this->data["allocations"],
                 $this->action
             );
