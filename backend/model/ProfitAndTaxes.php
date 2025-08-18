@@ -8,6 +8,7 @@ class ProfitAndTaxes extends BaseModel
 {
     private ?int $id;
     private int $stockId;
+    private int $cashId;
     private int $portfolioId;
     private int $userId;
     private ?float $stockQunatity;
@@ -23,10 +24,11 @@ class ProfitAndTaxes extends BaseModel
     private ?float $netProfit;
     private ?bool $isPayed;
 
-    public function __construct(?int $id = null, int $stockId = 0, int $portfolioId = 0, int $userId = 0, ?float $stockQunatity = null, ?float $boughtPrice = null, ?float $soldPrice = null, ?string $boughtDate = null, ?string $soldDate = null, ?float $grossProfit = null, ?float $taxesToPayPecantage = null, ?float $taxesToPay = null, ?float $managementFeesToPay = null, ?float $managementFeesToPayPercantage = null, ?float $netProfit = null, ?bool $isPayed = null)
+    public function __construct(?int $id = null, int $stockId = 0, int $cashId = 0, int $portfolioId = 0, int $userId = 0, ?float $stockQunatity = null, ?float $boughtPrice = null, ?float $soldPrice = null, ?string $boughtDate = null, ?string $soldDate = null, ?float $grossProfit = null, ?float $taxesToPayPecantage = null, ?float $taxesToPay = null, ?float $managementFeesToPay = null, ?float $managementFeesToPayPercantage = null, ?float $netProfit = null, ?bool $isPayed = null)
     {
         $this->id = $id;
         $this->stockId = $stockId;
+        $this->cashId = $cashId;
         $this->portfolioId = $portfolioId;
         $this->userId = $userId;
         $this->stockQunatity = $stockQunatity;
@@ -61,6 +63,16 @@ class ProfitAndTaxes extends BaseModel
     public function setStockId(int $stockId): void
     {
         $this->stockId = $stockId;
+    }
+
+    public function getCashId(): int
+    {
+        return $this->cashId;
+    }
+
+    public function setCashId(int $cashId): void
+    {
+        $this->cashId = $cashId;
     }
 
     public function getPortfolioId(): int
@@ -201,5 +213,26 @@ class ProfitAndTaxes extends BaseModel
     public function setIsPayed(bool $isPayed): void
     {
         $this->isPayed = $isPayed;
+    }
+
+    public function compare(ProfitAndTaxes $otherInstance): bool
+    {
+        return $this->id === $otherInstance->id &&
+            $this->stockId === $otherInstance->stockId &&
+            $this->cashId === $otherInstance->cashId &&
+            $this->portfolioId === $otherInstance->portfolioId &&
+            $this->userId === $otherInstance->userId &&
+            $this->stockQunatity === $otherInstance->stockQunatity &&
+            $this->boughtPrice === $otherInstance->boughtPrice &&
+            $this->soldPrice === $otherInstance->soldPrice &&
+            $this->boughtDate === $otherInstance->boughtDate &&
+            $this->soldDate === $otherInstance->soldDate &&
+            $this->grossProfit === $otherInstance->grossProfit &&
+            $this->taxesToPayPecantage === $otherInstance->taxesToPayPecantage &&
+            $this->taxesToPay === $otherInstance->taxesToPay &&
+            $this->managementFeesToPay === $otherInstance->managementFeesToPay &&
+            $this->managementFeesToPayPercantage === $otherInstance->managementFeesToPayPercantage &&
+            $this->netProfit === $otherInstance->netProfit &&
+            $this->isPayed === $otherInstance->isPayed;
     }
 }
