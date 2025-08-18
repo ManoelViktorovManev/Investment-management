@@ -9,6 +9,7 @@ class ProfitAndTaxesService
 {
     private int $stockId;
     private int $portfolioId;
+    private int $cashId;
     private float $price;
     private string $date;
     private array $allocations;
@@ -34,9 +35,10 @@ class ProfitAndTaxesService
     private float $netProfit;
     private bool $isPayed;
     */
-    public function __construct(int $stockId, int $portfolioId, float $price, string $date, array $allocations, string $action)
+    public function __construct(int $stockId, int $cashId, int $portfolioId, float $price, string $date, array $allocations, string $action)
     {
         $this->stockId = $stockId;
+        $this->cashId = $cashId;
         $this->portfolioId = $portfolioId;
         $this->price = $price;
         $this->date = $date;
@@ -53,6 +55,7 @@ class ProfitAndTaxesService
                 if (is_null($instance->getStockQunatity()) || is_null($instance->getBoughtPrice())) {
                     $instance->setStockQunatity($allocation);
                     $instance->setBoughtPrice($this->price);
+                    $instance->setCashId($this->cashId);
                 } else {
                     $newPrice = $this->calculateAverageBoughtPrice($instance, $allocation);
                     $instance->setStockQunatity($allocation + $instance->getStockQunatity());
@@ -76,6 +79,7 @@ class ProfitAndTaxesService
                     $newInstance->setStockId($instance->getStockId());
                     $newInstance->setStockQunatity($rememberOldStockAllocation - $allocation);
                     $newInstance->setBoughtPrice($instance->getBoughtPrice());
+                    $newInstance->setCashId($instance->getCashId());
 
                     $this->dbm->add($newInstance);
                 }
