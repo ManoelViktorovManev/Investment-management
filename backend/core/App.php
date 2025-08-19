@@ -20,7 +20,10 @@ class App
             $this->router = new Router();
             $this->checkForExistingResponse();
         } catch (Exception $e) {
-            echo "<h1>" . ($e->getMessage()) . "</h1>";
+            $message = $e->getMessage();
+            error_log("\033[31m$message\033[0m");
+            $this->executeResponse(new Response($message, 404));
+            // echo "<h1>" . ($e->getMessage()) . "</h1>";
         }
     }
 
