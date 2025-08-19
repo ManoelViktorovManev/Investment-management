@@ -43,8 +43,8 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                         ? (grossProfit * item.managementFeesToPayPercantage) / 100
                         : 0;
                 const taxes =
-                    item.taxesToPayPecantage && !isNaN(item.taxesToPayPecantage)
-                        ? (grossProfit * item.taxesToPayPecantage) / 100
+                    item.taxesToPayPercantage && !isNaN(item.taxesToPayPercantage)
+                        ? (grossProfit * item.taxesToPayPercantage) / 100
                         : 0;
 
                 const net = grossProfit - managementFees - taxes;
@@ -59,6 +59,7 @@ const ProfitAndTaxesComponent = ({ userId }) => {
         );
     };
 
+    // handle here because it is always true
     const handlePayed = (id) => {
         setUserProfitAndTaxes((prev) =>
             prev.map((item) =>
@@ -126,7 +127,7 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                     </td>
 
                                     <td className="border border-gray-300 px-2 py-1">
-                                        {item.stockQunatity}
+                                        {item.stockQuantity}
                                     </td>
                                     <td className="border border-gray-300 px-2 py-1">
                                         {item.boughtPrice}
@@ -159,11 +160,11 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    value={item.taxesToPayPecantage ?? ""}
+                                                    value={item.taxesToPayPercantage ?? ""}
                                                     onChange={(e) =>
                                                         handleInputChange(
                                                             item.id,
-                                                            "taxesToPayPecantage",
+                                                            "taxesToPayPercantage",
                                                             e.target.value
                                                         )
                                                     }
@@ -191,7 +192,7 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                                     className={`px-2 py-1 rounded text-white ${item.isPayed ? "bg-green-500" : "bg-gray-500 hover:bg-gray-600"
                                                         }`}
                                                 >
-                                                    {item.isPayed ? "Payed" : "Mark as Payed"}
+                                                    {item.isPayed ? "Payed" : "Not Payed"}
                                                 </button>
                                             </td>
                                         </>
