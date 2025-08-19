@@ -15,13 +15,20 @@ function App() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // ок
+
+  // Method that help to format the number 
+  const formatPrice = (value) => {
+    if (value === null || value === undefined) return null;
+    return parseFloat(Number(value).toFixed(4)); // до 4 знака, без излишни нули
+  };
+
+  //ок
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
     if (res.ok) setUsers(await res.json());
   };
 
-  // ок
+  //ок
   const getAllPortfolios = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
     if (res.ok) setPortfolios(await res.json());
@@ -42,11 +49,6 @@ function App() {
   //ok
   const getExchangeRates = async () => {
     const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
-    // if (res.ok) {
-    //   var result = await res.json();
-    //   setExchangeRates(result);
-    //   console.log(result);
-    // }
     if (res.ok) setExchangeRates(await res.json());
   };
 
@@ -54,10 +56,15 @@ function App() {
     const res = await fetch(`${API_BASE_URI}/getAllInfromation`);
     if (res.ok) {
       var result = await res.json();
-      // console.log(result["exchangeRates"])
+
+      const formattedStocks = result["stocks"].map((stock) => ({
+        ...stock,
+        price: formatPrice(stock.price),
+      }));
+
       setUsers(result["users"]);
       setPortfolios(result["portfolios"]);
-      setStocks(result["stocks"]);
+      setStocks(formattedStocks);
       setSettings(result["settings"]);
       setExchangeRates(result["exchangeRates"]);
     }
@@ -66,11 +73,6 @@ function App() {
   useEffect(() => {
     const loadAllData = async () => {
       await Promise.all([
-        // getAllUsers(),
-        // getAllPortfolios(),
-        // getAllStocks(),
-        // getSettings(),
-        // getExchangeRates(),
         getAllNeededInfromation()
       ]);
       setIsLoading(false);

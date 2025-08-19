@@ -18,6 +18,12 @@ const TransactionHistoryComponent = ({ title, fields, table, individualTransacti
     fetchTransactionHistory(currentPage);
   }, [currentPage, individualTransactionHisory]);
 
+  // Method that help to format the number 
+  const formatPrice = (value) => {
+    if (value === null || value === undefined) return null;
+    return parseFloat(Number(value).toFixed(4)); // до 4 знака, без излишни нули
+  };
+
   // again from which table
   async function fetchTransactionHistory(page) {
     try {
@@ -33,7 +39,16 @@ const TransactionHistoryComponent = ({ title, fields, table, individualTransacti
         throw new Error("Failed to fetch transaction history");
       }
       const data = await response.json();
-      setTransactions(data);
+
+      const formattedData = data.map((tx) => ({
+        ...tx,
+        numStocks: formatPrice(tx.numStocks),
+        price: formatPrice(tx.price),
+      }));
+
+
+      setTransactions(formattedData);
+
     } catch (error) {
       alert(error.message);
     }
@@ -50,7 +65,6 @@ const TransactionHistoryComponent = ({ title, fields, table, individualTransacti
         response = await fetch(`${API_BASE_URI}/getTransactionHistoryCountResults/${table}/`);
       }
 
-      // const response = await fetch(`${API_BASE_URI}/getTransactionHistoryCountResults/${table}/`);
       if (!response.ok) {
         throw new Error("Failed to count transaction history");
       }
@@ -80,11 +94,13 @@ const TransactionHistoryComponent = ({ title, fields, table, individualTransacti
             <tbody>
               {transactions.map((tx) => (
                 <tr key={tx.id}>
-                  {Object.values(tx).map((value, i) => (
-                    <td key={i} className="border px-3 py-2">
-                      {value}
-                    </td>
-                  ))}
+                  {Object.entries(tx)
+                    .filter(([key]) => key !== "id")
+                    .map(([_, value], i) => (
+                      <td key={i} className="border px-3 py-2">
+                        {value}
+                      </td>
+                    ))}
                 </tr>
               ))}
             </tbody>

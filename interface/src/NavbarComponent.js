@@ -15,7 +15,7 @@ const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
     },
     {
       label: 'Transaction History', action: () => setCurrentPage(<TransactionHistoryComponent title={"Transaction History"}
-        fields={["Id", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"transaction"} />)
+        fields={["Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"transaction"} />)
     },
   ];
 

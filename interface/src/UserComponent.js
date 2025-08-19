@@ -141,11 +141,11 @@ const UserComponent = ({ data }) => {
             {/* Individual transaction history */}
             {selectedUserId == "all" ? (
                 <TransactionHistoryComponent key="all" title={"Transaction User History"}
-                    fields={["Id", "User", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} />
+                    fields={["User", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} />
             ) : (
                 <>
                     <TransactionHistoryComponent key={selectedUserId} title={"Transaction History on " + (data.users.find(u => u.id === parseInt(selectedUserId))?.name ?? "Unknown User")}
-                        fields={["Id", "Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} individualTransactionHisory={selectedUserId} />
+                        fields={["Portfolio", "Stock", "Quantity", "Price", "Date", "Transaction"]} table={"asdf"} individualTransactionHisory={selectedUserId} />
 
                     <PortfolioList
                         stocks={chartData}
