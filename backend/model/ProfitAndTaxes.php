@@ -11,33 +11,33 @@ class ProfitAndTaxes extends BaseModel
     private int $cashId;
     private int $portfolioId;
     private int $userId;
-    private ?float $stockQunatity;
+    private ?float $stockQuantity;
     private ?float $boughtPrice;
     private ?float $soldPrice;
     private ?string $boughtDate;
     private ?string $soldDate;
     private ?float $grossProfit;
-    private ?float $taxesToPayPecantage;
+    private ?float $taxesToPayPercantage;
     private ?float $taxesToPay;
     private ?float $managementFeesToPay;
     private ?float $managementFeesToPayPercantage;
     private ?float $netProfit;
     private ?bool $isPayed;
 
-    public function __construct(?int $id = null, int $stockId = 0, int $cashId = 0, int $portfolioId = 0, int $userId = 0, ?float $stockQunatity = null, ?float $boughtPrice = null, ?float $soldPrice = null, ?string $boughtDate = null, ?string $soldDate = null, ?float $grossProfit = null, ?float $taxesToPayPecantage = null, ?float $taxesToPay = null, ?float $managementFeesToPay = null, ?float $managementFeesToPayPercantage = null, ?float $netProfit = null, ?bool $isPayed = null)
+    public function __construct(?int $id = null, int $stockId = 0, int $cashId = 0, int $portfolioId = 0, int $userId = 0, ?float $stockQuantity = null, ?float $boughtPrice = null, ?float $soldPrice = null, ?string $boughtDate = null, ?string $soldDate = null, ?float $grossProfit = null, ?float $taxesToPayPercantage = null, ?float $taxesToPay = null, ?float $managementFeesToPay = null, ?float $managementFeesToPayPercantage = null, ?float $netProfit = null, ?bool $isPayed = null)
     {
         $this->id = $id;
         $this->stockId = $stockId;
         $this->cashId = $cashId;
         $this->portfolioId = $portfolioId;
         $this->userId = $userId;
-        $this->stockQunatity = $stockQunatity;
+        $this->stockQuantity = $stockQuantity;
         $this->boughtPrice = $boughtPrice;
         $this->soldPrice = $soldPrice;
         $this->boughtDate = $boughtDate;
         $this->soldDate = $soldDate;
         $this->grossProfit = $grossProfit;
-        $this->taxesToPayPecantage = $taxesToPayPecantage;
+        $this->taxesToPayPercantage = $taxesToPayPercantage;
         $this->taxesToPay = $taxesToPay;
         $this->managementFeesToPay = $managementFeesToPay;
         $this->managementFeesToPayPercantage = $managementFeesToPayPercantage;
@@ -97,12 +97,12 @@ class ProfitAndTaxes extends BaseModel
 
     public function getStockQunatity(): ?float
     {
-        return $this->stockQunatity;
+        return $this->stockQuantity;
     }
 
-    public function setStockQunatity(float $stockQunatity): void
+    public function setStockQunatity(float $stockQuantity): void
     {
-        $this->stockQunatity = $stockQunatity;
+        $this->stockQuantity = $stockQuantity;
     }
 
     public function getBoughtPrice(): ?float
@@ -157,12 +157,12 @@ class ProfitAndTaxes extends BaseModel
 
     public function getTaxesToPayPecantage(): ?float
     {
-        return $this->taxesToPayPecantage;
+        return $this->taxesToPayPercantage;
     }
 
-    public function setTaxesToPayPecantage(float $taxesToPayPecantage): void
+    public function setTaxesToPayPecantage(float $taxesToPayPercantage): void
     {
-        $this->taxesToPayPecantage = $taxesToPayPecantage;
+        $this->taxesToPayPercantage = $taxesToPayPercantage;
     }
 
     public function getTaxesToPay(): ?float
@@ -222,13 +222,13 @@ class ProfitAndTaxes extends BaseModel
             $this->cashId === $otherInstance->cashId &&
             $this->portfolioId === $otherInstance->portfolioId &&
             $this->userId === $otherInstance->userId &&
-            $this->stockQunatity === $otherInstance->stockQunatity &&
+            $this->stockQuantity === $otherInstance->stockQuantity &&
             $this->boughtPrice === $otherInstance->boughtPrice &&
             $this->soldPrice === $otherInstance->soldPrice &&
             $this->boughtDate === $otherInstance->boughtDate &&
             $this->soldDate === $otherInstance->soldDate &&
             $this->grossProfit === $otherInstance->grossProfit &&
-            $this->taxesToPayPecantage === $otherInstance->taxesToPayPecantage &&
+            $this->taxesToPayPercantage === $otherInstance->taxesToPayPercantage &&
             $this->taxesToPay === $otherInstance->taxesToPay &&
             $this->managementFeesToPay === $otherInstance->managementFeesToPay &&
             $this->managementFeesToPayPercantage === $otherInstance->managementFeesToPayPercantage &&
