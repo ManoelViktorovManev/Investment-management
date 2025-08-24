@@ -7,10 +7,10 @@ use App\Core\BaseModel;
 class Settings extends BaseModel
 {
     private ?int $id;
-    private string $defaultCurrency;
+    private ?string $defaultCurrency;
     private ?int $managingSuperAdmin;
 
-    public function __construct(?int $id = null, string $defaultCurrency = '', ?int $managingSuperAdmin = null)
+    public function __construct(?int $id = null, ?string $defaultCurrency = null, ?int $managingSuperAdmin = null)
     {
         $this->id = $id;
         $this->defaultCurrency = $defaultCurrency;
@@ -27,7 +27,7 @@ class Settings extends BaseModel
         $this->id = $id;
     }
 
-    public function getDefaultCurrency(): string
+    public function getDefaultCurrency(): ?string
     {
         return $this->defaultCurrency;
     }

@@ -105,6 +105,18 @@ const UserComponent = ({ data }) => {
             setChartData(enriched);
         }
     }
+    if (
+        !data.settings ||
+        data.settings.defaultCurrency == null ||
+        data.settings.managingSuperAdmin == null
+    ) {
+        return (
+            <div>
+                <h1>Please set defaultCurrency and Super admin in Settings section</h1>
+            </div>
+        );
+    }
+
 
     return (
         <div>

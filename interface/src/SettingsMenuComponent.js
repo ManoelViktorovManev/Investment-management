@@ -29,8 +29,8 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [updatedStocks, setUpdatedStocks] = useState([]);
 
   // Settings state
-  const [newDefaultCurrency, setNewDefaultCurrency] = useState('');
-  const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState('');
+  const [newDefaultCurrency, setNewDefaultCurrency] = useState(null);
+  const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState(null);
 
   // fields for stock split
   const [selectedStockId, setSelectedStockId] = useState('');
@@ -51,12 +51,20 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
 
 
-
+  console.log(exchangeRates);
   useEffect(() => {
     setUpdatedStocks([...stocks]);
+  }, [stocks]);
+
+  useEffect(() => {
+    if (settings == null)
+      return;
     setCurrentDefaultCurrency(settings.defaultCurrency);
+  }, [settings]);
+
+  useEffect(() => {
     setEditedExchangeRates([...exchangeRates]);
-  }, [stocks, settings, exchangeRates]);
+  }, [exchangeRates]);
 
   // USER FUNCTIONS
   async function addNewUser() {
@@ -165,12 +173,8 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   //SETTINGS METHODS
 
   async function updateSettings() {
-    // if (!newDefaultCurrency.trim()) return alert("Settings name cannot be empty");
-    const hasCashCurrency = stocks.some(
-      stock => stock.isCash === 1 && stock.currency === newDefaultCurrency
-    );
-
-    console.log(hasCashCurrency);
+    // newDefaultCurrency => USD/EUR..
+    // selectedUserId => 1/2...
     const response = await fetch(`${API_BASE_URI}/updateSettings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -180,20 +184,28 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
       })
     });
     if (response.status !== 200) return alert("Problem updating settings");
-    if (!newDefaultCurrency.trim())
-      return;
-    // we create a new instance if there is non existing cash instance
-    if (hasCashCurrency == false) {
 
-      const response = await fetch(`${API_BASE_URI}/createStock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stockName: newDefaultCurrency + " cash", stockSymbol: newDefaultCurrency, stockCurrency: newDefaultCurrency, stockPrice: 1, isCash: 1 })
-      });
-      if (response.status !== 200) return alert("Problem updating settings");
+    if (newDefaultCurrency != null) {
+      if (!newDefaultCurrency.trim())
+        return;
+      // check if this is a new Currency that doesn`t exist
+      const hasCashCurrency = stocks.some(
+        stock => stock.isCash === 1 && stock.currency === newDefaultCurrency
+      );
+
+      // we create a new instance if there is non existing cash instance
+      if (hasCashCurrency == false) {
+
+        const response = await fetch(`${API_BASE_URI}/createStock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stockName: newDefaultCurrency + " cash", stockSymbol: newDefaultCurrency, stockCurrency: newDefaultCurrency, stockPrice: 1, isCash: 1 })
+        });
+        if (response.status !== 200) return alert("Problem updating settings");
+      }
     }
-
-    setNewDefaultCurrency('');
+    setNewDefaultCurrency(null);
+    setSelectedUserId(null)
     reloadSettings();
   }
 
@@ -244,7 +256,6 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
       return;
     }
 
-    console.log("NISAN");
     try {
       const response = await fetch(`${API_BASE_URI}/stockSplit`, {
         method: "POST",
@@ -546,7 +557,7 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
                   <div className="space-y-3">
                     {editedExchangeRates.map(rate => (
                       <div key={rate.id} className="flex items-center gap-2">
-                        <span className="w-24">{rate.firstSymbol} → {rate.secoundSymbol}</span>
+                        <span className="w-24">{rate.firstSymbol} → {rate.secondSymbol}</span>
                         <input
                           type="number"
                           step="0.0001"

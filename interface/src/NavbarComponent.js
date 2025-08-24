@@ -42,7 +42,7 @@ const SettingsMenuWrapper = ({ data, refreshMethods }) => {
   const [users, setUsers] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [stocks, setStocks] = useState([]);
-  const [settings, setSettings] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [exchangeRates, setExchangeRates] = useState([]);
 
   const getAllUsers = async () => {

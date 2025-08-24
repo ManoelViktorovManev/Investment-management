@@ -83,11 +83,16 @@ function App() {
         price: formatPrice(stock.price),
       }));
 
+      const formattedExchangeRate = result["exchangeRates"].map((rates) => ({
+        ...rates,
+        rate: formatPrice(rates.rate),
+      }));
+
       setUsers(result["users"]);
       setPortfolios(result["portfolios"]);
       setStocks(formattedStocks);
       setSettings(result["settings"]);
-      setExchangeRates(result["exchangeRates"]);
+      setExchangeRates(formattedExchangeRate);
     }
   };
   // Call them all once at start

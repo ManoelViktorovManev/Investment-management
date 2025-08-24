@@ -63,7 +63,7 @@ class SettingsController extends BaseController
         if ($ifExists == null) {
             $settings = $this->createSettings();
         }
-        return $this->json(['defaultCurrency' => $settings->getDefaultCurrency(), 'managmentSuperAdmin' => $settings->getManagingSuperAdmin()]);
+        return $this->json(['defaultCurrency' => $settings->getDefaultCurrency(), 'managingSuperAdmin' => $settings->getManagingSuperAdmin()]);
     }
 
     /**
@@ -185,7 +185,7 @@ class SettingsController extends BaseController
         $stocks = $results[0];
         $portfolios = $results[1];
         $users = $results[2];
-        $settings = $results[3];
+        $settings = $results[3][0];
         $exchangeRate = $results[4];
 
         return $this->json([

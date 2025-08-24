@@ -267,9 +267,21 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
       setStockData(mapped);
     }
   }
+  if (
+    !data.settings ||
+    data.settings.defaultCurrency == null ||
+    data.settings.managingSuperAdmin == null
+  ) {
+    return (
+      <div>
+        <h1>Please set defaultCurrency and Super admin in Settings section</h1>
+      </div>
+    );
+  }
+
 
   return (
-    <div>
+    < div >
       <select onChange={handleChangeofPortfolio}>
         <option key="0" value="">Entire portfolio</option>
         {Object.entries(porfoliosNamesAndIds).map(([id, name]) => (
@@ -278,80 +290,88 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
       </select>
 
 
-      {selectedPortfolio !== '' && (
+      {
+        selectedPortfolio !== '' && (
 
-        <div>
-          <button type="button" onClick={() => setShowBuyStockForm(prev => !prev)}>
-            {showBuyStockForm ? 'Hide Buy Stock/Insert Cash' : 'Buy Stock/Insert Cash'}
-          </button>
+          <div>
+            <button type="button" onClick={() => setShowBuyStockForm(prev => !prev)}>
+              {showBuyStockForm ? 'Hide Buy Stock/Insert Cash' : 'Buy Stock/Insert Cash'}
+            </button>
 
-          <button type="button" onClick={() => setShowSellStockForm(prev => !prev)}>
-            {showSellStockForm ? 'Hide Sell Stock/Remove Cash' : 'Sell Stock/Remove Cash'}
-          </button>
-        </div>
+            <button type="button" onClick={() => setShowSellStockForm(prev => !prev)}>
+              {showSellStockForm ? 'Hide Sell Stock/Remove Cash' : 'Sell Stock/Remove Cash'}
+            </button>
+          </div>
 
-      )}
+        )
+      }
 
       {/* Buying stock */}
-      {showBuyStockForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
-            <FormInput
-              title="Buy Stock/Insert Cash"
-              stock={newStock}
-              listOfStocks={stocksInfo}
-              onChange={handleInputChange}
-              onSubmit={(e) => handleTransactionSubmit(e, 'buy')}
-              portfolioId={selectedPortfolio}
-              listOfUsers={usersNamesAndIds}
-            />
+      {
+        showBuyStockForm && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="modal-close" onClick={() => setShowBuyStockForm(false)}>×</button>
+              <FormInput
+                title="Buy Stock/Insert Cash"
+                stock={newStock}
+                listOfStocks={stocksInfo}
+                onChange={handleInputChange}
+                onSubmit={(e) => handleTransactionSubmit(e, 'buy')}
+                portfolioId={selectedPortfolio}
+                listOfUsers={usersNamesAndIds}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* Selling stock */}
-      {showSellStockForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
-            <FormInput
-              title="Sell Stock/Remove Cash"
-              stock={newStock}
-              listOfStocks={stocksInfo}
-              onChange={handleInputChange}
-              onSubmit={(e) => handleTransactionSubmit(e, 'sell')}
-              portfolioId={selectedPortfolio}
-              listOfUsers={usersNamesAndIds}
-            />
+      {
+        showSellStockForm && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="modal-close" onClick={() => setShowSellStockForm(false)}>×</button>
+              <FormInput
+                title="Sell Stock/Remove Cash"
+                stock={newStock}
+                listOfStocks={stocksInfo}
+                onChange={handleInputChange}
+                onSubmit={(e) => handleTransactionSubmit(e, 'sell')}
+                portfolioId={selectedPortfolio}
+                listOfUsers={usersNamesAndIds}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
-      {selectedStockId ? (
-        <StockDistributionView
-          stock={stockData.find(s => s.stockId === selectedStockId)}
-          goBack={() => setSelectedStockId(null)}
-        />
-      ) : (
-        <>
-          <h2 className="text-3xl font-semibold mb-6">
-            Portfolio Overview: {porfoliosNamesAndIds[selectedPortfolio]}
-          </h2>
-          <PortfolioChart data={stockData} dataKey={"currentMarketCap"} />
-          <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>
-          <h3>Current value: {entireCashValue} {data.settings.defaultCurrency}</h3>
-          <PortfolioList
-            stocks={stockData}
-            setDelete={setDeletedStock}
-            onStockClick={(stockId) => setSelectedStockId(stockId)}
-            fields={["Symbol", "Name", "Currency", "Num Shares", "Current Stock Price", "Avg Cost/Share",
-              "Total Money Invested", "Current Market CAP", "Value by selected Currency", "Return on Investment",
-              "% of Portfolio", ""
-            ]}
+      {
+        selectedStockId ? (
+          <StockDistributionView
+            stock={stockData.find(s => s.stockId === selectedStockId)}
+            goBack={() => setSelectedStockId(null)}
           />
-        </>
-      )}
+        ) : (
+          <>
+            <h2 className="text-3xl font-semibold mb-6">
+              Portfolio Overview: {porfoliosNamesAndIds[selectedPortfolio]}
+            </h2>
+            <PortfolioChart data={stockData} dataKey={"currentMarketCap"} />
+            <h3 className="text-xl font-medium mt-8 mb-2">Stock Breakdown</h3>
+            <h3>Current value: {entireCashValue} {data.settings.defaultCurrency}</h3>
+            <PortfolioList
+              stocks={stockData}
+              setDelete={setDeletedStock}
+              onStockClick={(stockId) => setSelectedStockId(stockId)}
+              fields={["Symbol", "Name", "Currency", "Num Shares", "Current Stock Price", "Avg Cost/Share",
+                "Total Money Invested", "Current Market CAP", "Value by selected Currency", "Return on Investment",
+                "% of Portfolio", ""
+              ]}
+            />
+          </>
+        )
+      }
     </div >
   );
 };
