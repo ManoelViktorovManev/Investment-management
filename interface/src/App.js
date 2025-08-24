@@ -25,31 +25,52 @@ function App() {
   //ок
   const getAllUsers = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllUsers`);
-    if (res.ok) setUsers(await res.json());
+    if (res.ok) {
+      var result = await res.json();
+      setUsers(result);
+      return result;
+    }
   };
 
   //ок
   const getAllPortfolios = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
-    if (res.ok) setPortfolios(await res.json());
+    if (res.ok) {
+      var result = await res.json();
+      setPortfolios(result);
+      return result;
+    }
   };
 
   //ok
   const getAllStocks = async () => {
     const res = await fetch(`${API_BASE_URI}/getAllStocks`);
-    if (res.ok) setStocks(await res.json());
+    if (res.ok) {
+      var result = await res.json();
+      setStocks(result);
+      return result;
+    }
   };
 
   //ok
   const getSettings = async () => {
     const res = await fetch(`${API_BASE_URI}/getSettings`);
-    setSettings(await res.json());
+    if (res.ok) {
+      var result = await res.json();
+      setSettings(result);
+      return result;
+    }
+
   };
 
   //ok
   const getExchangeRates = async () => {
     const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
-    if (res.ok) setExchangeRates(await res.json());
+    if (res.ok) {
+      var result = await res.json();
+      setExchangeRates(result);
+      return result;
+    }
   };
 
   const getAllNeededInfromation = async () => {

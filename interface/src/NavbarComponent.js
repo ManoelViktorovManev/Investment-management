@@ -11,7 +11,7 @@ const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
     { label: 'Users', action: () => setCurrentPage(<UserComponent data={data} />) },
     {
       label: 'Settings',
-      action: () => setCurrentPage(<SettingsMenuWrapper />)
+      action: () => setCurrentPage(<SettingsMenuWrapper data={data} refreshMethods={refreshMethods} />)
     },
     {
       label: 'Transaction History', action: () => setCurrentPage(<TransactionHistoryComponent title={"Transaction History"}
@@ -38,7 +38,7 @@ const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
   );
 };
 
-const SettingsMenuWrapper = () => {
+const SettingsMenuWrapper = ({ data, refreshMethods }) => {
   const [users, setUsers] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -46,35 +46,35 @@ const SettingsMenuWrapper = () => {
   const [exchangeRates, setExchangeRates] = useState([]);
 
   const getAllUsers = async () => {
-    const res = await fetch(`${API_BASE_URI}/getAllUsers`);
-    if (res.ok) setUsers(await res.json());
+    var result = await refreshMethods.refreshUsers();
+    setUsers(result);
   };
 
   const getAllPortfolios = async () => {
-    const res = await fetch(`${API_BASE_URI}/getAllPortfolios`);
-    if (res.ok) setPortfolios(await res.json());
+    var result = await refreshMethods.refreshPortfolios();
+    setPortfolios(result);
   };
 
   const getAllStocks = async () => {
-    const res = await fetch(`${API_BASE_URI}/getAllStocks`);
-    if (res.ok) setStocks(await res.json());
+    var result = await refreshMethods.refreshStocks();
+    setStocks(result);
   };
   const getSettings = async () => {
-    const res = await fetch(`${API_BASE_URI}/getSettings`);
-    if (res.ok) setSettings(await res.json());
+    var result = await refreshMethods.refreshSettings();
+    setSettings(result);
   };
 
   const getExchangeRates = async () => {
-    const res = await fetch(`${API_BASE_URI}/getExchangeRates`);
-    if (res.ok) setExchangeRates(await res.json());
+    var result = await refreshMethods.refreshExchangeRates();
+    setExchangeRates(result);
   };
 
   useEffect(() => {
-    getAllUsers();
-    getAllPortfolios();
-    getAllStocks();
-    getSettings();
-    getExchangeRates();
+    setUsers(data.users);
+    setPortfolios(data.portfolios);
+    setStocks(data.stocks);
+    setSettings(data.settings);
+    setExchangeRates(data.exchangeRates);
   }, []);
 
   return (
@@ -92,5 +92,8 @@ const SettingsMenuWrapper = () => {
     />
   );
 };
+
+
+
 
 export { NavbarComponent };

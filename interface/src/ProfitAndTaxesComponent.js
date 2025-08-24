@@ -8,14 +8,33 @@ const ProfitAndTaxesComponent = ({ userId }) => {
         getUserProfitAndTaxes();
     }, [userId]);
 
+    // Method that help to format the number 
+    const formatPrice = (value) => {
+        if (value === null || value === undefined) return null;
+        return parseFloat(Number(value).toFixed(4)); // до 4 знака, без излишни нули
+    };
+
     const getUserProfitAndTaxes = async () => {
         const res = await fetch(
             `${API_BASE_URI}/getProfitAndTaxesWithGrossProfit/${userId}`
         );
         if (res.ok) {
             const response = await res.json();
-            setUserProfitAndTaxes(response);
-            console.log(response);
+
+            const formattedData = response.map((tx) => ({
+                ...tx,
+                stockQuantity: formatPrice(tx.stockQuantity),
+                boughtPrice: formatPrice(tx.boughtPrice),
+                soldPrice: formatPrice(tx.soldPrice),
+                grossProfit: formatPrice(tx.grossProfit),
+                taxesToPayPercantage: formatPrice(tx.taxesToPayPercantage),
+                taxesToPay: formatPrice(tx.taxesToPay),
+                managementFeesToPay: formatPrice(tx.managementFeesToPay),
+                managementFeesToPayPercantage: formatPrice(tx.managementFeesToPayPercantage),
+                netProfit: formatPrice(tx.netProfit),
+            }));
+            setUserProfitAndTaxes(formattedData);
+            console.log(formattedData);
         }
     };
 
