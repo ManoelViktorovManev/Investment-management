@@ -240,8 +240,9 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
 
         var rate = null;
         if (stock.currency != data.settings.defaultCurrency) {
-          rate = getConversionRate(data.settings.defaultCurrency, stock.currency, data.exchangeRates);
-          entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)) * rate);
+          rate = getConversionRate(stock.currency, data.settings.defaultCurrency, data.exchangeRates);
+          entireCashValue = entireCashValue + parseFloat(((stock.price * numStocks) * rate).toFixed(2));
+
         }
         else {
           entireCashValue = entireCashValue + (parseFloat((stock.price * numStocks).toFixed(2)));
@@ -257,7 +258,7 @@ const HomeComponent = ({ data, refreshStocksMethod }) => {
           averagePricePerStock: (valueOfStock / numStocks).toFixed(2),
           value: valueOfStock,
           currentMarketCap: parseFloat((stock.price * numStocks).toFixed(2)),
-          valueInSelectedCurrency: rate != null ? (parseFloat((stock.price * numStocks).toFixed(2)) * rate) : parseFloat((stock.price * numStocks).toFixed(2)),
+          valueInSelectedCurrency: rate != null ? parseFloat(((stock.price * numStocks) * rate).toFixed(2)) : parseFloat((stock.price * numStocks).toFixed(2)),
           selectedCurrency: data.settings.defaultCurrency,
           returnOfInvestment: ((stock.price * numStocks - valueOfStock) / valueOfStock * 100).toFixed(2),
           percentage: 0,

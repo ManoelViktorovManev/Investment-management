@@ -51,7 +51,6 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
 
 
-  console.log(exchangeRates);
   useEffect(() => {
     setUpdatedStocks([...stocks]);
   }, [stocks]);

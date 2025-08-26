@@ -34,7 +34,6 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                 netProfit: formatPrice(tx.netProfit),
             }));
             setUserProfitAndTaxes(formattedData);
-            console.log(formattedData);
         }
     };
 

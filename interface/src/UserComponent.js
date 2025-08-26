@@ -46,7 +46,6 @@ const UserComponent = ({ data }) => {
     }, [deletedStock]);
 
     async function getAllStocksOwnedByUser(userId) {
-        // OPTIMIZE THIS BECAUSE IT IS SOOO SLOW
         const isAll = userId === null || userId === "all";
         setIsGroupByUser(isAll);
 
@@ -60,23 +59,39 @@ const UserComponent = ({ data }) => {
         const raw = await response.json();
 
         if (isAll) {
-            // Group total value per user
             const groupedByUser = {};
-            // here down there is an bug
+
             for (const { userId, stockId, stockQuantity } of raw) {
-                // ok
                 const quantity = parseFloat(stockQuantity);
-                const price = allStockInfo[stockId]?.price || 0;
+                const stock = allStockInfo[stockId];
+                if (!stock) continue;
+
+                let valueInDefaultCurrency = 0;
+
+                if (stock.currency !== data.settings.defaultCurrency) {
+                    const rate = getConversionRate(
+                        stock.currency,
+                        data.settings.defaultCurrency,
+                        data.exchangeRates
+                    );
+                    valueInDefaultCurrency = (stock.price * quantity) * rate;
+                } else {
+                    valueInDefaultCurrency = stock.price * quantity;
+                }
+
                 if (!groupedByUser[userId]) groupedByUser[userId] = 0;
-                groupedByUser[userId] += quantity * price;
+                groupedByUser[userId] += valueInDefaultCurrency;
             }
+
             const finalChartData = Object.entries(groupedByUser).map(([userId, totalValue]) => {
                 const user = users.find(u => u.id === parseInt(userId));
+
                 return {
                     name: user?.name ?? `User ${userId}`,
                     totalValue: parseFloat(totalValue.toFixed(2)),
                 };
             });
+
             setChartData(finalChartData);
         } else {
             const combinedStocks = {};
@@ -91,6 +106,19 @@ const UserComponent = ({ data }) => {
             // Step 2: Enrich for chart
             const enriched = Object.entries(combinedStocks).map(([stockId, quantity]) => {
                 const stock = allStockInfo[stockId];
+                let valueInDefaultCurrency = 0;
+                let rate = null;
+                if (stock.currency != data.settings.defaultCurrency) {
+                    rate = getConversionRate(stock.currency, data.settings.defaultCurrency, data.exchangeRates);
+                    valueInDefaultCurrency = parseFloat(((stock.price * quantity) * rate).toFixed(2));
+                }
+                else {
+                    valueInDefaultCurrency = (parseFloat((stock.price * quantity).toFixed(2)));
+                }
+                console.log(valueInDefaultCurrency);
+                console.log(stock.price);
+                console.log(quantity);
+                console.log(parseFloat((stock.price * quantity)));
                 return {
                     // symbol, percantage, profit
                     name: stock?.name ?? `Stock ${stockId}`,
@@ -98,12 +126,13 @@ const UserComponent = ({ data }) => {
                     stockQuantity: quantity,
                     price: stock?.price ?? 0,
                     marketValue: quantity * (stock?.price || 0),
-
+                    valueInDefCurrency: valueInDefaultCurrency
                 };
             });
 
             setChartData(enriched);
         }
+
     }
     if (
         !data.settings ||
@@ -117,6 +146,23 @@ const UserComponent = ({ data }) => {
         );
     }
 
+    function getConversionRate(fromSymbol, toSymbol, exchangeRates) {
+
+        if (fromSymbol === toSymbol) return 1;
+
+        const direct = exchangeRates.find(
+            r => r.firstSymbol == fromSymbol && r.secondSymbol == toSymbol
+        );
+        if (direct) return parseFloat(direct.rate);
+
+
+        const reverse = exchangeRates.find(
+            r => r.firstSymbol == toSymbol && r.secondSymbol == fromSymbol
+        );
+        if (reverse) return 1 / parseFloat(reverse.rate);
+
+        return null;
+    }
 
     return (
         <div>
@@ -145,9 +191,9 @@ const UserComponent = ({ data }) => {
 
 
             {isGroupByUser ? (
-                <h3>Total Combined Portfolio: USD {chartData.reduce((sum, user) => sum + user.totalValue, 0).toFixed(2)}</h3>
+                <h3>Total Combined Portfolio: {data.settings.defaultCurrency} {chartData.reduce((sum, user) => sum + user.totalValue, 0).toFixed(2)}</h3>
             ) : (
-                <h3>Total Portfolio Value: USD {chartData.reduce((sum, stock) => sum + stock.marketValue, 0).toFixed(2)}</h3>
+                <h3>Total Portfolio Value: {data.settings.defaultCurrency} {chartData.reduce((sum, stock) => sum + stock.valueInDefCurrency, 0).toFixed(2)}</h3>
             )}
             <PortfolioChart data={chartData} dataKey={isGroupByUser ? "totalValue" : "stockQuantity"} />
             {/* Individual transaction history */}
@@ -163,7 +209,7 @@ const UserComponent = ({ data }) => {
                         stocks={chartData}
                         setDelete={setDeletedStock}
                         fields={["Name", "Currency", "Num Shares", "Current Stock Price",
-                            "Current Market CAP", ""
+                            "Current Market CAP", "Market Cap by Default Currency " + data.settings.defaultCurrency, ""
                         ]}
                     />
                     <ProfitAndTaxesComponent
