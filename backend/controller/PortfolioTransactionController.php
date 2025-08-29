@@ -13,6 +13,7 @@ use App\Core\BaseController;
 use App\Core\Route;
 use App\Service\StockTradeService;
 use App\Core\Response;
+use App\Service\DividendMaintenanceFeeService;
 
 /**
  * Class PortfolioTransactionController
@@ -162,6 +163,16 @@ class PortfolioTransactionController extends BaseController
 
         $stockTradeService = new StockTradeService('WITHDRAWAL', $data, true);
         $stockTradeService->handleStockTradeLogic();
+        return new Response("OK", 200);
+    }
+
+
+    #[Route('/addDividentOrMaintenanceFee', methods: ["POST"])]
+    public function addDivident()
+    {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $asdf = new DividendMaintenanceFeeService($data);
         return new Response("OK", 200);
     }
 }

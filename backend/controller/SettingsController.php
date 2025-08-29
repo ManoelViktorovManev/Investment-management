@@ -109,44 +109,6 @@ class SettingsController extends BaseController
         return new Response("OK");
     }
 
-    // /**
-    //  * Endpoint: POST /updateSettings
-    //  *
-    //  * Updates application settings, particularly the default currency ID.
-    //  * If no settings entry exists, a new one is created.
-    //  *
-    //  * Expected JSON payload:
-    //  * {
-    //  *   "defaultCurrency": int
-    //  * }
-    //  *
-    //  * @return Response Returns "OK" upon successful update.
-    //  */
-    // #[Route('/updateManagingSuperAdminSettings', methods: ['POST'])]
-    // public function updateManagingSuperAdminSettings()
-    // {
-    //     $rawInput = file_get_contents("php://input");
-    //     $data = json_decode($rawInput, true);
-
-    //     $newSuperAdminId = $data["idSuperAdmin"];
-
-    //     $db = new DbManipulation();
-    //     $settings = new Settings();
-
-    //     $ifExists = $settings->query()->first();
-
-    //     if ($ifExists == null) {
-    //         $settings = $this->createSettings();
-    //     }
-
-    //     $settings->setManagingSuperAdmin($newSuperAdminId);
-
-    //     $db->add($settings);
-    //     $db->commit();
-
-    //     return new Response("OK");
-    // }
-
     /**
      * Endpoint: GET /getAllInfromation
      *

@@ -294,9 +294,10 @@ const SettingsMenuComponent = ({ users, reloadUsers, portfolios, reloadPortfolio
       transactionDate,
     };
 
+    console.log(payload);
     try {
       // Replace with your actual API call
-      const response = await fetch("/api/your-endpoint", {
+      const response = await fetch(`${API_BASE_URI}/addDividentOrMaintenanceFee`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -236,7 +236,23 @@ class StockTradeService
                 $this->data["allocations"],
                 $this->action
             );
-            $pats->handleshit();
+            $pats->handleLogic();
+
+            //add commission
+            $newData = [];
+            $newData['portfolioId'] = $this->data["portfolioId"];
+            $newData["isDividend"] = false;
+            $newData["amount"] = $this->data['commission'];
+            $newData["transactionDate"] = $this->data["date"];
+
+            if ($this->data["currencyCommission"] == $this->data["currency"]) {
+                $newData["currencyStockId"] = $this->cash->getId();
+            } else {
+                $newCurrency = $this->data["currencyCommission"];
+                $getTheNewCurrency = $this->getStockModelInstance("$newCurrency cash", $newCurrency, $newCurrency, 1, true);
+                $newData["currencyStockId"] = $getTheNewCurrency->getId();
+            }
+            $callDMFS = new DividendMaintenanceFeeService($newData);
         }
     }
 
