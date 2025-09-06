@@ -17,7 +17,6 @@ use App\Model\PortfolioStock;
 use App\Core\DbManipulation;
 use App\Controller\TransactionHistoryController;
 use App\Core\Response;
-use App\Model\ProfitAndTaxes;
 use App\Service\StockUserPositionService;
 use App\Service\ProfitAndTaxesService;
 
@@ -244,7 +243,7 @@ class StockTradeService
             $newData["isDividend"] = false;
             $newData["amount"] = $this->data['commission'];
             $newData["transactionDate"] = $this->data["date"];
-
+            $newData["allocation"] = array_keys($this->data["allocations"]);
             if ($this->data["currencyCommission"] == $this->data["currency"]) {
                 $newData["currencyStockId"] = $this->cash->getId();
             } else {
