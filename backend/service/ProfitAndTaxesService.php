@@ -46,7 +46,7 @@ class ProfitAndTaxesService
         $this->action = $action;
         $this->dbm = new DbManipulation();
     }
-    public function handleshit()
+    public function handleLogic()
     {
         foreach ($this->allocations as $userId => $allocation) {
             $instance = $this->getProfitAndTaxesModel($userId);

@@ -15,6 +15,13 @@ use App\Model\ProfitAndTaxes;
 use App\Core\Response;
 use App\Core\DbManipulation;
 
+use App\Controller\TransactionHistoryController;
+use App\Controller\UserPortfolioStockController;
+use App\Model\UserPortfolioStock;
+use App\Model\PortfolioStock;
+use App\Model\Portfolio;
+use App\Model\Stock;
+
 /**
  * Class ProfitAndTaxesController
  *
@@ -67,6 +74,7 @@ class ProfitAndTaxesController extends BaseController
         $dbInstance = new DbManipulation();
 
         $currentData = $data["currentData"];
+        $superAdmin = $data["superUserId"];
 
         foreach ($currentData as $PTInstance) {
             $instance = new ProfitAndTaxes();
@@ -94,12 +102,35 @@ class ProfitAndTaxesController extends BaseController
                 $PTInstance["netProfit"],
                 $PTInstance["isPayed"]
             );
+            // we compare, because it can be not updated.
             $result = $instance->compare($currentData);
 
             if ($result == false) {
                 $dbInstance->add($currentData);
             }
-            // if($currentData->getIsPayed() == true)
+            // trybwa da se naprawi logikata za prehwurlyane na dqalovete.
+
+            // if ($currentData->getIsPayed() == true && $result == false) {
+            if ($currentData->getIsPayed() == true) {
+                // Update PortfolioStock, TransactionHistory, UserPortfolioStock, UserTransactionHistory
+                // if ($currentData->getUserId() == $superAdmin) {
+                // }
+                $currency = new Stock();
+                $currency->query()->where(['id', '=', $currentData->getCashId()])->first();
+
+                $stock = new Stock();
+                $stock->query()->where(['id', '=', $currentData->getStockId()])->first();
+
+                $UserPortfolioStock = new UserPortfolioStock();
+
+                // take the user and superAdminUser id
+                $array = $UserPortfolioStock->query()
+                    ->where(["stockId", "=",  $currentData->getCashId()])
+                    ->and()
+                    ->where(["portfolioId", "=", $currentData->getPortfolioId()])
+                    ->and()
+                    ->where(["userId", "IN", 1]);
+            }
         }
         $dbInstance->commit();
 

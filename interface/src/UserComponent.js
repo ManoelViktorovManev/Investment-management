@@ -115,10 +115,6 @@ const UserComponent = ({ data }) => {
                 else {
                     valueInDefaultCurrency = (parseFloat((stock.price * quantity).toFixed(2)));
                 }
-                console.log(valueInDefaultCurrency);
-                console.log(stock.price);
-                console.log(quantity);
-                console.log(parseFloat((stock.price * quantity)));
                 return {
                     // symbol, percantage, profit
                     name: stock?.name ?? `Stock ${stockId}`,
@@ -213,6 +209,7 @@ const UserComponent = ({ data }) => {
                         ]}
                     />
                     <ProfitAndTaxesComponent
+                        superAdmin={data.settings.managingSuperAdmin}
                         userId={selectedUserId}
                     />
 

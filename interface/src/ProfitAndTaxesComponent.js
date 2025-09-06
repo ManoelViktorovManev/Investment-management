@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import API_BASE_URI from "./EnvVar.js";
 
-const ProfitAndTaxesComponent = ({ userId }) => {
+const ProfitAndTaxesComponent = ({ userId, superAdmin }) => {
     const [userProfitAndTaxes, setUserProfitAndTaxes] = useState([]);
 
     useEffect(() => {
         getUserProfitAndTaxes();
     }, [userId]);
-
     // Method that help to format the number 
     const formatPrice = (value) => {
         if (value === null || value === undefined) return null;
@@ -66,12 +65,16 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                         : 0;
 
                 const net = grossProfit - managementFees - taxes;
-
+                // console.log(item);
+                const managementFeesPercent = item.managementFeesToPayPercantage == null ? 0 : item.managementFeesToPayPercantage;
+                const taxesPercent = item.taxesToPayPercantage == null ? 0 : item.taxesToPayPercantage;
                 return {
                     ...item,
                     managementFeesToPay: managementFees.toFixed(2),
                     taxesToPay: taxes.toFixed(2),
                     netProfit: net.toFixed(2),
+                    managementFeesToPayPercantage: managementFeesPercent.toFixed(2),
+                    taxesToPayPercantage: taxesPercent.toFixed(2)
                 };
             })
         );
@@ -81,7 +84,8 @@ const ProfitAndTaxesComponent = ({ userId }) => {
     const handlePayed = (id) => {
         setUserProfitAndTaxes((prev) =>
             prev.map((item) =>
-                item.id === id ? { ...item, isPayed: true } : item
+                // console.log();
+                item.id === id ? { ...item, isPayed: !item.isPayed } : item
             )
         );
     };
@@ -91,7 +95,8 @@ const ProfitAndTaxesComponent = ({ userId }) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                currentData: userProfitAndTaxes
+                currentData: userProfitAndTaxes,
+                superUserId: superAdmin
             })
         });
     };
@@ -123,9 +128,15 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                 <th className="border border-gray-300 px-2 py-1">Bought Price</th>
                                 <th className="border border-gray-300 px-2 py-1">Sold Price</th>
                                 <th className="border border-gray-300 px-2 py-1">Gross Profit</th>
-                                <th className="border border-gray-300 px-2 py-1">Mgmt Fee %</th>
+                                {superAdmin != userId && (
+                                    <th className="border border-gray-300 px-2 py-1">Mgmt Fee %</th>
+                                )}
+
                                 <th className="border border-gray-300 px-2 py-1">Taxes %</th>
-                                <th className="border border-gray-300 px-2 py-1">Mgmt Fees</th>
+                                {superAdmin != userId && (
+                                    <th className="border border-gray-300 px-2 py-1">Mgmt Fees</th>
+                                )}
+
                                 <th className="border border-gray-300 px-2 py-1">Taxes</th>
                                 <th className="border border-gray-300 px-2 py-1">Net Profit</th>
                                 <th className="border border-gray-300 px-2 py-1">Actions</th>
@@ -159,21 +170,24 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                     </td>
                                     {item.grossProfit > 0 && (
                                         <>
-                                            <td className="border border-gray-300 px-2 py-1">
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={item.managementFeesToPayPercantage ?? ""}
-                                                    onChange={(e) =>
-                                                        handleInputChange(
-                                                            item.id,
-                                                            "managementFeesToPayPercantage",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="border rounded p-1 w-20"
-                                                />
-                                            </td>
+                                            {superAdmin != userId && (
+                                                <td className="border border-gray-300 px-2 py-1">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={item.managementFeesToPayPercantage ?? ""}
+                                                        onChange={(e) =>
+                                                            handleInputChange(
+                                                                item.id,
+                                                                "managementFeesToPayPercantage",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className="border rounded p-1 w-20"
+                                                    />
+                                                </td>
+                                            )}
+
                                             <td className="border border-gray-300 px-2 py-1">
                                                 <input
                                                     type="number"
@@ -189,9 +203,11 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                                     className="border rounded p-1 w-20"
                                                 />
                                             </td>
-                                            <td className="border border-gray-300 px-2 py-1">
-                                                {item.managementFeesToPay ?? "-"}
-                                            </td>
+                                            {superAdmin != userId && (
+                                                <td className="border border-gray-300 px-2 py-1">
+                                                    {item.managementFeesToPay ?? "-"}
+                                                </td>
+                                            )}
                                             <td className="border border-gray-300 px-2 py-1">
                                                 {item.taxesToPay ?? "-"}
                                             </td>
@@ -201,6 +217,7 @@ const ProfitAndTaxesComponent = ({ userId }) => {
                                             <td className="border border-gray-300 px-2 py-1 space-x-2">
                                                 <button
                                                     onClick={() => calculateValues(item.id)}
+
                                                     className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                                                 >
                                                     Calculate

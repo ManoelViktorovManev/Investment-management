@@ -150,11 +150,26 @@ class DividendMaintenanceFeeService
         $result = $this->getEquityOwnedByUsersInPortfolio($this->data["portfolioId"]);
 
         $allocation = [];
+        $overAllPercentage = 0;
+        if ($this->action == "COMMISSION") {
+            // only one user
+            foreach ($result as $values) {
+                $userId = $values["userId"];
 
+                if (in_array($userId, $this->data["allocation"])) {
+                    $overAllPercentage += $values["equity_percent"];
+                }
+            }
+
+            // $this->data["allocation"]; it holds userId// [1]
+        }
+        if ($overAllPercentage == 0) {
+            $overAllPercentage = 100;
+        }
         foreach ($result as $values) {
             $userId = $values["userId"];
             $percent = $values["equity_percent"];
-            $sumToRemove = ($percent / 100) * $this->data["amount"];
+            $sumToRemove = ($percent / $overAllPercentage) * $this->data["amount"];
 
             $allocation[$userId] = $sumToRemove;
 
