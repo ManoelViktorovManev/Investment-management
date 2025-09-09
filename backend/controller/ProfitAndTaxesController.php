@@ -112,14 +112,16 @@ class ProfitAndTaxesController extends BaseController
 
             // if ($currentData->getIsPayed() == true && $result == false) {
             if ($currentData->getIsPayed() == true) {
-                // Update PortfolioStock, TransactionHistory, UserPortfolioStock, UserTransactionHistory
-                // if ($currentData->getUserId() == $superAdmin) {
-                // }
+                if ($currentData->getUserId() == $superAdmin) {
+                }
                 $currency = new Stock();
                 $currency->query()->where(['id', '=', $currentData->getCashId()])->first();
 
                 $stock = new Stock();
                 $stock->query()->where(['id', '=', $currentData->getStockId()])->first();
+
+                $portfolio = new Portfolio();
+                $portfolio->query()->where(['id', '=', $currentData->getPortfolioId()])->first();
 
                 $UserPortfolioStock = new UserPortfolioStock();
 
@@ -129,7 +131,55 @@ class ProfitAndTaxesController extends BaseController
                     ->and()
                     ->where(["portfolioId", "=", $currentData->getPortfolioId()])
                     ->and()
-                    ->where(["userId", "IN", 1]);
+                    ->where(["userId", "IN", [$currentData->getUserId(), $superAdmin]])
+                    ->all(true);
+
+                if ($array[0]->getUserId() == $superAdmin) {
+                    $array[1]->setStockQuantity($array[1]->getStockQuantity() - $currentData->getTaxesToPay() - $currentData->getManagementFeesToPay());
+                    $array[0]->setStockQuantity($array[0]->getStockQuantity() + $currentData->getManagementFeesToPay());
+                } else {
+                    $array[1]->setStockQuantity($array[1]->getStockQuantity() + $currentData->getManagementFeesToPay());
+                    $array[0]->setStockQuantity($array[0]->getStockQuantity() - $currentData->getTaxesToPay() - $currentData->getManagementFeesToPay());
+                }
+                // add them 
+                $dbInstance->add($array[0]);
+                $dbInstance->add($array[1]);
+
+                $psinstance = new PortfolioStock();
+                $psinstance
+                    ->query()
+                    ->where(["idPortfolio", "=", $currentData->getPortfolioId()])
+                    ->and()
+                    ->where(["idStock", "=", $currentData->getCashId()])
+                    ->first();
+
+                // only remove taxes, because management fees if transfered to the superAdmin
+                $psinstance->setNumStocks($psinstance->getNumStocks() - $currentData->getTaxesToPay());
+                $psinstance->setValueOfStock($psinstance->getNumStocks());
+                //add them
+                $dbInstance->add($psinstance);
+
+                //transactionhistory
+                $transactionHistory = new TransactionHistoryController();
+                $transactionHistory->createNewTransactionHistory(
+                    [$currentData->getUserId() => $currentData->getTaxesToPay()], // OK
+                    $currency, // ok
+                    $portfolio, // ok
+                    $currentData->getTaxesToPay(), // ok
+                    1, //OK ???
+                    date("Y-m-d"), // OK 
+                    "Goverment Taxes" // OK
+                );
+
+                $transactionHistory->createNewTransactionHistory(
+                    [$currentData->getUserId() => $currentData->getManagementFeesToPay(), $superAdmin => $currentData->getManagementFeesToPay()], // OK
+                    $currency, // ok
+                    $portfolio, // ok
+                    $currentData->getManagementFeesToPay(), // ok
+                    1, //OK
+                    date("Y-m-d"), // OK 
+                    "Management Fees" // OK
+                );
             }
         }
         $dbInstance->commit();
