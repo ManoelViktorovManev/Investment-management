@@ -15,7 +15,12 @@ function App() {
         4. After buying or selling position (дял) => holding and history of transactions 
         5. After sell of stock => taxes, commision and others
     */
-    const [isForFirstTime,setIsForFirstTime] = useState(false); 
+    const [isForFirstTime,setIsForFirstTime] = useState(false);
+    const [optionExistingPortfolio, setOptionExistingPortfolio] = useState(false);
+    const [optionNewPortfolio, setOptionNewPortfolio] = useState(false);
+    const [doneWithSettings, setDoneWithSettings] = useState(false); 
+    const [currency, setCurrency] = useState("EURO")
+    const [priceForOneStake, setPriceForOneStake] = useState(0);
     
     async function checkSettings() {
         const response = await fetch(`${API_BASE_URI}/getSettings`, {
@@ -34,8 +39,8 @@ function App() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                defaultCurrency: "EUR",
-                sharePrice: 0.79118
+                defaultCurrency: currency,
+                sharePrice: priceForOneStake
             })
         });
     }
@@ -48,6 +53,12 @@ function App() {
             })
         });
     }
+    const handleChange = (event) => {
+        setCurrency(event.target.value)
+    }
+    const handleDyalChange = (event) =>{
+        setPriceForOneStake(event.target.value)
+    }
     // Call them all once at start
     useEffect(() => {
         checkSettings();
@@ -55,10 +66,17 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if(isForFirstTime==true){
+        if(optionExistingPortfolio==true || optionNewPortfolio==true){
+            // createSettings();
+            setIsForFirstTime(false);
+        }
+    }, [optionExistingPortfolio, optionNewPortfolio]);
+
+     useEffect(() => {
+        if(doneWithSettings==true){
             createSettings();
         }
-    }, [isForFirstTime]);
+    }, [doneWithSettings]);
    
 
     return ( 
@@ -66,10 +84,39 @@ function App() {
         <p> PATKA GOLEMA </p> 
        {isForFirstTime == true &&(
         <div className="text-center mt-32">
-            <h1 className="text-5xl font-bold mb-6">This is first time</h1>
+            <h1 className="text-5xl font-bold mb-6">Choose what option do you want:</h1>
+            <button type="button" onClick={() => setOptionExistingPortfolio(true)}>Existing Portfolio
+            </button>
+
+            <button type="button" onClick={() => {
+                setOptionNewPortfolio(true)
+            }}> New Portfolio
+            </button>
           </div>
        )}
-        </div >
+       {(doneWithSettings == false && isForFirstTime==false && (optionExistingPortfolio==true || optionNewPortfolio==true)) &&(
+        <div className="text-center mt-32">
+            <h1 className="text-5xl font-bold mb-6">Choose what currency do you use:</h1>
+            <select value={currency} onChange={handleChange}>
+                <option value="EUR">EURO</option>
+                <option value="USD">USD</option>
+            </select>
+            {(optionExistingPortfolio==true) &&(
+                <td>
+                <label> CENA NA DYAL: </label>
+                    <input
+                        type='number'
+                        name="dyal"
+                        min='0'
+                        onChange={handleDyalChange}
+                    />
+                </td>
+            )}
+            <button type="button" onClick={() => setDoneWithSettings(true)}>Done
+            </button>
+          </div>
+       )}
+        </div>
     );
 }
 export default App;
