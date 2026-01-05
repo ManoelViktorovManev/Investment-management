@@ -8,11 +8,13 @@ class User extends BaseModel
 {
     private ?int $id;
     private string $name;
+    private float $shares;
 
-    public function __construct(?int $id = null, string $name = '')
+    public function __construct(?int $id = null, string $name = '', float $shares = 0)
     {
         $this->id = $id;
         $this->name = $name;
+        $this->shares = $shares;
     }
 
     public function getId(): ?int
@@ -33,5 +35,15 @@ class User extends BaseModel
     public function setName(string $name): void
     {
         $this->name = $name;
+    }
+
+    public function getShares(): float
+    {
+        return $this->shares;
+    }
+
+    public function setShares(float $shares): void
+    {
+        $this->shares = $shares;
     }
 }

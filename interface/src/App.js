@@ -21,6 +21,12 @@ function App() {
     const [doneWithSettings, setDoneWithSettings] = useState(false); 
     const [currency, setCurrency] = useState("EURO")
     const [priceForOneStake, setPriceForOneStake] = useState(0);
+    const [allShares, setAllShares] = useState(0);
+
+    const [userName, setUserName] = useState("");
+    const [userShares, setUserShare] = useState(0);
+    const [arrayUsers,setArrayUsers] = useState([]);
+    
     
     async function checkSettings() {
         const response = await fetch(`${API_BASE_URI}/getSettings`, {
@@ -40,18 +46,24 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 defaultCurrency: currency,
-                sharePrice: priceForOneStake
+                sharePrice: priceForOneStake,
+                allShares:allShares
             })
         });
     }
     async function createUser(){
+        
         const response = await fetch(`${API_BASE_URI}/createUser`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: "NISAN"
+                list: arrayUsers 
             })
         });
+    }
+    function rememberUserData(){
+        setArrayUsers([...arrayUsers, {name:userName, shares:userShares}]);
+        setAllShares(Number(allShares)+Number(userShares));
     }
     const handleChange = (event) => {
         setCurrency(event.target.value)
@@ -59,15 +71,20 @@ function App() {
     const handleDyalChange = (event) =>{
         setPriceForOneStake(event.target.value)
     }
+    const handleUserNameChange = (event) =>{
+        setUserName(event.target.value)
+    }
+    const handleUserSharesChange = (event) =>{
+        setUserShare(event.target.value)
+    } 
+
     // Call them all once at start
     useEffect(() => {
         checkSettings();
-        // createUser();
     }, []);
 
     useEffect(() => {
         if(optionExistingPortfolio==true || optionNewPortfolio==true){
-            // createSettings();
             setIsForFirstTime(false);
         }
     }, [optionExistingPortfolio, optionNewPortfolio]);
@@ -75,6 +92,9 @@ function App() {
      useEffect(() => {
         if(doneWithSettings==true){
             createSettings();
+        }
+        if(optionExistingPortfolio == true){
+            createUser();
         }
     }, [doneWithSettings]);
    
@@ -102,7 +122,8 @@ function App() {
                 <option value="USD">USD</option>
             </select>
             {(optionExistingPortfolio==true) &&(
-                <td>
+                
+                <div>
                 <label> CENA NA DYAL: </label>
                     <input
                         type='number'
@@ -110,7 +131,29 @@ function App() {
                         min='0'
                         onChange={handleDyalChange}
                     />
-                </td>
+                     <label>User name: </label>
+                    <input
+                        type='text'
+                        value={userName}
+                        name="user_name"
+                        onChange={handleUserNameChange}
+                    />
+                    <label>User shares: </label>
+                    <input
+                        type='number'
+                        name="user_shares"
+                        value={userShares}
+                        min="0"
+                        onChange={handleUserSharesChange}
+                    />
+                    <button type="button" onClick={() => {
+                        rememberUserData()
+                        setUserName("");
+                        setUserShare(0);
+                    }}> Add user
+                    </button>
+                </div>
+                // Adding user => User name + number of shares they have
             )}
             <button type="button" onClick={() => setDoneWithSettings(true)}>Done
             </button>

@@ -23,7 +23,8 @@ class SettingsController extends BaseController
 
         $name= $data["defaultCurrency"];
         $sharePrice = $data["sharePrice"];
-        $settings = new Settings(null,$name,$sharePrice);
+        $allShares = $data["allShares"];
+        $settings = new Settings(null,$name,$sharePrice,$allShares);
         $db->add($settings);
         $db->commit();
         return new Response("Successfuly insert a new record");

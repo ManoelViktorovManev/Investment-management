@@ -21,9 +21,24 @@ class UserController extends BaseController
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        $name= $data["name"];
-        $user = new UserModel(null, $name);
-        $db->add($user);
+        $listOfUsers = $data["list"];
+        if (empty($listOfUsers)){
+            $name= $data["name"];
+            $shares = $data["shares"];
+
+            $user = new UserModel(null, $name,$shares);
+            $db->add($user);
+        }
+        else{
+            foreach($listOfUsers as $element){
+                $name= $element["name"];
+                $shares = $element["shares"];
+
+                $user = new UserModel(null, $name,$shares);
+                $db->add($user); 
+            }
+        }
+        
         $db->commit();
         return new Response("Successfuly insert a new record");
     }
