@@ -15,7 +15,7 @@ const FirstTimeLoging = ({onSetupComplete}) => {
     const [arrayUsers,setArrayUsers] = useState([]);
 
     async function createSettings() {
-       const response = await fetch(`${API_BASE_URI}/updateSettings`, {
+       const response = await fetch(`${API_BASE_URI}/createSettings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

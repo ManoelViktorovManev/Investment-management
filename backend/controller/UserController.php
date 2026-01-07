@@ -50,8 +50,29 @@ class UserController extends BaseController
 
         return $this->json($array);
     }
-
+    #[Route('/updateUserShares', methods:["POST"])]
     public function updateUser(){
-        // $user 
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $user = new UserModel();
+        if (!array_key_exists('userId', $data) || array_key_exists('mode', $data) || array_key_exists('updatedShares', $data)){
+            return new Response("No existing User",404);
+        }
+        $db = new DbManipulation();
+        $user->query()->where("id","=",$data["userId"])->first();
+
+        if($data["mode"]=="add"){
+            // +
+            $user->setShares($user->getShares()+$data["updatedShares"]);
+        }
+        else{
+            // -
+            $user->setShares($user->getShares()-$data["updatedShares"]);
+        }
+
+        $db->add($user);
+        $db->commit();
+        return new Response("Successfuly updated a record");
+
     }
 }

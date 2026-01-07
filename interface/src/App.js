@@ -4,6 +4,7 @@ import { NavbarComponent } from './NavbarComponent';
 
 import API_BASE_URI from './EnvVar.js';
 import { FirstTimeLoging } from './FirstTimeLoging.js';
+import { UserComponent } from './UserComponent.js';
 
 
 function App() {
@@ -47,8 +48,8 @@ function App() {
     }, []);
 
     const data = useMemo(() => ({
-    users,
-    settings,
+        users,
+        settings,
     }), [users, settings]);
     const refreshMethods = {
         refreshUsers: getUsers,
@@ -78,13 +79,14 @@ function App() {
                 />
 
                 <main className="ml-[200px] flex-grow p-10">
-                    {currentPage === '' ? (
+                    {currentPage === '' && (
                     <div className="text-center mt-32">
                         <h1 className="text-5xl font-bold mb-6">Welcome to the Portfolio Dashboard</h1>
                         <p className="text-xl text-gray-700">Select a page from the sidebar to get started.</p>
                     </div>
-                    ) : (
-                    currentPage
+                    )}
+                    {currentPage === 'users' && (
+                    <UserComponent data={data} refreshMethods={refreshMethods} />
                     )}
                 </main>
             </div>
