@@ -6,7 +6,6 @@ const UserComponent = ({ data, refreshMethods }) => {
     var share = settings[0].sharePrice; // only one instance of settings we have
     var allShares = settings[0].allShares;
     
-    console.log(allShares);
     const [addShares,setAddShares] = useState(false);
     const [removeShares,setRemoveShares] = useState(false);
 
@@ -21,10 +20,7 @@ const UserComponent = ({ data, refreshMethods }) => {
     const [newUserMoney, setNewUserMoney] = useState(0);
     const [newUserShares, setNewUserShares] = useState(0);
 
-    /* ТОDO: 1. to have accsess to settings OK
-             2. Succsessfully adding a new User + updating settings OK
-             3. Working + and - and edit on user
-    */ 
+    
 
      async function  handleCreateUser() {
       // 🔥 HERE you will add your API call
@@ -39,7 +35,7 @@ const UserComponent = ({ data, refreshMethods }) => {
 
         if (response.status==200){
           var calculation = (Number(newUserShares) + Number(allShares)).toFixed(2);
-          console.log(calculation);
+          // console.log(calculation);
           const response = await fetch(`${API_BASE_URI}/updateSettings`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -76,12 +72,36 @@ const UserComponent = ({ data, refreshMethods }) => {
         shares: editShares
       });
 
-      // HERE YOU WILL CALL:
-      // - /addShares or /removeShares endpoint
-      // - update settings if needed
-  
-      // !!!!!!!! Update share, allShares because we need it. 
-      // Reset UI
+      const response = await fetch(`${API_BASE_URI}/updateUserShares`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId:user.id,
+                mode:addShares ? "add" : "remove",
+                updatedShares: Number(editShares)
+            })
+        });
+        // NISANNN
+
+
+      if(response.status==200){
+        var statetoperform =  addShares ? "add" : "remove";
+        var calculation = 0;
+        if(statetoperform=="add"){
+          calculation = (Number(editShares) + Number(allShares)).toFixed(2);
+        }
+        else{
+          calculation= ( Number(allShares) - Number(editShares)).toFixed(2);
+        }
+         
+          const response = await fetch(`${API_BASE_URI}/updateSettings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  allShares: calculation
+              })
+          });
+      }
       setAddShares(false);
       setRemoveShares(false);
       setEditUser(null);
@@ -174,7 +194,9 @@ const UserComponent = ({ data, refreshMethods }) => {
        {addNewUser && (
         <div className="p-4 border rounded-lg bg-gray-50 shadow space-y-3 max-w-md">
           <h3 className="text-lg font-semibold">Create New User</h3>
-
+           <label className="block text-sm text-gray-600">
+              Name
+            </label>
           <input
             type="text"
             placeholder="User name"
@@ -183,6 +205,9 @@ const UserComponent = ({ data, refreshMethods }) => {
             onChange={(e) => setNewUserName(e.target.value)}
           />
 
+          <label className="block text-sm text-gray-600">
+              Amout of money
+            </label>
           <input
             type="number"
             placeholder="Initial amount of money"
@@ -197,7 +222,9 @@ const UserComponent = ({ data, refreshMethods }) => {
               
             } }
           />
-
+          <label className="block text-sm text-gray-600">
+              Shares to get
+            </label>
           <input
             type="number"
             placeholder="Initial shares"

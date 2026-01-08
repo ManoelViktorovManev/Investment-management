@@ -55,7 +55,7 @@ class UserController extends BaseController
         $data = json_decode(file_get_contents("php://input"), true);
 
         $user = new UserModel();
-        if (!array_key_exists('userId', $data) || array_key_exists('mode', $data) || array_key_exists('updatedShares', $data)){
+        if (!array_key_exists('userId', $data) || !array_key_exists('mode', $data) || !array_key_exists('updatedShares', $data)){
             return new Response("No existing User",404);
         }
         $db = new DbManipulation();
