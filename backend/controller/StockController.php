@@ -28,9 +28,8 @@ class StockController extends BaseController
     }
     #[Route('/getStocks')]
     public function getStock()
-    {
-        $information = new Stock()->query()->all(); 
-        return $this->json($information);
+    { 
+        return $this->json((new Stock())->query()->all());
     }
     #[Route('/deleteStock', methods:["POST"])]
     public function deleteStock()
@@ -73,6 +72,20 @@ class StockController extends BaseController
         $db->commit();
 
         return new Response("Successfuly insert a new record");
+    }
+    
+    #[Route('/calculatePortfolioValue/{currency}')]
+    public function calculatePortfolioValue($currency)
+    {
+        $allStocks = (new Stock())->query()->all(true);
+        $calculation = 0;
+        foreach($allStocks as $stock){
+            $calculation= $calculation + ($stock->getPrice() * $stock->getNumberOfShares());
+            if($stock->getCurrency()!=$currency){
+                // umnojawame
+            }
+        }
+        return $this->json(["portfolioValue"=>$calculation, "currency"=>$currency]);
     }
 
 }

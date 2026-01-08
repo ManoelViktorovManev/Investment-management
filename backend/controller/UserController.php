@@ -45,10 +45,10 @@ class UserController extends BaseController
     #[Route('/getUsers')]
     public function getUsers()
     {   
-        $user = new UserModel();
-        $array = $user->query()->all();
+        // $user = ;
+        // $array = $user->query()->all();
 
-        return $this->json($array);
+        return $this->json((new UserModel())->query()->all());
     }
     #[Route('/updateUserShares', methods:["POST"])]
     public function updateUser(){

@@ -25,6 +25,7 @@ function App() {
     const [currentPage, setCurrentPage] = useState('');
     const [settings, setSettings] = useState([]);
     const [users,setUsers]=useState([]);
+    const [stocks, setStocks] = useState([]);
     const [loading, setLoading] = useState(true);
 
     async function getSettings() {
@@ -44,19 +45,30 @@ function App() {
             const result = await response.json();
             setUsers(result);
         }
-    }   
+    } 
+    async function getStocks(){
+        const response = await fetch(`${API_BASE_URI}/getStocks`, {
+        });
+        if (response.status==200){
+            const result = await response.json();
+            setStocks(result);
+        }
+    }    
     useEffect(() => {
         getSettings();
         getUsers();
+        getStocks();
     }, []);
 
     const data = useMemo(() => ({
         users,
         settings,
-    }), [users, settings]);
+        stocks,
+    }), [users, settings,stocks]);
     const refreshMethods = {
         refreshUsers: getUsers,
         refreshSettings: getSettings,
+        refreshStocks: getStocks,
     };
 
     if (loading) {

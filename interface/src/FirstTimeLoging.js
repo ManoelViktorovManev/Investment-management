@@ -93,7 +93,7 @@ const FirstTimeLoging = ({onSetupComplete}) => {
         <div className="text-center mt-32">
             <h1 className="text-5xl font-bold mb-6">Choose what currency do you use:</h1>
             <select value={currency} onChange={handleChange}>
-                <option value="EUR">EURO</option>
+                <option value="EUR">EUR</option>
                 <option value="USD">USD</option>
             </select>
             {(optionExistingPortfolio==true) &&(
