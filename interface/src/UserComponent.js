@@ -299,9 +299,7 @@ const UserComponent = ({ data, refreshMethods }) => {
                   −
                 </button>
 
-                {/* <button className="px-2 py-1 bg-red-500 text-white rounded"  onClick={() => setRemoveShares(true)}>
-                  Edit
-                </button> */}
+                
               </td>
             </tr>
             

@@ -5,18 +5,21 @@ import { NavbarComponent } from './NavbarComponent';
 import API_BASE_URI from './EnvVar.js';
 import { FirstTimeLoging } from './FirstTimeLoging.js';
 import { UserComponent } from './UserComponent.js';
+import { Allocation } from './Allocation.js';
 
 
 function App() {
 
     /*
     TODO:
-        1. Settings hold what is the entire value of the portfolio - DONE
-        2. Option for if there is existing portfolio and option if to start from 0. (Ако е както мен, да се добави ръчно всичко.) - DONE
+        1. Settings hold what is the entire value of the portfolio - STATUS: DONE
+        2. Option for if there is existing portfolio and option if to start from 0. (Ако е както мен, да се добави ръчно всичко.) 
+            STATUS: DONE
         3. Display of adding a new user + a new position of the user (getting money) + removing the position (returning back money)
-        4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position.
-        5. After buying or selling position (дял) => holding and history of transactions 
-        6. After sell of stock => taxes, commision and others
+            STATUS: DONE
+        4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position. STATUS: 1/2 DONE
+        5. After buying or selling position (дял) => holding and history of transactions STATUS: NOT STARTED
+        6. After sell of stock => taxes, commision and others STATUS: NOT STARTED
     */
 
     const [currentPage, setCurrentPage] = useState('');
@@ -87,6 +90,9 @@ function App() {
                     )}
                     {currentPage === 'users' && (
                     <UserComponent data={data} refreshMethods={refreshMethods} />
+                    )}
+                    {currentPage === 'allocation' && (
+                    <Allocation data={data} refreshMethods={refreshMethods} />
                     )}
                 </main>
             </div>
