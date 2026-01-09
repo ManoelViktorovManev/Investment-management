@@ -6,7 +6,7 @@ const FirstTimeLoging = ({onSetupComplete}) => {
     const [optionExistingPortfolio, setOptionExistingPortfolio] = useState(false);
     const [optionNewPortfolio, setOptionNewPortfolio] = useState(false);
     const [doneWithSettings, setDoneWithSettings] = useState(false); 
-    const [currency, setCurrency] = useState("EURO")
+    const [currency, setCurrency] = useState("EUR")
     const [priceForOneStake, setPriceForOneStake] = useState(0);
     const [allShares, setAllShares] = useState(0);
 

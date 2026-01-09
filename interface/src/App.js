@@ -6,6 +6,7 @@ import API_BASE_URI from './EnvVar.js';
 import { FirstTimeLoging } from './FirstTimeLoging.js';
 import { UserComponent } from './UserComponent.js';
 import { Allocation } from './Allocation.js';
+import { SettingsComponent } from './SettingsComponent.js';
 
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
             STATUS: DONE
         3. Display of adding a new user + a new position of the user (getting money) + removing the position (returning back money)
             STATUS: DONE
-        4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position. STATUS: 1/2 DONE
+        4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position. STATUS: DONE
         5. After buying or selling position (дял) => holding and history of transactions STATUS: NOT STARTED
         6. After sell of stock => taxes, commision and others STATUS: NOT STARTED
     */
@@ -26,6 +27,7 @@ function App() {
     const [settings, setSettings] = useState([]);
     const [users,setUsers]=useState([]);
     const [stocks, setStocks] = useState([]);
+    const [rates, setRates] = useState([]);
     const [loading, setLoading] = useState(true);
 
     async function getSettings() {
@@ -53,22 +55,33 @@ function App() {
             const result = await response.json();
             setStocks(result);
         }
-    }    
+    }
+    async function getRates(){
+        const response = await fetch(`${API_BASE_URI}/getExchangeRates`, {
+        });
+        if (response.status==200){
+            const result = await response.json();
+            setRates(result);
+        }
+    }     
     useEffect(() => {
         getSettings();
         getUsers();
         getStocks();
+        getRates();
     }, []);
 
     const data = useMemo(() => ({
         users,
         settings,
         stocks,
-    }), [users, settings,stocks]);
+        rates,
+    }), [users, settings,stocks,rates]);
     const refreshMethods = {
         refreshUsers: getUsers,
         refreshSettings: getSettings,
         refreshStocks: getStocks,
+        refreshRates:getRates,
     };
 
     if (loading) {
@@ -105,6 +118,9 @@ function App() {
                     )}
                     {currentPage === 'allocation' && (
                     <Allocation data={data} refreshMethods={refreshMethods} />
+                    )}
+                    {currentPage === 'settings' && (
+                    <SettingsComponent data={data} refreshMethods={refreshMethods} />
                     )}
                 </main>
             </div>

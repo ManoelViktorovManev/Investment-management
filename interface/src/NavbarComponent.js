@@ -5,6 +5,7 @@ const NavbarComponent = ({ setCurrentPage, data, refreshMethods }) => {
   const navItems = [
      { label: 'Users', action: () => setCurrentPage('users') },
      { label: 'Allocation', action: () => setCurrentPage('allocation') },
+     { label: 'Settings', action: ()=>setCurrentPage('settings')},
   ];
   return (
     <nav className="min-w-[220px] h-screen fixed top-0 left-0 bg-gray-900 text-white shadow-lg">

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import API_BASE_URI from './EnvVar.js';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 const COLORS = ['#3799efff','#1900ffff' , '#00ff62ff', '#FFBB28', '#ff0000ff', '#aa00ff', '#50551fff', '#2f9f40ff' , '#000000', '#ff009dff'];
@@ -19,7 +20,7 @@ const Allocation = ({ data,refreshMethods }) => {
     name: '',
     shares: '',
     price: '',
-    currency: 'USD'
+    currency: ''
   });
 
   // Edit stock state
@@ -38,7 +39,6 @@ const Allocation = ({ data,refreshMethods }) => {
 
   // Placeholder actions (API calls go here later)
   async function handleCreateStock() {
-    console.log("CREATE STOCK:", newStock);
     const response = await fetch(`${API_BASE_URI}/createStock`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -50,30 +50,96 @@ const Allocation = ({ data,refreshMethods }) => {
           })
       });
     if(response.status==200){
-      const response = await fetch(`${API_BASE_URI}/updateSettings`, {
+      // we need to get portfolio value /calculatePortfolioValue/{currency}
+      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`, {
+        });
+        if (responseForCalculation.status==200){
+            const result = await responseForCalculation.json();
+            const value = result.portfolioValue;
+
+            const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+            const responseUpdateSettings = await fetch(`${API_BASE_URI}/updateSettings`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  allShares: calculation
+                  sharePrice: newValuePerShare
               })
           });
+        }
+      
     }
     setAddStockMode(false);
     setNewStock({ name: '', shares: '', price: '', currency: 'USD' });
-    refreshMethods.refreshUsers();
+    refreshMethods.refreshStocks();
     refreshMethods.refreshSettings();
     
   };
 
-  const handleUpdateStock = (id) => {
-    console.log("UPDATE STOCK:", id, editValues);
+  async function handleUpdateStock(id){
+    
+    const response = await fetch(`${API_BASE_URI}/updateStock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              id: id,
+              price:editValues.price,
+              shares:editValues.shares
+          })
+      });
+    // again we need to call this
+    if(response.status==200){
+      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`, {
+        });
+        if (responseForCalculation.status==200){
+            const result = await responseForCalculation.json();
+            const value = result.portfolioValue;
+
+            const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+            
+            const responseUpdateSettings = await fetch(`${API_BASE_URI}/updateSettings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  sharePrice: newValuePerShare
+              })
+          });
+        }
+      
+    }
+    refreshMethods.refreshStocks();
+    refreshMethods.refreshSettings();
     setEditingStockId(null);
-    // TODO: call API
+    setEditValues({ shares: '', price: '' });
   };
 
-  const handleDeleteStock = (id) => {
-    console.log("DELETE STOCK:", id);
-    // TODO: call API
+  async function handleDeleteStock(id){
+    const response = await fetch(`${API_BASE_URI}/deleteStock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              id: id
+          })
+      });
+    // again we need to call this
+    if(response.status==200){
+      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`, {
+        });
+        if (responseForCalculation.status==200){
+            const result = await responseForCalculation.json();
+            const value = result.portfolioValue;
+
+            const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+            const responseUpdateSettings = await fetch(`${API_BASE_URI}/updateSettings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  sharePrice: newValuePerShare
+              })
+          });
+        }
+    }
+    refreshMethods.refreshStocks();
+    refreshMethods.refreshSettings();
   };
 
   return (
@@ -168,14 +234,13 @@ const Allocation = ({ data,refreshMethods }) => {
                 onChange={(e) => setNewStock({ ...newStock, price: e.target.value })}
               />
 
-              <select
+              <input
+                type="text"
+                placeholder="Currency"
                 className="w-full p-2 border rounded"
                 value={newStock.currency}
                 onChange={(e) => setNewStock({ ...newStock, currency: e.target.value })}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
+              />
 
               <div className="flex gap-2">
                 <button
@@ -221,7 +286,7 @@ const Allocation = ({ data,refreshMethods }) => {
                         onChange={(e) => setEditValues({ ...editValues, shares: e.target.value })}
                       />
                     ) : (
-                      stock.shares
+                      stock.numberOfShares
                     )}
                   </td>
 
@@ -253,19 +318,28 @@ const Allocation = ({ data,refreshMethods }) => {
                         className="px-2 py-1 bg-yellow-500 text-white rounded"
                         onClick={() => {
                           setEditingStockId(stock.id);
-                          setEditValues({ shares: stock.shares, price: stock.price });
+                          setEditValues({ shares: stock.numberOfShares, price: stock.price });
                         }}
                       >
                         Edit
                       </button>
                     )}
-
-                    <button
+                    {editingStockId === stock.id ? (
+                       <button
+                      className="px-2 py-1 bg-red-600 text-white rounded"
+                      onClick={() => setEditingStockId(null)}
+                    >
+                      Cancel
+                    </button>
+                    ): (
+                       <button
                       className="px-2 py-1 bg-red-600 text-white rounded"
                       onClick={() => handleDeleteStock(stock.id)}
                     >
                       Delete
                     </button>
+                    )}
+                   
                   </td>
                 </tr>
               ))}

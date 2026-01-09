@@ -42,7 +42,7 @@ class StockController extends BaseController
         }
 
         $stock = new Stock();
-        $stock = $stock->query()->where("id","=",$data["id"])->first();
+        $stock->query()->where("id","=",$data["id"])->first();
         $db->delete($stock);
         $db->commit();
 
@@ -77,12 +77,38 @@ class StockController extends BaseController
     #[Route('/calculatePortfolioValue/{currency}')]
     public function calculatePortfolioValue($currency)
     {
+        // we are looking to EUR
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
+        $currencys = CurrencyExhangeRateController::getExchangeRates();
         foreach($allStocks as $stock){
-            $calculation= $calculation + ($stock->getPrice() * $stock->getNumberOfShares());
+            
             if($stock->getCurrency()!=$currency){
-                // umnojawame
+               
+                $state = false;
+                foreach($currencys as $curr){
+                    // tuk se 4upi
+                    if(($curr->getFirstCurrency() == $stock->getCurrency() || $curr->getSecondCurrency() == $stock->getCurrency()) 
+                        && ($curr->getFirstCurrency() == $currency || $curr->getSecondCurrency() == $currency))
+                    {
+                        $state = true;
+                        if($curr->getFirstCurrency() == $stock->getCurrency()){
+                            // AKA Here is DOLAR USD=> EUR = *0.86 => (1USD = 0.86 EUR)
+                            $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares() * $curr->getRate(),2);
+                        }
+                        else{
+                            //reverse
+                            $calculation= $calculation+ round($stock->getPrice() * $stock->getNumberOfShares() / $curr->getRate(),2);
+                        }
+                        break;
+                    }
+                }
+                if($state == false){
+                    return new Response("Non existing rates", 404);
+                }
+            }
+            else{
+                $calculation= $calculation + ($stock->getPrice() * $stock->getNumberOfShares());
             }
         }
         return $this->json(["portfolioValue"=>$calculation, "currency"=>$currency]);
