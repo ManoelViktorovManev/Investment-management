@@ -67,5 +67,9 @@ class SettingsController extends BaseController
         return new Response("Successfuly updated");
     }
 
-
+    public static function getPortfolioValue(){
+        $settings = new Settings();
+        $settings->query()->first();
+        return round($settings->getSharePrice()*$settings->getallShares(),2);
+    }
 }
