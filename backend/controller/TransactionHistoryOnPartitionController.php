@@ -25,7 +25,9 @@ class TransactionHistoryOnPartitionController extends BaseController
             || !array_key_exists('priceForPartition', $data) || !array_key_exists('newUserPartitionsNumber', $data)){
             return new Response("Can`t create a new Stock. Missing information",404);
         }
-        $transaction = new TransactionHistoryOnPartition(null,$data["typeTransaction"],date("d.m.Y"), $data["price"], 
+        // I HAVE TO SET THE TIMEZONE => look at date_default_timezone_set()
+        date_default_timezone_set("Europe/Sofia");
+        $transaction = new TransactionHistoryOnPartition(null,$data["typeTransaction"],date("d.m.Y"), $data["person"], 
             $data["sumChange"], $data["changePartition"],$data["priceForPartition"], $data["newUserPartitionsNumber"]); 
         $db->add($transaction);
         $db->commit();

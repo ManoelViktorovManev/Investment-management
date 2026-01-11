@@ -7,6 +7,7 @@ import { FirstTimeLoging } from './FirstTimeLoging.js';
 import { UserComponent } from './UserComponent.js';
 import { Allocation } from './Allocation.js';
 import { SettingsComponent } from './SettingsComponent.js';
+import { THTCComponent } from './THTCComponent.js';
 
 
 function App() {
@@ -19,8 +20,8 @@ function App() {
         3. Display of adding a new user + a new position of the user (getting money) + removing the position (returning back money)
             STATUS: DONE
         4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position. STATUS: DONE
-        5. After buying or selling position (дял) => holding and history of transactions STATUS: NOT STARTED
-        6. After sell of stock => taxes, commision and others STATUS: NOT STARTED
+        5. After buying or selling position (дял) => holding and history of transactions STATUS: DONE
+        6. After sell of stock => taxes, commision and others STATUS: Done 1/3
     */
 
     const [currentPage, setCurrentPage] = useState('');
@@ -28,6 +29,7 @@ function App() {
     const [users,setUsers]=useState([]);
     const [stocks, setStocks] = useState([]);
     const [rates, setRates] = useState([]);
+    const [transactionHistory, setTransactionHistory] = useState([]);
     const [loading, setLoading] = useState(true);
 
     async function getSettings() {
@@ -63,12 +65,21 @@ function App() {
             const result = await response.json();
             setRates(result);
         }
-    }     
+    }
+    async function getTransactionsHistory(){
+        const response = await fetch(`${API_BASE_URI}/getTransactions`, {
+        });
+        if (response.status==200){
+            const result = await response.json();
+            setTransactionHistory(result);
+        }
+    }      
     useEffect(() => {
         getSettings();
         getUsers();
         getStocks();
         getRates();
+        getTransactionsHistory();
     }, []);
 
     const data = useMemo(() => ({
@@ -76,12 +87,14 @@ function App() {
         settings,
         stocks,
         rates,
-    }), [users, settings,stocks,rates]);
+        transactionHistory
+    }), [users, settings,stocks,rates,transactionHistory]);
     const refreshMethods = {
         refreshUsers: getUsers,
         refreshSettings: getSettings,
         refreshStocks: getStocks,
         refreshRates:getRates,
+        refreshTransactionHistory: getTransactionsHistory
     };
 
     if (loading) {
@@ -102,8 +115,6 @@ function App() {
             <div>
              <NavbarComponent
                 setCurrentPage={setCurrentPage}
-                data={data}
-                refreshMethods={refreshMethods}
                 />
 
                 <main className="ml-[200px] flex-grow p-10">
@@ -121,6 +132,9 @@ function App() {
                     )}
                     {currentPage === 'settings' && (
                     <SettingsComponent data={data} refreshMethods={refreshMethods} />
+                    )}
+                    {currentPage === 'thtc' && (
+                    <THTCComponent data={data} refreshMethods={refreshMethods} />
                     )}
                 </main>
             </div>

@@ -34,6 +34,18 @@ const UserComponent = ({ data, refreshMethods }) => {
         });
 
         if (response.status==200){
+          const responseTransaction = await fetch(`${API_BASE_URI}/createTransaction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                typeTransaction: "add",
+                person:newUserName,
+                sumChange: newUserMoney,
+                changePartition: newUserShares,
+                priceForPartition:share,
+                newUserPartitionsNumber: newUserShares
+            })
+          });
           var calculation = (Number(newUserShares) + Number(allShares)).toFixed(2);
           // console.log(calculation);
           const response = await fetch(`${API_BASE_URI}/updateSettings`, {
@@ -42,13 +54,6 @@ const UserComponent = ({ data, refreshMethods }) => {
               body: JSON.stringify({
                   allShares: calculation
               })
-          });
-
-          // call adding a new User + call updating settings number of shares
-          console.log({
-            name: newUserName,
-            money: Number(newUserMoney).toFixed(2),
-            shares: Number(newUserShares).toFixed(2),
           });
 
           // Reset form
@@ -81,10 +86,30 @@ const UserComponent = ({ data, refreshMethods }) => {
                 updatedShares: Number(editShares)
             })
         });
-        // NISANNN
 
 
       if(response.status==200){
+
+        console.log({
+          typeTransaction: addShares ? "add" : "remove",
+                person: user.name,
+                sumChange: editMoney,
+                changePartition: editShares,
+                priceForPartition:share,
+                newUserPartitionsNumber: addShares ?  Number(user.shares) + Number(editShares): Number(user.shares) - Number(editShares)
+        })
+        const responseTransaction = await fetch(`${API_BASE_URI}/createTransaction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                typeTransaction: addShares ? "add" : "remove",
+                person: user.name,
+                sumChange: editMoney,
+                changePartition: editShares,
+                priceForPartition:share,
+                newUserPartitionsNumber: addShares ?  Number(user.shares) + Number(editShares): Number(user.shares) - Number(editShares)
+            })
+          });
         var statetoperform =  addShares ? "add" : "remove";
         var calculation = 0;
         if(statetoperform=="add"){

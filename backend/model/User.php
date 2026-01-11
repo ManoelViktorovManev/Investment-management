@@ -9,12 +9,14 @@ class User extends BaseModel
     private ?int $id;
     private string $name;
     private float $shares;
+    private float $commissionPercent;
 
-    public function __construct(?int $id = null, string $name = '', float $shares = 0)
+    public function __construct(?int $id = null, string $name = '', float $shares = 0, float $commissionPercent = 0)
     {
         $this->id = $id;
         $this->name = $name;
         $this->shares = $shares;
+        $this->commissionPercent = $commissionPercent;
     }
 
     public function getId(): ?int
@@ -45,5 +47,15 @@ class User extends BaseModel
     public function setShares(float $shares): void
     {
         $this->shares = $shares;
+    }
+
+    public function getCommissionPercent(): float
+    {
+        return $this->commissionPercent;
+    }
+
+    public function setCommisionPercent(float $commissionPercent): void
+    {
+        $this->commissionPercent = $commissionPercent;
     }
 }

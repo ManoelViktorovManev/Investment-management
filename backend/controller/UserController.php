@@ -45,13 +45,10 @@ class UserController extends BaseController
     #[Route('/getUsers')]
     public function getUsers()
     {   
-        // $user = ;
-        // $array = $user->query()->all();
-
         return $this->json((new UserModel())->query()->all());
     }
     #[Route('/updateUserShares', methods:["POST"])]
-    public function updateUser(){
+    public function updateUserShares(){
         $data = json_decode(file_get_contents("php://input"), true);
 
         $user = new UserModel();
@@ -69,6 +66,24 @@ class UserController extends BaseController
             // -
             $user->setShares($user->getShares()-$data["updatedShares"]);
         }
+
+        $db->add($user);
+        $db->commit();
+        return new Response("Successfuly updated a record");
+
+    }
+
+    #[Route('/updateUserCommision', methods:["POST"])]
+    public function updateUserCommision(){
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $user = new UserModel();
+        if (!array_key_exists('userId', $data) || !array_key_exists('commisionPercent', $data)){
+            return new Response("No existing User",404);
+        }
+        $db = new DbManipulation();
+        $user->query()->where("id","=",$data["userId"])->first();
+        $user->setCommisionPercent($data["commisionPercent"]);
 
         $db->add($user);
         $db->commit();

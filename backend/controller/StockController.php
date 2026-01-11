@@ -118,7 +118,6 @@ class StockController extends BaseController
     #[Route('/calculateStocksValue/{currency}')]
     public function calculateStocksValue($currency)
     {
-        // we are looking to EUR
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
         $currencys = CurrencyExhangeRateController::getExchangeRates();
