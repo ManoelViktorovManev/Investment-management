@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useMemo } from 'react';
+import API_BASE_URI from './EnvVar.js'; 
 const THTCComponent = ({ data, refreshMethods }) => {
   const transactionHistory = data.transactionHistory;
   const users = data.users;
+  const settings = data.settings
 
   // Screen selection: "history" | "tax" | "commission"
   const [screen, setScreen] = useState("history");
@@ -40,6 +41,7 @@ const THTCComponent = ({ data, refreshMethods }) => {
     }));
   };
 
+   
   const handleCommissionCancel = () => {
     setEditedCommissions({ ...originalCommissions });
   };
@@ -63,12 +65,49 @@ const THTCComponent = ({ data, refreshMethods }) => {
 
     console.log("Will update:", updates);
 
-    // ❗ Call your API here instead of console.log
-    // for (const change of updates) {
-    //   await fetch(...);
-    // }
-
+    const responseTransaction = await fetch(`${API_BASE_URI}/updateUserCommision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            list:updates
+        })
+    });
     refreshMethods.refreshUsers();
+  };
+
+  // ---------------- TAX STATE ----------------
+  const [taxCompany, setTaxCompany] = useState("");
+  const [taxUserId, setTaxUserId] = useState("");
+  const [taxProfit, setTaxProfit] = useState("");
+
+  const selectedUser = users.find(u => u.id === Number(taxUserId));
+  const userShares = selectedUser?.shares ?? 0;
+  const commissionPercent = selectedUser ? (Number(editedCommissions[selectedUser.id]).toFixed(2) || 0) : 0;
+
+  const totalShares = settings[0].allShares;
+
+  const IBTC = useMemo(() => {
+    if (!taxProfit || !userShares || !totalShares) return 0;
+    return (userShares / totalShares) * Number(taxProfit);
+  }, [taxProfit, userShares, totalShares]);
+
+  const tax10 = IBTC * 0.10;
+  const IBC = IBTC - tax10;
+  const commission = IBC * (commissionPercent / 100);
+  const netIncome = IBC - commission;
+
+  const handleSubmitTax = () => {
+    const payload = {
+      company: taxCompany,
+      userId: taxUserId,
+      profit: Number(taxProfit),
+      IBTC,
+      tax10,
+      IBC,
+      commission,
+      netIncome
+    };
+    console.log("TAX SUBMIT:", payload);
   };
 
   return (
@@ -151,7 +190,7 @@ const THTCComponent = ({ data, refreshMethods }) => {
                     <input
                       type="number"
                       step="0.01"
-                      value={editedCommissions[u.id]}
+                      value={Number(editedCommissions[u.id]).toFixed(0)}
                       onChange={e => handleCommissionChange(u.id, Number(e.target.value))}
                       style={{ width:"80px" }}
                     /> %
@@ -169,7 +208,41 @@ const THTCComponent = ({ data, refreshMethods }) => {
       )}
 
       {/* ---------------------- TAX SCREEN ---------------------- */}
-      {screen === "tax" && <h2>Taxes — Coming next...</h2>}
+      {screen === "tax" && (
+        <div style={{ maxWidth:"400px" }}>
+          <h2>Taxes</h2>
+
+          <label>Company:</label>
+          <input style={inputStyle} value={taxCompany} onChange={e => setTaxCompany(e.target.value)} />
+
+          <label>User:</label>
+          <select style={inputStyle} value={taxUserId} onChange={e => setTaxUserId(e.target.value)}>
+            <option value="">Select user</option>
+            {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+
+          <label>Profit from Sale:</label>
+          <input type="number" style={inputStyle} value={taxProfit} onChange={e => setTaxProfit(e.target.value)} />
+
+          {(selectedUser && taxProfit) && (
+            <div style={{ marginTop:"1rem", border:"1px solid #ddd", padding:"10px", borderRadius:"6px" }}>
+              <p>IBTC: {IBTC.toFixed(2)}</p>
+              <p>10% Tax: {tax10.toFixed(2)}</p>
+              <p>IBC: {IBC.toFixed(2)}</p>
+              <p>Commission ({commissionPercent}%): {commission.toFixed(2)}</p>
+              <h4>Net income: {netIncome.toFixed(2)}</h4>
+            </div>
+          )}
+
+          <button
+            style={{...btnActive, marginTop:"1rem"}}
+            disabled={!taxCompany || !taxUserId || !taxProfit}
+            onClick={handleSubmitTax}
+          >
+            Submit
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -192,6 +265,14 @@ const btnActive = {
   background:"#007bff",
   color:"white",
   borderColor:"#007bff"
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "6px",
+  marginBottom: "10px",
+  border: "1px solid #ccc",
+  borderRadius: "4px"
 };
 
 export { THTCComponent };

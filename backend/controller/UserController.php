@@ -78,14 +78,22 @@ class UserController extends BaseController
         $data = json_decode(file_get_contents("php://input"), true);
 
         $user = new UserModel();
-        if (!array_key_exists('userId', $data) || !array_key_exists('commisionPercent', $data)){
-            return new Response("No existing User",404);
-        }
+        $listOfUsers = $data["list"];
         $db = new DbManipulation();
-        $user->query()->where("id","=",$data["userId"])->first();
-        $user->setCommisionPercent($data["commisionPercent"]);
-
-        $db->add($user);
+        if (empty($listOfUsers)){
+            return new Response("NO list to update",404);
+        }
+        else{
+            foreach($listOfUsers as $element){
+                $id= $element["id"];
+                $newCommision = $element["commissionPercent"];
+                $user = new UserModel();
+                $user->query()->where("id","=",$id)->first();
+                $user->setCommisionPercent($newCommision);
+                $db->add($user); 
+            }
+        }
+       
         $db->commit();
         return new Response("Successfuly updated a record");
 
