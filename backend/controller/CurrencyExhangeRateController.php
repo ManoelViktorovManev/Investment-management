@@ -40,6 +40,46 @@ class CurrencyExhangeRateController extends BaseController
         return (new CurrencyExchangeRate())->query()->all(true);
     }
 
+    #[Route('/getExchangeRate/{firstCurrency}/{secondCurrency}')]
+    public function getExchangeRate($firstCurrency, $secondCurrency)
+    {
+        $rate = self::calculateExchangeRate($firstCurrency, $secondCurrency);
+
+        if ($rate !== null) {
+            return $this->json([
+                "from" => $firstCurrency,
+                "to"   => $secondCurrency,
+                "result" => $rate
+            ]);
+        }
+
+        return new Response("No existing rate", 404);
+    }
+
+
+    public static function calculateExchangeRate($firstCurrency, $secondCurrency)
+    {
+        $exchangeratesarray = (new CurrencyExchangeRate())->query()->all(true);
+        $rate = null;
+
+        foreach ($exchangeratesarray as $rates) {
+            if (
+                ($rates->getFirstCurrency() == $firstCurrency || $rates->getSecondCurrency() == $firstCurrency)
+                && ($rates->getFirstCurrency() == $secondCurrency || $rates->getSecondCurrency() == $secondCurrency)
+            ) {
+                if ($rates->getFirstCurrency() == $firstCurrency) {
+                    $rate = $rates->getRate();
+                } else {
+                    $rate = round(1/$rates->getRate(), 4);
+                }
+            }
+        }
+
+        return $rate;
+    }
+
+
+
     #[Route('/deleteExchangeRate', methods:["POST"])]
     public function deleteExchangeRate()
     {

@@ -96,18 +96,25 @@ const THTCComponent = ({ data, refreshMethods }) => {
   const commission = IBC * (commissionPercent / 100);
   const netIncome = IBC - commission;
 
-  const handleSubmitTax = () => {
-    const payload = {
-      company: taxCompany,
-      userId: taxUserId,
-      profit: Number(taxProfit),
-      IBTC,
-      tax10,
-      IBC,
-      commission,
-      netIncome
-    };
-    console.log("TAX SUBMIT:", payload);
+  async function handleSubmitTax(){
+    const responseTransaction = await fetch(`${API_BASE_URI}/createTaxes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            company:taxCompany,
+            profitFromSale:Number(taxProfit)
+        })
+    });
+    // const payload = {
+    //   company: taxCompany,
+    //   userId: taxUserId,
+    //   profit: Number(taxProfit),
+    //   IBTC,
+    //   tax10,
+    //   IBC,
+    //   commission,
+    //   netIncome
+    // };
   };
 
   return (
@@ -236,7 +243,7 @@ const THTCComponent = ({ data, refreshMethods }) => {
 
           <button
             style={{...btnActive, marginTop:"1rem"}}
-            disabled={!taxCompany || !taxUserId || !taxProfit}
+            disabled={!taxCompany || !taxProfit}
             onClick={handleSubmitTax}
           >
             Submit

@@ -75,38 +75,23 @@ class StockController extends BaseController
         return new Response("Successfuly insert a new record");
     }
     
+    // {"portfolioValue":40934.11,"currency":"EUR"}
     #[Route('/calculatePortfolioValue/{currency}')]
     public function calculatePortfolioValue($currency)
     {
         // we are looking to EUR
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
-        $currencys = CurrencyExhangeRateController::getExchangeRates();
         foreach($allStocks as $stock){
             
             if($stock->getCurrency()!=$currency){
                
-                $state = false;
-                foreach($currencys as $curr){
-                    
-                    if(($curr->getFirstCurrency() == $stock->getCurrency() || $curr->getSecondCurrency() == $stock->getCurrency()) 
-                        && ($curr->getFirstCurrency() == $currency || $curr->getSecondCurrency() == $currency))
-                    {
-                        $state = true;
-                        if($curr->getFirstCurrency() == $stock->getCurrency()){
-                            // AKA Here is DOLAR USD=> EUR = *0.86 => (1USD = 0.86 EUR)
-                            $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares() * $curr->getRate(),2);
-                        }
-                        else{
-                            //reverse
-                            $calculation= $calculation+ round($stock->getPrice() * $stock->getNumberOfShares() / $curr->getRate(),2);
-                        }
-                        break;
-                    }
-                }
-                if($state == false){
+                $rate=CurrencyExhangeRateController::calculateExchangeRate($stock->getCurrency(),$currency);
+                if($rate==null){
                     return new Response("Non existing rates", 404);
                 }
+                $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares() * $rate,2);
+                
             }
             else{
                 $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares(),2);

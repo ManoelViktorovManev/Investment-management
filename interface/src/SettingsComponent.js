@@ -3,6 +3,7 @@ import API_BASE_URI from './EnvVar.js';
 const SettingsComponent = ({ data, refreshMethods }) => {
   
   var rates = data.rates;
+  var sharePrice = data.settings[0].sharePrice;
   var settingsDefaultCurrency = data.settings[0].defaultCurrency;
   const [showCurrencySettings, setShowCurrencySettings] = useState(false);
 
@@ -100,6 +101,10 @@ const SettingsComponent = ({ data, refreshMethods }) => {
             <option value="USD">USD</option>
           </select>
 
+          <hr />
+
+          <h3>Share Price</h3>
+          <p>{Number(sharePrice).toFixed(5)}</p>
           <hr />
 
           {/* Existing Exchange Rates */}
