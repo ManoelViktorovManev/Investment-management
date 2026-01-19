@@ -22,11 +22,15 @@ class TaxesController extends BaseController
         $data = json_decode($rawInput, true);
 
         if (!array_key_exists('company', $data) || !array_key_exists('profitFromSale', $data)
-             || !array_key_exists('currency', $data)){
+             || !array_key_exists('currency', $data) || !array_key_exists('defaultCurrency', $data) ){
             return new Response("Can`t create a new Stock. Missing information",404);
         }
         date_default_timezone_set("Europe/Sofia");
-        $taxes = new Taxes(null,$data["company"],date("d.m.Y"),$data["profitFromSale"]);
+        $rate=CurrencyExhangeRateController::calculateExchangeRate($data["defaultCurrency"],$data["currency"]);
+        if($rate==null){
+            return new Response("Non existing rates {$data["defaultCurrency"]} to {$data["currency"]}", 404);
+        }
+        $taxes = new Taxes(null,$data["company"],date("d.m.Y"),$data["currency"],$rate,$data["profitFromSale"]);
         $db->add($taxes);
         // here come the interesting part
         $db->commit();
@@ -35,7 +39,7 @@ class TaxesController extends BaseController
         $settings = new Settings();
         $settings->query()->first();
         foreach($usersArray as $user){
-            // TODO: add three more fields; 10taxesToDefaultCurrency, 
+            // TODO: add three more fields; 10taxesToDefaultCurrency!!!!
             if($user->getShares()==0){
                 continue;
             }
@@ -56,4 +60,39 @@ class TaxesController extends BaseController
         $db->commit();
         return new Response("Successfuly insert a new record");
     }
+
+    #[Route('/updatePayedTaxesAndCommisions', methods:["POST"])]
+    public function updatePayedTaxesAndCommisions()
+    {
+        $db = new DbManipulation();
+        
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        if (!array_key_exists('taxId', $data) || !array_key_exists('userId', $data)){
+            return new Response("Can`t update state. Missing information",404);
+        }
+        $taxesUsers = new TaxesUsers();
+        $taxesUsers->query()->where("taxesId","=",$data["taxId"])->and()->where("userId","=",$data["userId"])->first();
+
+        $state = $taxesUsers->getTaxesAndCommisionPayed();
+        $state == 1? $taxesUsers->setTaxesAndCommisionPayed(0) : $taxesUsers->setTaxesAndCommisionPayed(1);
+        $db->add($taxesUsers);
+        $db->commit();
+        return new Response("Successfuly updated a record");
+    }
+
+    #[Route('/getTaxes')]
+    public function getTaxes()
+    {
+        return $this->json((new Taxes())->query()->all());
+    }
+
+    #[Route('/getUserTaxes')]
+    public function getUserTaxes()
+    {
+        return $this->json((new TaxesUsers())->query()->all());
+    }
+
+
 }

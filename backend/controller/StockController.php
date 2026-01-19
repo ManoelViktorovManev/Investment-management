@@ -7,7 +7,6 @@ use App\Model\Stock;
 use App\Core\Route;
 use App\Core\DbManipulation;
 use App\Core\Response;
-// use App\Mo;
 
 class StockController extends BaseController
 {
@@ -75,11 +74,11 @@ class StockController extends BaseController
         return new Response("Successfuly insert a new record");
     }
     
-    // {"portfolioValue":40934.11,"currency":"EUR"}
+   
     #[Route('/calculatePortfolioValue/{currency}')]
     public function calculatePortfolioValue($currency)
     {
-        // we are looking to EUR
+       
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
         foreach($allStocks as $stock){
@@ -88,7 +87,7 @@ class StockController extends BaseController
                
                 $rate=CurrencyExhangeRateController::calculateExchangeRate($stock->getCurrency(),$currency);
                 if($rate==null){
-                    return new Response("Non existing rates", 404);
+                    return new Response("Non existing rates {$stock->getCurrency()} to {$currency}", 404);
                 }
                 $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares() * $rate,2);
                 
@@ -99,44 +98,4 @@ class StockController extends BaseController
         }
         return $this->json(["portfolioValue"=>$calculation, "currency"=>$currency]);
     }
-
-    #[Route('/calculateStocksValue/{currency}')]
-    public function calculateStocksValue($currency)
-    {
-        $allStocks = (new Stock())->query()->all(true);
-        $calculation = 0;
-        $currencys = CurrencyExhangeRateController::getExchangeRates();
-        foreach($allStocks as $stock){
-            if($stock->getPrice() == 1 && str_contains($stock->getName(),"Cash")){
-
-                if($stock->getCurrency() != $currency){
-                    $state = false;
-                    foreach($currencys as $curr){
-                         if(($curr->getFirstCurrency() == $stock->getCurrency() || $curr->getSecondCurrency() == $stock->getCurrency()) 
-                        && ($curr->getFirstCurrency() == $currency || $curr->getSecondCurrency() == $currency))
-                        {
-                            $state = true;
-                            if($curr->getFirstCurrency() == $stock->getCurrency()){
-                                $calculation= $calculation + round( $stock->getNumberOfShares() * $curr->getRate(),2);
-                            }
-                            else{
-                                //reverse
-                                $calculation= $calculation+ round( $stock->getNumberOfShares() / $curr->getRate(),2);
-                            }
-                            break;
-                        }
-                    }
-                    if($state == false){
-                        return new Response("Non existing rates", 404);
-                    }
-                }
-                else{
-                    $calculation = $calculation + $stock->getNumberOfShares();
-                }
-            }
-        }
-        
-        return $this->json(["stockValue"=>$calculation,"%"=>round(($calculation/SettingsController::getPortfolioValue())*100,2),"currency"=>$currency]);
-    }
-
 }

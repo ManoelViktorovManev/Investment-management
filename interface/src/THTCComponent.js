@@ -3,7 +3,9 @@ import API_BASE_URI from './EnvVar.js';
 const THTCComponent = ({ data, refreshMethods }) => {
   const transactionHistory = data.transactionHistory;
   const users = data.users;
-  const settings = data.settings
+  const settings = data.settings;
+  const taxes = data.taxes;
+  const allUserTaxes=data.userTaxes;
 
   // Screen selection: "history" | "tax" | "commission"
   const [screen, setScreen] = useState("history");
@@ -14,15 +16,28 @@ const THTCComponent = ({ data, refreshMethods }) => {
   // Commission states
   const [originalCommissions, setOriginalCommissions] = useState({});
   const [editedCommissions, setEditedCommissions] = useState({});
+  const [userIdWithName, setUserIdWithName] = useState([]);
+
+  const [selectedTaxId, setSelectedTaxId] = useState(null);
+
+  const matchingUserTaxes = allUserTaxes.filter(
+    u => u.taxesId === selectedTaxId
+  );
 
   // Initialize commission states when users change
   useEffect(() => {
     const orig = {};
     const edit = {};
+    const userId = [];
     users.forEach(u => {
       orig[u.id] = u.commissionPercent || 0;
       edit[u.id] = u.commissionPercent || 0;
+      if(u.id!=null){
+        userId[u.id] = u.name;
+      }
     });
+    setUserIdWithName(userId);
+    console.log(userId);
     setOriginalCommissions(orig);
     setEditedCommissions(edit);
   }, [users]);
@@ -75,26 +90,21 @@ const THTCComponent = ({ data, refreshMethods }) => {
     refreshMethods.refreshUsers();
   };
 
+  const handleTogglePayment = async (userId,taxId) => {
+    const responseTransaction = await fetch(`${API_BASE_URI}/updatePayedTaxesAndCommisions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            taxId:taxId,
+            userId:userId
+        })
+    });
+    refreshMethods.refreshUserTaxes();
+  }
   // ---------------- TAX STATE ----------------
   const [taxCompany, setTaxCompany] = useState("");
-  const [taxUserId, setTaxUserId] = useState("");
   const [taxProfit, setTaxProfit] = useState("");
-
-  const selectedUser = users.find(u => u.id === Number(taxUserId));
-  const userShares = selectedUser?.shares ?? 0;
-  const commissionPercent = selectedUser ? (Number(editedCommissions[selectedUser.id]).toFixed(2) || 0) : 0;
-
-  const totalShares = settings[0].allShares;
-
-  const IBTC = useMemo(() => {
-    if (!taxProfit || !userShares || !totalShares) return 0;
-    return (userShares / totalShares) * Number(taxProfit);
-  }, [taxProfit, userShares, totalShares]);
-
-  const tax10 = IBTC * 0.10;
-  const IBC = IBTC - tax10;
-  const commission = IBC * (commissionPercent / 100);
-  const netIncome = IBC - commission;
+  const [currencySelected,setCurrencySelected] = useState("");
 
   async function handleSubmitTax(){
     const responseTransaction = await fetch(`${API_BASE_URI}/createTaxes`, {
@@ -102,19 +112,14 @@ const THTCComponent = ({ data, refreshMethods }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             company:taxCompany,
-            profitFromSale:Number(taxProfit)
+            profitFromSale:Number(taxProfit),
+            currency: currencySelected,
+            defaultCurrency: settings[0].defaultCurrency
         })
     });
-    // const payload = {
-    //   company: taxCompany,
-    //   userId: taxUserId,
-    //   profit: Number(taxProfit),
-    //   IBTC,
-    //   tax10,
-    //   IBC,
-    //   commission,
-    //   netIncome
-    // };
+    refreshMethods.refreshTaxes();
+    refreshMethods.refreshUserTaxes();
+
   };
 
   return (
@@ -222,16 +227,14 @@ const THTCComponent = ({ data, refreshMethods }) => {
           <label>Company:</label>
           <input style={inputStyle} value={taxCompany} onChange={e => setTaxCompany(e.target.value)} />
 
-          <label>User:</label>
-          <select style={inputStyle} value={taxUserId} onChange={e => setTaxUserId(e.target.value)}>
-            <option value="">Select user</option>
-            {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </select>
-
           <label>Profit from Sale:</label>
           <input type="number" style={inputStyle} value={taxProfit} onChange={e => setTaxProfit(e.target.value)} />
 
-          {(selectedUser && taxProfit) && (
+          <label>Currency:</label>
+          <input style={inputStyle} onChange={e => setCurrencySelected(e.target.value)} />
+
+
+          {/* {(selectedUser && taxProfit) && (
             <div style={{ marginTop:"1rem", border:"1px solid #ddd", padding:"10px", borderRadius:"6px" }}>
               <p>IBTC: {IBTC.toFixed(2)}</p>
               <p>10% Tax: {tax10.toFixed(2)}</p>
@@ -239,15 +242,63 @@ const THTCComponent = ({ data, refreshMethods }) => {
               <p>Commission ({commissionPercent}%): {commission.toFixed(2)}</p>
               <h4>Net income: {netIncome.toFixed(2)}</h4>
             </div>
-          )}
+          )} */}
 
           <button
             style={{...btnActive, marginTop:"1rem"}}
-            disabled={!taxCompany || !taxProfit}
+            disabled={!taxCompany || !taxProfit || !currencySelected}
             onClick={handleSubmitTax}
           >
             Submit
           </button>
+          <div>
+          {/* Taxes list */}
+          <h3>All Taxes</h3>
+          {taxes.map(t => (
+            <div
+              key={t.id}
+              onClick={() => setSelectedTaxId(t.id)}
+              style={{ padding: "6px", borderBottom: "1px solid #ddd", cursor:"pointer" }}
+            >
+              {t.company} - {t.date} - Profit: {Number(t.profitFromSale).toFixed(2)}
+            </div>
+          ))}
+
+          {/* Detail panel */}
+          {selectedTaxId && (
+            <div style={{ marginTop:"1rem", border:"1px solid #ccc", padding:"10px" }}>
+              <h4>User Taxes for Tax ID: {selectedTaxId}</h4>
+              {matchingUserTaxes.length > 0 ? (
+                matchingUserTaxes.map(item => (
+                  <div key={item.id}>
+                    User: {userIdWithName[item.userId]}, IBTC: {Number(item.IBTC).toFixed(2)}, 10% Taxes:{Number(item.taxes10Percent).toFixed(2)}, IBC: {Number(item.IBC).toFixed(2)}, 
+                    Commision: {Number(item.commision).toFixed(2)}, Net Income: {Number(item.netIncome).toFixed(2)}
+                    <button
+                    onClick={() => handleTogglePayment(item.userId, selectedTaxId)}
+                    style={{
+                      marginLeft: "10px",
+                      padding: "4px 10px",
+                      backgroundColor: item.taxesAndCommisionPayed ? "green" : "red",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    {item.taxesAndCommisionPayed ? "Paid" : "Not Paid"}
+                  </button>
+
+                  </div>
+                ))
+              ) : (
+                <p>No related user taxes.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+
+
         </div>
       )}
     </div>

@@ -14,14 +14,16 @@ function App() {
 
     /*
     TODO:
-        1. Settings hold what is the entire value of the portfolio - STATUS: DONE
-        2. Option for if there is existing portfolio and option if to start from 0. (Ако е както мен, да се добави ръчно всичко.) 
-            STATUS: DONE
-        3. Display of adding a new user + a new position of the user (getting money) + removing the position (returning back money)
-            STATUS: DONE
-        4. Showing as graph the total ownership (shares + value). Graph of total stock and total cash position. STATUS: DONE
-        5. After buying or selling position (дял) => holding and history of transactions STATUS: DONE
-        6. After sell of stock => taxes, commision and others STATUS: Done 1/3
+        6. After sell of stock => taxes, commision and others STATUS: Done 90%
+
+    NEXT TASKS:
+        1. Automated Market and Currency Data Fetch => from yahoofinance, 
+        Bulgarian API, and currecny api to take the data at the end of the day and input it.
+        2. End-of-Day Performance Tracking => Tracking the share price historoicaly and have
+        line chart showing overtime what happend.
+        3. Adding a new assets - loan
+        4. Email/ exporting pdf data => showing for every weak what happened to the price +
+        what are top movers for the weak. (3 best and 3 worst)
     */
 
     const [currentPage, setCurrentPage] = useState('');
@@ -30,6 +32,8 @@ function App() {
     const [stocks, setStocks] = useState([]);
     const [rates, setRates] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [taxes, setTaxes] = useState([]);
+    const [userTaxes, setUserTaxes] = useState([]);
     const [loading, setLoading] = useState(true);
 
     async function getSettings() {
@@ -73,13 +77,32 @@ function App() {
             const result = await response.json();
             setTransactionHistory(result);
         }
-    }      
+    }
+    async function getTaxes(){
+        const response = await fetch(`${API_BASE_URI}/getTaxes`, {
+        });
+        if (response.status==200){
+            const result = await response.json();
+            setTaxes(result);
+        }
+    } 
+    
+    async function getUserTaxes(){
+        const response = await fetch(`${API_BASE_URI}/getUserTaxes`, {
+        });
+        if (response.status==200){
+            const result = await response.json();
+            setUserTaxes(result);
+        }
+    }  
     useEffect(() => {
         getSettings();
         getUsers();
         getStocks();
         getRates();
         getTransactionsHistory();
+        getTaxes();
+        getUserTaxes();
     }, []);
 
     const data = useMemo(() => ({
@@ -87,14 +110,18 @@ function App() {
         settings,
         stocks,
         rates,
-        transactionHistory
-    }), [users, settings,stocks,rates,transactionHistory]);
+        transactionHistory,
+        taxes,
+        userTaxes,
+    }), [users, settings,stocks,rates,transactionHistory,taxes,userTaxes]);
     const refreshMethods = {
         refreshUsers: getUsers,
         refreshSettings: getSettings,
         refreshStocks: getStocks,
         refreshRates:getRates,
-        refreshTransactionHistory: getTransactionsHistory
+        refreshTransactionHistory: getTransactionsHistory,
+        refreshTaxes: getTaxes,
+        refreshUserTaxes: getUserTaxes,
     };
 
     if (loading) {
