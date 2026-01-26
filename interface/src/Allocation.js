@@ -124,7 +124,7 @@ const Allocation = ({ data, refreshMethods }) => {
       })
     });
     if(response.status === 200){
-      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`);
+      const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
       if (responseForCalculation.status === 200){
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
@@ -156,7 +156,7 @@ const Allocation = ({ data, refreshMethods }) => {
     });
 
     if(response.status === 200){
-      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`);
+      const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
       if (responseForCalculation.status === 200){
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
@@ -184,7 +184,7 @@ const Allocation = ({ data, refreshMethods }) => {
     });
 
     if(response.status === 200){
-      const responseForCalculation = await fetch(`${API_BASE_URI}/calculatePortfolioValue/${settings[0].defaultCurrency}`);
+      const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
       if (responseForCalculation.status === 200){
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;

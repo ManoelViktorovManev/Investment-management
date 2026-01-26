@@ -7,6 +7,7 @@ use App\Model\Stock;
 use App\Core\Route;
 use App\Core\DbManipulation;
 use App\Core\Response;
+use App\Model\Settings;
 
 class StockController extends BaseController
 {
@@ -73,12 +74,47 @@ class StockController extends BaseController
 
         return new Response("Successfuly insert a new record");
     }
+
+    #[Route('/updateMultipleStocks', methods:["POST"])]
+    public function updateMultipleStocks()
+    {
+        $db = new DbManipulation();
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (!array_key_exists('list', $data) || !array_key_exists('date', $data)
+             || !array_key_exists('amountOfShares', $data) || !array_key_exists('currency', $data)){
+            return new Response("Can`t update Stock. Missing information",404);
+        }
+
+        // $allShares = (new Stock())->query()->all(true);
+        foreach($data["list"] as $stockElement)
+        {
+            $stock = new Stock($stockElement["id"], $stockElement["name"],$stockElement["price"],$stockElement["numberOfShares"], $stockElement["currency"]);
+            $db->add($stock);
+        }
+        $db->commit();
+        // we need to get entire portfolio price now + currency
+
+        $calculation = self::calculatePortfolioValue($data["currency"]);
+
+        if ($calculation == null) {
+            return new Response("No existing rate", 404);
+        }       
+        // now we update settings
+        $settings = new Settings();
+        $settings->query()->first();
+        $settings->setSharePrice(round($calculation/$settings->getallShares(),5));
+        $db->add($settings);
+        $db->commit();
+
+        //finally we add the new element in db HistoryPriceOFONeShare :)
+        HistoryPriceOfOneShareController::createStaticInstance($data["date"],$settings->getSharePrice());
+        return new Response("Successfuly insert a new record");
+    }
     
    
-    #[Route('/calculatePortfolioValue/{currency}')]
-    public function calculatePortfolioValue($currency)
+    public static function calculatePortfolioValue($currency)
     {
-       
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
         foreach($allStocks as $stock){
@@ -96,6 +132,19 @@ class StockController extends BaseController
                 $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares(),2);
             }
         }
-        return $this->json(["portfolioValue"=>$calculation, "currency"=>$currency]);
+        return $calculation;
+    }
+
+    #[Route('/getPortfolioSize/{currency}')]
+    public function getPortfolioSize($currency)
+    {
+       
+        $calculation = self::calculatePortfolioValue($currency);
+
+        if ($calculation !== null) {
+            return $this->json(["portfolioValue"=>$calculation, "currency"=>$currency]);
+        }
+
+        return new Response("No existing rate", 404);
     }
 }

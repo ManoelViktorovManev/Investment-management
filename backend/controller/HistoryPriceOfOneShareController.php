@@ -20,12 +20,20 @@ class HistoryPriceOfOneShareController extends BaseController
 
         $name= $data["date"];
         $sharePrice = $data["sharePrice"];
+        
         $sharePriceHistory = new HistoryPriceOfOneShare(null,$name,$sharePrice);
         $db->add($sharePriceHistory);
         $db->commit();
         return new Response("Successfuly insert a new record");
     }
 
+    public static function createStaticInstance($date,$sharePrice){
+        $db = new DbManipulation();
+        $sharePriceHistory = new HistoryPriceOfOneShare(null,$date,$sharePrice);
+        $db->add($sharePriceHistory);
+        $db->commit();
+        return;
+    }
     #[Route('/getHistoryPrice/{fromDate}/{toDate}')]
     public function getHistoryPrice($fromDate,$toDate)
     {
@@ -34,6 +42,51 @@ class HistoryPriceOfOneShareController extends BaseController
         $sharePriceHistory = new HistoryPriceOfOneShare();
         $array = $sharePriceHistory->query()->where("date",">=",$fromDate)->and()->where("date","<=",$toDate)->all();
         return $this->json($array);
+    }
+
+    #[Route('/getLastRecordedDate')]
+    public function getLastRecordedDate()
+    {
+        date_default_timezone_set("Europe/Sofia");
+        $now = date("d.m.Y");
+
+        $sharePriceHistory = new HistoryPriceOfOneShare();
+        
+        // Get last recorded row
+        $sharePriceHistory->query()
+            ->where("date", "<=", $now)
+            ->order(["date", "DESC"])
+            ->first();
+
+        
+        // check if db is empty => record todays price
+        if($sharePriceHistory->getId()==null){
+            return $this->json([
+            "lastRecorder" => null,
+            "datesToRecord" => 1,
+             "missingDates" => [$now]
+        ]);
+        }
+        $lastDate = $sharePriceHistory->getDate(); 
+
+        // Convert to DateTime objects
+        $today = \DateTime::createFromFormat('d.m.Y', $now);
+        $lastDt = \DateTime::createFromFormat('d.m.Y', $lastDate);
+
+        $missingDates = [];
+        $cursor = clone $lastDt;
+        $cursor->modify('+1 day');
+
+        while ($cursor < $today) {
+            $missingDates[] = $cursor->format('d.m.Y');
+            $cursor->modify('+1 day');
+        }
+
+        return $this->json([
+            "lastRecorder" => $lastDate,
+            "datesToRecord" => count($missingDates),
+             "missingDates" => $missingDates
+        ]);
     }
 
 }
