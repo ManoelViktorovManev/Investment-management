@@ -7,6 +7,7 @@ const NavbarComponent = ({ setCurrentPage }) => {
      { label: 'Allocation', action: () => setCurrentPage('allocation') },
      { label: 'Settings', action: ()=>setCurrentPage('settings')},
      { label: 'Transaction History, Taxes and Commisions', action: ()=>setCurrentPage('thtc')},
+     { label: 'Share price movement', action: ()=>setCurrentPage('price_movement')},
   ];
   return (
     <nav className="min-w-[220px] h-screen fixed top-0 left-0 bg-gray-900 text-white shadow-lg">

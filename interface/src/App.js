@@ -8,6 +8,7 @@ import { UserComponent } from './UserComponent.js';
 import { Allocation } from './Allocation.js';
 import { SettingsComponent } from './SettingsComponent.js';
 import { THTCComponent } from './THTCComponent.js';
+import { PriceMovement } from './PriceMovement.js';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('');
@@ -90,7 +91,7 @@ function App() {
     }
 
     async function getDateForUpdate(){
-        
+        console.log(stocks);
         if(showUpdatePrice==true){
             return;
         }
@@ -101,25 +102,13 @@ function App() {
             if(result.datesToRecord > 0){
                 setMissingDates(result.missingDates);   // store missing dates
                 setSelectedMissingDate(result.missingDates[0]); // default first
-                console.log(stocks);
+                
                 setPriceUpdateData(stocks); // prepare editable
                 setShowUpdatePrice(true);
             }
         }
     }
-
-    // Helper function to convert stocks array into editable structure 
-    // function resultStocksToEditable(stockList) { 
-    //      return stockList.map(s => ({
-    //     id: s.id,
-    //     name: s.name,
-    //     price: String(s.price),
-    //     numberOfShares: String(s.numberOfShares),
-    //     currency
-    //     }));
-    //  }
     
-
     // Handle change in editable table
     function handleEditField(id, field, value) {
         setPriceUpdateData(prev => prev.map(item =>
@@ -133,7 +122,6 @@ function App() {
             date: selectedMissingDate,
             stocks: priceUpdateData
         });
-        console.log(priceUpdateData)
         // TODO: backend call
         const response = await fetch(`${API_BASE_URI}/updateMultipleStocks`, {
             method: 'POST',
@@ -294,6 +282,7 @@ function App() {
                         {currentPage === 'allocation' && <Allocation data={data} refreshMethods={refreshMethods} />}
                         {currentPage === 'settings' && <SettingsComponent data={data} refreshMethods={refreshMethods} />}
                         {currentPage === 'thtc' && <THTCComponent data={data} refreshMethods={refreshMethods} />}
+                        {currentPage === 'price_movement' && <PriceMovement data={data} refreshMethods={refreshMethods} />}
                     </main>
                 </div>
             )}
