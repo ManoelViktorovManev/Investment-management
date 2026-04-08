@@ -32,12 +32,12 @@ const Allocation = ({ data, refreshMethods }) => {
   const [editingStockId, setEditingStockId] = useState(null);
   const [editValues, setEditValues] = useState({ shares: '', price: '' });
 
-  const chartDataShares = users.map(u => ({
+  const chartDataShares = users.filter(u=>u.shares>0).map(u => ({
     name: u.name,
     value: Number(u.shares)
   }));
   chartDataShares.sort((a, b) => b.value - a.value);
-  const chartDataUsersMoney = users.map(u => ({
+  const chartDataUsersMoney = users.filter(u=>u.shares>0).map(u => ({
     name: u.name,
     value: parseFloat((u.shares * settings[0].sharePrice).toFixed(2))
   }));
