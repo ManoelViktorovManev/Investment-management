@@ -59,6 +59,9 @@ class CurrencyExhangeRateController extends BaseController
 
     public static function calculateExchangeRate($firstCurrency, $secondCurrency)
     {
+        if($firstCurrency===$secondCurrency)
+            return 1;
+        
         $exchangeratesarray = (new CurrencyExchangeRate())->query()->all(true);
         $rate = null;
 

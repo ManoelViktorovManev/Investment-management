@@ -38,13 +38,14 @@ class TaxesController extends BaseController
         $usersArray = (new User())->query()->all(true);
         $settings = new Settings();
         $settings->query()->first();
+        $taxableIncomeBasedOnNAP = round($data["profitFromSale"]*0.9,2);
         foreach($usersArray as $user){
             // TODO: add three more fields; 10taxesToDefaultCurrency!!!!
             if($user->getShares()==0){
                 continue;
             }
-            //IBTC => (user shares/ all shares) * profitFromSale
-            $IBTC = round(($user->getShares()/$settings->getallShares())*$data["profitFromSale"],2);
+            //IBTC => (user shares/ all shares) * taxableIncomeBasedOnNAP
+            $IBTC = round(($user->getShares()/$settings->getallShares())*$taxableIncomeBasedOnNAP,2);
             //10% taxes => 0.1 * IBTC
             $taxes10percent = round(0.1*$IBTC,2);
             //IBC => IBTC - 10% taxes
