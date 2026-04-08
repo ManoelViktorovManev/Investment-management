@@ -10,26 +10,27 @@ use App\Model\HistoryPriceOfOneShare;
 
 class HistoryPriceOfOneShareController extends BaseController
 {
-    #[Route('/createHistoryPrice', methods:["POST"])]
-    public function createSettings()
-    {
-        $db = new DbManipulation();
+    // #[Route('/createHistoryPrice', methods:["POST"])]
+    // public function createSettings()
+    // {
+    //     $db = new DbManipulation();
         
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+    //     $rawInput = file_get_contents("php://input");
+    //     $data = json_decode($rawInput, true);
 
-        $name= $data["date"];
-        $sharePrice = $data["sharePrice"];
+    //     $name= $data["date"];
+    //     $sharePrice = $data["sharePrice"];
         
-        $sharePriceHistory = new HistoryPriceOfOneShare(null,$name,$sharePrice);
-        $db->add($sharePriceHistory);
-        $db->commit();
-        return new Response("Successfuly insert a new record");
-    }
+    //     $sharePriceHistory = new HistoryPriceOfOneShare(null,$name,$sharePrice);
+    //     $db->add($sharePriceHistory);
+    //     $db->commit();
+    //     return new Response("Successfuly insert a new record");
+    // }
 
     public static function createStaticInstance($date,$sharePrice){
         $db = new DbManipulation();
-        $sharePriceHistory = new HistoryPriceOfOneShare(null,$date,$sharePrice);
+        $formatedDate = \DateTime::createFromFormat('d.m.Y', $date)->format('Y-m-d');
+        $sharePriceHistory = new HistoryPriceOfOneShare(null,$formatedDate,$sharePrice);
         $db->add($sharePriceHistory);
         $db->commit();
         return;
@@ -37,8 +38,8 @@ class HistoryPriceOfOneShareController extends BaseController
     #[Route('/getHistoryPrice/{fromDate}/{toDate}')]
     public function getHistoryPrice($fromDate,$toDate)
     {
-        $fromDate = \DateTime::createFromFormat('Y-m-d', $fromDate)->format('d.m.Y');
-        $toDate   = \DateTime::createFromFormat('Y-m-d', $toDate)->format('d.m.Y');
+        // $fromDate = \DateTime::createFromFormat('Y-m-d', $fromDate)->format('d.m.Y');
+        // $toDate   = \DateTime::createFromFormat('Y-m-d', $toDate)->format('d.m.Y');
         $sharePriceHistory = new HistoryPriceOfOneShare();
         $array = $sharePriceHistory->query()->where("date",">=",$fromDate)->and()->where("date","<=",$toDate)->all();
         return $this->json($array);
@@ -48,7 +49,7 @@ class HistoryPriceOfOneShareController extends BaseController
     public function getLastRecordedDate()
     {
         date_default_timezone_set("Europe/Sofia");
-        $now = date("d.m.Y");
+        $now = date("Y-m-d");
 
         $sharePriceHistory = new HistoryPriceOfOneShare();
         
@@ -70,8 +71,8 @@ class HistoryPriceOfOneShareController extends BaseController
         $lastDate = $sharePriceHistory->getDate(); 
 
         // Convert to DateTime objects
-        $today = \DateTime::createFromFormat('d.m.Y', $now);
-        $lastDt = \DateTime::createFromFormat('d.m.Y', $lastDate);
+        $today = \DateTime::createFromFormat('Y-m-d', $now);
+        $lastDt = \DateTime::createFromFormat('Y-m-d', $lastDate);
 
         $missingDates = [];
         $cursor = clone $lastDt;

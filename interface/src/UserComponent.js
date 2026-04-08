@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js'; 
-const UserComponent = ({ data, refreshMethods }) => {
+const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate }) => {
     var users = data.users;
     var settings = data.settings;
     var share = settings[0].sharePrice; // only one instance of settings we have
@@ -144,7 +144,14 @@ const UserComponent = ({ data, refreshMethods }) => {
         <button className="px-2 py-1 bg-green-500 text-white rounded mr-2"  onClick={() => setAddNewUser(true)}>
             Add a new User
         </button>
-
+        {cameFromUpdate && (
+        <button
+          className="mb-4 p-2 bg-blue-600 text-white rounded"
+          onClick={onBackToUpdate}
+        >
+          ⬅ Back to price update
+        </button>
+      )}
 
         {/* Adding or removing amount of shares/ money from the account  */}
         {(addShares || removeShares) && editUser && (
@@ -299,7 +306,7 @@ const UserComponent = ({ data, refreshMethods }) => {
               className="border-t hover:bg-gray-50 transition"
             >
               <td className="px-4 py-2">{user.name}</td>
-              <td className="px-4 py-2">{Math.round(user.shares)}</td>
+              <td className="px-4 py-2">{Number(user.shares).toFixed(2)}</td>
               <td className="px-4 py-2 text-center">
        
                 <button

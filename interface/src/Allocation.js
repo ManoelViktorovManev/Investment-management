@@ -9,6 +9,7 @@ const Allocation = ({ data, refreshMethods }) => {
   const settings = data.settings;
   const stocks = data.stocks;
 
+  // TODO!!!HERE WE HAVE BUG AND FIX IT
   const enitrePortfolioPrice = (Number(settings[0].allShares) * Number(settings[0].sharePrice)).toFixed(2);
 
   const [shareState, setShareState] = useState(true);
@@ -161,7 +162,7 @@ const Allocation = ({ data, refreshMethods }) => {
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
         const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
-
+        console.log(newValuePerShare);
         await fetch(`${API_BASE_URI}/updateSettings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -206,10 +207,12 @@ const Allocation = ({ data, refreshMethods }) => {
  
   return (
     <div>
-
-      <button className="px-2 py-1 bg-green-500 text-white rounded mr-2" onClick={() => setShareState(!shareState)}>
+      {!buttonForStocks && (
+        <button className="px-2 py-1 bg-green-500 text-white rounded mr-2" onClick={() => setShareState(!shareState)}>
         {shareState ? "Show money" : "Show shares"}
-      </button>
+        </button>
+      )}
+      
 
       <button className="px-2 py-1 bg-green-500 text-white rounded mr-2" onClick={() => setButtonForStocks(!buttonForStocks)}>
         {buttonForStocks ? "Show piechart" : "Show stocks"}

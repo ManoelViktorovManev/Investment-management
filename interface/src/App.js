@@ -26,6 +26,8 @@ function App() {
     const [missingDates, setMissingDates] = useState([]);
     const [selectedMissingDate, setSelectedMissingDate] = useState("");
     const [priceUpdateData, setPriceUpdateData] = useState([]); // editable stocks data
+    const [cameFromUpdate, setCameFromUpdate] = useState(false);
+    const [appMode, setAppMode] = useState("normal"); 
 
     async function getSettings() {
         const response = await fetch(`${API_BASE_URI}/getSettings`);
@@ -91,7 +93,7 @@ function App() {
     }
 
     async function getDateForUpdate(){
-        console.log(stocks);
+        // console.log(stocks);
         if(showUpdatePrice==true){
             return;
         }
@@ -105,6 +107,7 @@ function App() {
                 
                 setPriceUpdateData(stocks); // prepare editable
                 setShowUpdatePrice(true);
+                setAppMode("update");
             }
         }
     }
@@ -118,10 +121,10 @@ function App() {
 
     // SAVE handler (backend logic you implement)
     async function handleSavePriceUpdates() {
-        console.log("Updating:", {
-            date: selectedMissingDate,
-            stocks: priceUpdateData
-        });
+        // console.log("Updating:", {
+        //     date: selectedMissingDate,
+        //     stocks: priceUpdateData
+        // });
         // TODO: backend call
         const response = await fetch(`${API_BASE_URI}/updateMultipleStocks`, {
             method: 'POST',
@@ -138,13 +141,13 @@ function App() {
         const remaining = missingDates.filter(d => d !== selectedMissingDate);
 
         if (remaining.length > 0) {
-            // Move to the next date
             setMissingDates(remaining);
             setSelectedMissingDate(remaining[0]);
         } else {
-            // All done → exit update mode
             setShowUpdatePrice(false);
+            setAppMode("normal");   // ✅ FIX
         }
+
     }
 
 
@@ -165,8 +168,9 @@ function App() {
     useEffect(() => {
         if(stocks.length!=0){
             getDateForUpdate();
-            setLoading(false);
+            
         }
+        setLoading(false);
     }, [stocks])
 
     const data = useMemo(() => ({
@@ -209,6 +213,27 @@ function App() {
                         <option key={d} value={d}>{d}</option>
                     ))}
                 </select>
+                <button
+                className="mt-4 p-2 bg-green-600 text-white rounded"
+                onClick={() => {
+                    setCameFromUpdate(true);
+                    setShowUpdatePrice(false);
+                    setCurrentPage('settings');
+                }}
+                >
+                Edit exchange rates
+                </button>
+
+                <button
+                className="mt-4 p-2 bg-green-600 text-white rounded"
+                onClick={() => {
+                    setCameFromUpdate(true);
+                    setShowUpdatePrice(false);
+                    setCurrentPage('users');
+                }}
+                >
+                Edit User shares
+                </button>
 
                 <table className="border-collapse border border-gray-500">
                     <thead>
@@ -252,11 +277,16 @@ function App() {
                 </button>
 
                 <button
-                    className="mt-2 p-2 bg-gray-400 text-black rounded"
-                    onClick={() => setShowUpdatePrice(false)}
+                className="mt-2 p-2 bg-gray-400 text-black rounded"
+                onClick={() => {
+                    setShowUpdatePrice(false);
+                    setAppMode("normal");   // ✅ FIX
+                    setCameFromUpdate(false);
+                }}
                 >
-                    CANCEL
+                CANCEL
                 </button>
+
             </div>
         );
     }
@@ -270,7 +300,11 @@ function App() {
                 <FirstTimeLoging onSetupComplete={getSettings} />
             ) : (
                 <div>
-                    <NavbarComponent setCurrentPage={setCurrentPage} />
+                    <NavbarComponent
+                    setCurrentPage={setCurrentPage}
+                    appMode={appMode}
+                    />
+
                     <main className="ml-[200px] flex-grow p-10">
                         {currentPage === '' && (
                             <div className="text-center mt-32">
@@ -278,11 +312,43 @@ function App() {
                                 <p className="text-xl text-gray-700">Select a page from the sidebar to get started.</p>
                             </div>
                         )}
-                        {currentPage === 'users' && <UserComponent data={data} refreshMethods={refreshMethods} />}
-                        {currentPage === 'allocation' && <Allocation data={data} refreshMethods={refreshMethods} />}
-                        {currentPage === 'settings' && <SettingsComponent data={data} refreshMethods={refreshMethods} />}
-                        {currentPage === 'thtc' && <THTCComponent data={data} refreshMethods={refreshMethods} />}
-                        {currentPage === 'price_movement' && <PriceMovement data={data} refreshMethods={refreshMethods} />}
+                        
+                       {currentPage === 'users' && (
+                        <UserComponent
+                            data={data}
+                            refreshMethods={refreshMethods}
+                            cameFromUpdate={cameFromUpdate}
+                            onBackToUpdate={() => {
+                            setShowUpdatePrice(true);
+                            setCurrentPage('');
+                            }}
+                        />
+                        )}
+
+                        {currentPage === 'settings' && (
+                        <SettingsComponent
+                            data={data}
+                            refreshMethods={refreshMethods}
+                            cameFromUpdate={cameFromUpdate}
+                            onBackToUpdate={() => {
+                            setShowUpdatePrice(true);
+                            setCurrentPage('');
+                            }}
+                        />
+                        )}
+
+                        {appMode === "normal" && currentPage === 'allocation' && (
+                        <Allocation data={data} refreshMethods={refreshMethods} />
+                        )}
+
+                        {appMode === "normal" && currentPage === 'thtc' && (
+                        <THTCComponent data={data} refreshMethods={refreshMethods} />
+                        )}
+
+                        {appMode === "normal" && currentPage === 'price_movement' && (
+                        <PriceMovement data={data} refreshMethods={refreshMethods} />
+                        )}
+
                     </main>
                 </div>
             )}

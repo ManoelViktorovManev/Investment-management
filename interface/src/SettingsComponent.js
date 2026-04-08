@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import API_BASE_URI from './EnvVar.js';
-const SettingsComponent = ({ data, refreshMethods }) => {
+const SettingsComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate }) => {
   
   var rates = data.rates;
   var sharePrice = data.settings[0].sharePrice;
   var settingsDefaultCurrency = data.settings[0].defaultCurrency;
-  const [showCurrencySettings, setShowCurrencySettings] = useState(false);
 
   const [defaultCurrency, setDefaultCurrency] = useState(settingsDefaultCurrency);
   const [updateRate, setUpdateRate] = useState("");
@@ -14,6 +13,7 @@ const SettingsComponent = ({ data, refreshMethods }) => {
   const [firstCurrency, setFirstCurrency] = useState("");
   const [secondCurrency, setSecondCurrency] = useState("");
   const [newRate, setNewRate] = useState("");
+
 
   async function handleAddRate(){
     if (!firstCurrency || !secondCurrency) {
@@ -82,11 +82,14 @@ const SettingsComponent = ({ data, refreshMethods }) => {
   return (
     <div style={{ padding: "1rem" }}>
       
-      <button onClick={() => setShowCurrencySettings(!showCurrencySettings)}>
-        {showCurrencySettings ? "Hide Currency Settings" : "Show Currency Settings"}
-      </button>
-
-      {showCurrencySettings && (
+      {cameFromUpdate && (
+        <button
+          className="mb-4 p-2 bg-blue-600 text-white rounded"
+          onClick={onBackToUpdate}
+        >
+          ⬅ Back to price update
+        </button>
+      )}
         <div style={{ marginTop: "1rem" }}>
           {/* Default Currency */}
           <h3>Default Currency</h3>
@@ -158,7 +161,7 @@ const SettingsComponent = ({ data, refreshMethods }) => {
             <button onClick={handleAddRate}>Add</button>
           </div>
         </div>
-      )}
+      
 
     </div>
   );
