@@ -21,16 +21,25 @@ const Allocation = ({ data, refreshMethods }) => {
 
   // New stock form state
   const [addStockMode, setAddStockMode] = useState(false);
+  const [buyStockMode, setBuyStockMode] = useState(false);
+  const [sellStockMode, setSellStockMode] = useState(false);
+
   const [newStock, setNewStock] = useState({
     name: '',
-    shares: '',
-    price: '',
-    currency: 'USD'
+    currency: data.settings[0].defaultCurrency,
+    isCash: false,
   });
 
+  const [buyStock, setBuyStock] = useState({
+    stockId: '',
+    price: '',
+    amount: '',
+    currency: data.settings[0].defaultCurrency,
+    rateForTheCurrencty: 1
+  });
   // Edit stock state
   const [editingStockId, setEditingStockId] = useState(null);
-  const [editValues, setEditValues] = useState({ shares: '', price: '' });
+  const [editValues, setEditValues] = useState({ price: '', shares: '' });
 
   const chartDataShares = users.filter(u=>u.shares>0).map(u => ({
     name: u.name,
@@ -119,8 +128,37 @@ const Allocation = ({ data, refreshMethods }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: newStock.name,
-        price: newStock.price,
-        shares: newStock.shares,
+        currency: newStock.currency,
+        isCash: newStock.isCash,
+      })
+    });
+    if(response.status === 200){
+      const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
+      if (responseForCalculation.status === 200){
+        const result = await responseForCalculation.json();
+        const value = result.portfolioValue;
+        const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+
+        await fetch(`${API_BASE_URI}/updateSettings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sharePrice: newValuePerShare })
+        });
+      }
+    }
+
+    setAddStockMode(false);
+    setNewStock({ name: '', currency: data.settings[0].defaultCurrency, isCash: false });
+    refreshMethods.refreshStocks();
+    refreshMethods.refreshSettings();
+  }
+
+  async function handleBuyStock(){
+    const response = await fetch(`${API_BASE_URI}/createStock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newStock.name,
         currency: newStock.currency
       })
     });
@@ -140,20 +178,31 @@ const Allocation = ({ data, refreshMethods }) => {
     }
 
     setAddStockMode(false);
-    setNewStock({ name: '', shares: '', price: '', currency: 'USD' });
+    setNewStock({ name: '', currency: data.settings[0].defaultCurrency });
     refreshMethods.refreshStocks();
     refreshMethods.refreshSettings();
   }
 
   async function handleUpdateStock(id){
+    var json = {};
+    const stock = stocks.find((s) => s.id === id);
+     if (stock.isCash == 1){
+      json = {
+        id: id,
+        shares: editValues.shares
+      }
+     }
+     else{
+      json = {
+        id: id,
+        price: editValues.price,
+      }
+     }
+      
     const response = await fetch(`${API_BASE_URI}/updateStock`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: id,
-        price: editValues.price,
-        shares: editValues.shares
-      })
+      body: JSON.stringify(json)
     });
 
     if(response.status === 200){
@@ -174,7 +223,7 @@ const Allocation = ({ data, refreshMethods }) => {
     refreshMethods.refreshStocks();
     refreshMethods.refreshSettings();
     setEditingStockId(null);
-    setEditValues({ shares: '', price: '' });
+    setEditValues({ price: '' });
   }
 
   async function handleDeleteStock(id){
@@ -284,12 +333,77 @@ const Allocation = ({ data, refreshMethods }) => {
             Entire value of portfolio: {enitrePortfolioPrice}
           </h1>
 
-          {!addStockMode && (
-            <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setAddStockMode(true)}>
+          {!addStockMode && !buyStockMode && !sellStockMode && (
+            <>
+              <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setAddStockMode(true)}>
               Add New Stock
             </button>
-          )}
 
+            <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setBuyStockMode(true)}>
+              Buy stock
+            </button>
+
+            <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setSellStockMode(true)}>
+              Sell Stock
+            </button>
+            </>
+            
+          )}
+          {buyStockMode && (
+            <>
+            <div className="p-3 border rounded mt-3 space-y-2 max-w-md">
+              <h3 className="font-semibold">Buying stock</h3>
+
+              <select
+                className="w-full p-2 border rounded"
+                value={buyStock.stockId}
+                onChange={(e) =>{
+                  const selectedStockId = e.target.value;
+
+                const selectedStock = stocks.find(
+                  (s) => s.id === selectedStockId
+                );
+
+                setBuyStock({
+                  ...buyStock,
+                  stockId: selectedStockId,
+                  currency: selectedStock.currency,
+                });
+                }}
+              >
+                <option value="">Select stock</option>
+
+                {stocks.map((stock) => (
+                  <option key={stock.id} value={stock.id}>
+                    {stock.name} ({stock.id})
+                  </option>
+                ))}
+              </select>
+              
+              <input type="number" placeholder="Number of Shares" className="w-full p-2 border rounded"
+                value={buyStock.shares} onChange={(e) => setBuyStock({ ...buyStock, shares: e.target.value })} />
+
+              <input type="number" placeholder="Price per Share" className="w-full p-2 border rounded"
+                value={buyStock.price} onChange={(e) => setBuyStock({ ...buyStock, price: e.target.value })} />
+
+              <input
+                  type="text"
+                  className="w-full p-2 border rounded bg-gray-100"
+                  value={buyStock.currency}
+                  readOnly
+                />
+
+              <input type="text" placeholder="Currency Rate" className="w-full p-2 border rounded"
+                value={buyStock.rateForTheCurrencty} onChange={(e) => setBuyStock({ ...buyStock, rateForTheCurrencty: e.target.value })} />
+
+              <div className="flex gap-2">
+                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={handleBuyStock}>Upload</button>
+                <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setBuyStockMode(false)}>Cancel</button>
+              </div>
+            </div>
+            </>
+            // when we buy => which stock + we need to add the amount + the price + currency + exchangeRate for the day of the currency to standart
+          )}
           {addStockMode && (
             <div className="p-3 border rounded mt-3 space-y-2 max-w-md">
               <h3 className="font-semibold">Add New Stock</h3>
@@ -297,15 +411,12 @@ const Allocation = ({ data, refreshMethods }) => {
               <input type="text" placeholder="Stock Name" className="w-full p-2 border rounded"
                 value={newStock.name} onChange={(e) => setNewStock({ ...newStock, name: e.target.value })} />
 
-              <input type="number" placeholder="Number of Shares" className="w-full p-2 border rounded"
-                value={newStock.shares} onChange={(e) => setNewStock({ ...newStock, shares: e.target.value })} />
-
-              <input type="number" placeholder="Price per Share" className="w-full p-2 border rounded"
-                value={newStock.price} onChange={(e) => setNewStock({ ...newStock, price: e.target.value })} />
-
               <input type="text" placeholder="Currency" className="w-full p-2 border rounded"
                 value={newStock.currency} onChange={(e) => setNewStock({ ...newStock, currency: e.target.value })} />
-
+              <input type="checkbox" id="isCash" name="isCash" value={newStock.isCash} onChange={(e) => setNewStock({ ...newStock, isCash: e.target.checked })}
+              />
+              <label for="isCash">Is Cash</label>
+              
               <div className="flex gap-2">
                 <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={handleCreateStock}>Upload</button>
                 <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setAddStockMode(false)}>Cancel</button>
@@ -314,67 +425,120 @@ const Allocation = ({ data, refreshMethods }) => {
           )}
 
           <table className="min-w-full border border-gray-300 bg-white mt-4 rounded">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-3 py-2">Name</th>
-                <th className="px-3 py-2">Shares</th>
-                <th className="px-3 py-2">Price</th>
-                <th className="px-3 py-2">Currency</th>
-                <th className="px-3 py-2 text-center">Actions</th>
-              </tr>
-            </thead>
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="px-3 py-2">Name</th>
+              <th className="px-3 py-2">Shares</th>
+              <th className="px-3 py-2">Price</th>
+              <th className="px-3 py-2">Currency</th>
+              <th className="px-3 py-2 text-center">Actions</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {stocks.map(stock => (
-                <tr key={stock.id} className="border-t">
-                  <td className="px-3 py-2">{stock.name}</td>
+          <tbody>
+            {stocks.map((stock) => (
+              <tr key={stock.id} className="border-t">
+                
+                {/* NAME */}
+                <td className="px-3 py-2">{stock.name}</td>
 
-                  <td className="px-3 py-2">
-                    {editingStockId === stock.id ? (
-                      <input type="number" className="w-20 p-1 border rounded"
+                {/* SHARES */}
+                <td className="px-3 py-2">
+                  {editingStockId === stock.id ? (
+                    stock.isCash == 1 ? (
+                      <input
+                        type="number"
+                        className="w-20 p-1 border rounded"
                         value={editValues.shares}
-                        onChange={(e) => setEditValues({ ...editValues, shares: e.target.value })} />
+                        onChange={(e) =>
+                          setEditValues({
+                            ...editValues,
+                            shares: e.target.value,
+                          })
+                        }
+                      />
                     ) : (
-                      Number(stock.numberOfShares).toFixed(2)
-                    )}
-                  </td>
+                      stock.numberOfShares
+                    )
+                  ) : (
+                    stock.numberOfShares
+                  )}
+                </td>
 
-                  <td className="px-3 py-2">
-                    {editingStockId === stock.id ? (
-                      <input type="number" className="w-20 p-1 border rounded"
+                {/* PRICE */}
+                <td className="px-3 py-2">
+                  {editingStockId === stock.id ? (
+                    stock.isCash != 1 ? (
+                      <input
+                        type="number"
+                        className="w-20 p-1 border rounded"
                         value={editValues.price}
-                        onChange={(e) => setEditValues({ ...editValues, price: e.target.value })} />
+                        onChange={(e) =>
+                          setEditValues({
+                            ...editValues,
+                            price: e.target.value,
+                          })
+                        }
+                      />
                     ) : (
                       Number(stock.price).toFixed(3)
-                    )}
-                  </td>
+                    )
+                  ) : (
+                    Number(stock.price).toFixed(3)
+                  )}
+                </td>
 
-                  <td className="px-3 py-2">{stock.currency}</td>
+                {/* CURRENCY */}
+                <td className="px-3 py-2">{stock.currency}</td>
 
-                  <td className="px-3 py-2 text-center space-x-2">
-                    {editingStockId === stock.id ? (
-                      <button className="px-2 py-1 bg-green-600 text-white rounded"
-                        onClick={() => handleUpdateStock(stock.id)}>Save</button>
-                    ) : (
-                      <button className="px-2 py-1 bg-yellow-500 text-white rounded"
+                {/* ACTIONS */}
+                <td className="px-3 py-2 text-center space-x-2">
+                  {editingStockId === stock.id ? (
+                    <>
+                      <button
+                        className="px-2 py-1 bg-green-600 text-white rounded"
+                        onClick={() => handleUpdateStock(stock.id)}
+                      >
+                        Save
+                      </button>
+
+                      <button
+                        className="px-2 py-1 bg-red-600 text-white rounded"
+                        onClick={() => setEditingStockId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="px-2 py-1 bg-yellow-500 text-white rounded"
                         onClick={() => {
                           setEditingStockId(stock.id);
-                          setEditValues({ shares: stock.numberOfShares, price: stock.price });
-                        }}>Edit</button>
-                    )}
+                          setEditValues({
+                            price: stock.price,
+                            shares: stock.numberOfShare,
+                          });
+                        }}
+                      >
+                        {stock.isCash == 1
+                          ? "Update amount of money"
+                          : "Update share price"}
+                      </button>
 
-                    {editingStockId === stock.id ? (
-                      <button className="px-2 py-1 bg-red-600 text-white rounded"
-                        onClick={() => setEditingStockId(null)}>Cancel</button>
-                    ) : (
-                      <button className="px-2 py-1 bg-red-600 text-white rounded"
-                        onClick={() => handleDeleteStock(stock.id)}>Delete</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <button
+                        className="px-2 py-1 bg-red-600 text-white rounded"
+                        onClick={() => handleDeleteStock(stock.id)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
         </div>
       )}

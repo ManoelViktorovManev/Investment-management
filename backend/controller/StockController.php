@@ -16,12 +16,12 @@ class StockController extends BaseController
     {
         $db = new DbManipulation();
         $data = json_decode(file_get_contents("php://input"), true);
-
-        if (!array_key_exists('name', $data) || !array_key_exists('price', $data) || !array_key_exists('shares', $data) || !array_key_exists('currency', $data) ){
+        // we handle and isCash
+        if (!array_key_exists('name', $data) ||  !array_key_exists('currency', $data) || !array_key_exists('isCash', $data) ){
             return new Response("Can`t create a new Stock. Missing information",404);
         }
 
-        $stock = new Stock(null,$data["name"],$data["price"],$data["shares"], $data["currency"]); 
+        $stock = new Stock($data["name"],$data["currency"],$data["isCash"]); 
         $db->add($stock);
         $db->commit();
 

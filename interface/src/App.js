@@ -167,8 +167,7 @@ function App() {
 
     useEffect(() => {
         if(stocks.length!=0){
-            getDateForUpdate();
-            
+            // getDateForUpdate(); 
         }
         setLoading(false);
     }, [stocks])
