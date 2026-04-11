@@ -34,8 +34,9 @@ const Allocation = ({ data, refreshMethods }) => {
     stockId: '',
     price: '',
     amount: '',
-    currency: data.settings[0].defaultCurrency,
-    rateForTheCurrencty: 1
+    currency: '',
+    rateForTheCurrencty: '',
+    date: "",
   });
   // Edit stock state
   const [editingStockId, setEditingStockId] = useState(null);
@@ -154,12 +155,17 @@ const Allocation = ({ data, refreshMethods }) => {
   }
 
   async function handleBuyStock(){
-    const response = await fetch(`${API_BASE_URI}/createStock`, {
+    const response = await fetch(`${API_BASE_URI}/addStockTransaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: newStock.name,
-        currency: newStock.currency
+        type: "buy",
+        stockId: buyStock.stockId,
+        price: Number(buyStock.price),
+        quantity: Number(buyStock.amount),
+        currency: buyStock.currency,
+        rate: buyStock.rateForTheCurrencty,
+        date: buyStock.date,
       })
     });
     if(response.status === 200){
@@ -176,9 +182,8 @@ const Allocation = ({ data, refreshMethods }) => {
         });
       }
     }
-
-    setAddStockMode(false);
-    setNewStock({ name: '', currency: data.settings[0].defaultCurrency });
+    setBuyStockMode(false);
+    setBuyStock({ stockId: '',price: '',amount: '',currency: '',rateForTheCurrencty: '',date: "", });
     refreshMethods.refreshStocks();
     refreshMethods.refreshSettings();
   }
@@ -358,22 +363,23 @@ const Allocation = ({ data, refreshMethods }) => {
                 className="w-full p-2 border rounded"
                 value={buyStock.stockId}
                 onChange={(e) =>{
-                  const selectedStockId = e.target.value;
-
+                const selectedStockId = e.target.value;
+               
                 const selectedStock = stocks.find(
-                  (s) => s.id === selectedStockId
+                  (s) => s.id == selectedStockId
                 );
-
+  
                 setBuyStock({
                   ...buyStock,
                   stockId: selectedStockId,
                   currency: selectedStock.currency,
+                  rateForTheCurrencty: selectedStock.currency == data.settings[0].defaultCurrency?1:""
                 });
                 }}
               >
                 <option value="">Select stock</option>
 
-                {stocks.map((stock) => (
+                {stocks.filter(u=>u.isCash===0).map((stock) => (
                   <option key={stock.id} value={stock.id}>
                     {stock.name} ({stock.id})
                   </option>
@@ -381,7 +387,7 @@ const Allocation = ({ data, refreshMethods }) => {
               </select>
               
               <input type="number" placeholder="Number of Shares" className="w-full p-2 border rounded"
-                value={buyStock.shares} onChange={(e) => setBuyStock({ ...buyStock, shares: e.target.value })} />
+                value={buyStock.shares} onChange={(e) => setBuyStock({ ...buyStock, amount: e.target.value })} />
 
               <input type="number" placeholder="Price per Share" className="w-full p-2 border rounded"
                 value={buyStock.price} onChange={(e) => setBuyStock({ ...buyStock, price: e.target.value })} />
@@ -395,7 +401,14 @@ const Allocation = ({ data, refreshMethods }) => {
 
               <input type="text" placeholder="Currency Rate" className="w-full p-2 border rounded"
                 value={buyStock.rateForTheCurrencty} onChange={(e) => setBuyStock({ ...buyStock, rateForTheCurrencty: e.target.value })} />
-
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                value={buyStock.date}
+                onChange={(e) =>
+                  setBuyStock({ ...buyStock, date: e.target.value })
+                }
+              />
               <div className="flex gap-2">
                 <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={handleBuyStock}>Upload</button>
                 <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setBuyStockMode(false)}>Cancel</button>
