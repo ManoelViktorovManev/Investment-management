@@ -11,6 +11,7 @@ const Allocation = ({ data, refreshMethods }) => {
 
   // TODO!!!HERE WE HAVE BUG AND FIX IT
   const enitrePortfolioPrice = (Number(settings[0].allShares) * Number(settings[0].sharePrice)).toFixed(2);
+  const today = new Date().toISOString().split("T")[0];
 
   const [shareState, setShareState] = useState(true);
   const [buttonForStocks, setButtonForStocks] = useState(false);
@@ -36,8 +37,9 @@ const Allocation = ({ data, refreshMethods }) => {
     amount: '',
     currency: '',
     rateForTheCurrencty: '',
-    date: "",
+    date: today,
   });
+
   // Edit stock state
   const [editingStockId, setEditingStockId] = useState(null);
   const [editValues, setEditValues] = useState({ price: '', shares: '' });
@@ -154,12 +156,12 @@ const Allocation = ({ data, refreshMethods }) => {
     refreshMethods.refreshSettings();
   }
 
-  async function handleBuyStock(){
+  async function handleBuyStock(transactionType){
     const response = await fetch(`${API_BASE_URI}/addStockTransaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: "buy",
+        type: transactionType,
         stockId: buyStock.stockId,
         price: Number(buyStock.price),
         quantity: Number(buyStock.amount),
@@ -183,10 +185,11 @@ const Allocation = ({ data, refreshMethods }) => {
       }
     }
     setBuyStockMode(false);
-    setBuyStock({ stockId: '',price: '',amount: '',currency: '',rateForTheCurrencty: '',date: "", });
+    setBuyStock({ stockId: '',price: '',amount: '',currency: '',rateForTheCurrencty: '',date: today, });
     refreshMethods.refreshStocks();
     refreshMethods.refreshSettings();
   }
+  
 
   async function handleUpdateStock(id){
     var json = {};
@@ -354,7 +357,84 @@ const Allocation = ({ data, refreshMethods }) => {
             </>
             
           )}
+          {/* BUY STOCK */}
           {buyStockMode && (
+            <>
+            <div className="p-3 border rounded mt-3 space-y-2 max-w-md">
+              <h3 className="font-semibold">Buying stock</h3>
+
+              <select
+                className="w-full p-2 border rounded"
+                value={buyStock.stockId}
+                onChange={(e) =>{
+                const selectedStockId = e.target.value;
+               
+                const selectedStock = stocks.find(
+                  (s) => s.id == selectedStockId
+                );
+  
+                setBuyStock({
+                  ...buyStock,
+                  stockId: selectedStockId,
+                  currency: selectedStock.currency,
+                  rateForTheCurrencty: selectedStock.currency == data.settings[0].defaultCurrency?1:""
+                });
+                }}
+              >
+                <option value="">Select stock</option>
+
+                {stocks.filter(u=>u.isCash===0).map((stock) => (
+                  <option key={stock.id} value={stock.id}>
+                    {stock.name} ({stock.id})
+                  </option>
+                ))}
+              </select>
+              
+              <input type="number" placeholder="Number of Shares" className="w-full p-2 border rounded"
+                value={buyStock.shares} onChange={(e) => setBuyStock({ ...buyStock, amount: e.target.value })} />
+
+              <input type="number" placeholder="Price per Share" className="w-full p-2 border rounded"
+                value={buyStock.price} onChange={(e) => setBuyStock({ ...buyStock, price: e.target.value })} />
+
+              <input
+                  type="text"
+                  className="w-full p-2 border rounded bg-gray-100"
+                  value={buyStock.currency}
+                  disabled
+                />
+
+              <input
+                type="number"
+                placeholder="Currency Rate"
+                className="w-full p-2 border rounded"
+                value={buyStock.rateForTheCurrencty}
+                disabled={buyStock.currency === data.settings[0].defaultCurrency}
+                onChange={(e) =>
+                  setBuyStock({
+                    ...buyStock,
+                    rateForTheCurrencty: e.target.value
+                  })
+                }
+              />
+              
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                value={buyStock.date}
+                onChange={(e) =>
+                  setBuyStock({ ...buyStock, date: e.target.value })
+                }
+              />
+              <div className="flex gap-2">
+                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyStock("buy")}>Upload</button>
+                <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setBuyStockMode(false)}>Cancel</button>
+              </div>
+            </div>
+            </>
+            
+          )}
+          {/* SELL STOCK */}
+          {sellStockMode && (
             <>
             <div className="p-3 border rounded mt-3 space-y-2 max-w-md">
               <h3 className="font-semibold">Buying stock</h3>
@@ -410,13 +490,16 @@ const Allocation = ({ data, refreshMethods }) => {
                 }
               />
               <div className="flex gap-2">
-                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={handleBuyStock}>Upload</button>
-                <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setBuyStockMode(false)}>Cancel</button>
+                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyStock("sell")}>Upload</button>
+                <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setSellStockMode(false)}>Cancel</button>
               </div>
             </div>
             </>
-            // when we buy => which stock + we need to add the amount + the price + currency + exchangeRate for the day of the currency to standart
+            
           )}
+
+
+
           {addStockMode && (
             <div className="p-3 border rounded mt-3 space-y-2 max-w-md">
               <h3 className="font-semibold">Add New Stock</h3>

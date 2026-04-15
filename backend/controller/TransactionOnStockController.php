@@ -8,6 +8,7 @@ use App\Core\DbManipulation;
 use App\Core\Response;
 use App\Model\TransactionOnStock;
 use App\Model\Stock;
+use App\Model\StockPositionLots;
 
 class TransactionOnStockController extends BaseController
 {
@@ -23,16 +24,38 @@ class TransactionOnStockController extends BaseController
             
             return new Response("Can`t create a new CurrencyRate. Missing information",404);
         }
+
+        // again new check if they are empty
         $stock = new Stock();
         $stock->query()->where("id","=",$data["stockId"])->first();
-        $newCurrency = new TransactionOnStock($data['stockId'],$data['type'],$data['quantity'], $data['price'], $data['currency'],$data['rate'],$data['date']); 
+
+        $newCurrency = new TransactionOnStock($data['stockId'],$data['type'],$data['quantity'], $data['price'], $data['currency'],$data['rate'],$data['date']);
         $db->add($newCurrency);
+
+        $currentShares = $stock->getNumberOfShares();
         $stock->setPrice($data["price"]);
+
         if($data['type']=="buy"){
-            $stock->setNumberOfShares($stock->getNumberOfShares() + $data['quantity']);
+            $newTotalShares = $currentShares + $data['quantity'];
+            $stock->setNumberOfShares($newTotalShares);
+            
+            $stockLot = new StockPositionLots($data['stockId'],$data["price"],$data['quantity']);
+            $db->add($stockLot);
+            $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
+            $stock->setAveragePrice($result["averagePrice"]);
         }
         else{
-            $stock->setNumberOfShares($stock->getNumberOfShares() - $data['quantity']);
+            if ($data['quantity'] > $currentShares) {
+                return new Response("Cannot sell more shares than owned", 400);
+            }
+            StockPositionLotsController::performSell($data['stockId'],$data['quantity']);
+
+            $newTotalShares = $currentShares - $data['quantity'];
+            $stock->setNumberOfShares($newTotalShares);
+
+            $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
+            $stock->setAveragePrice($result["averagePrice"]);
+
         }
 
         $db->add($stock);
