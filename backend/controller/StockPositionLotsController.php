@@ -59,6 +59,7 @@ class StockPositionLotsController extends BaseController
             $investedSum = $investedSum + ($value["price"] * $value["quantity"]);
             $amount = $amount + $value["quantity"];
         }
+        
         $averagePrice = round($investedSum/$amount,4);
         return ["investedSum"=>$investedSum,"amount"=>$amount,"averagePrice"=>$averagePrice];
     }

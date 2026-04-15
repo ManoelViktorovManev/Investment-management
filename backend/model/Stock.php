@@ -9,7 +9,7 @@ class Stock extends BaseModel
     private ?int $id;
     private string $name;
     private float $price;
-    private float $averagePrice;
+    private ?float $averagePrice;
     private float $numberOfShares;
     private string $currency;
     private bool $isCash;
@@ -21,7 +21,7 @@ class Stock extends BaseModel
         $this->name = $name;
         $this->currency = $currency;
         $this->isCash = $isCash;
-        $this->averagePrice = 0;
+        $this->averagePrice = $isCash==true?null:0;
         $this->numberOfShares = 0;
         $this->id = null;
     }

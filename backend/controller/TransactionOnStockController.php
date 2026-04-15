@@ -33,16 +33,18 @@ class TransactionOnStockController extends BaseController
         $db->add($newCurrency);
 
         $currentShares = $stock->getNumberOfShares();
-        $stock->setPrice($data["price"]);
-
         if($data['type']=="buy"){
+            $stockLot = new StockPositionLots($data['stockId'],$data["price"],$data['quantity']);
+            $db->add($stockLot);
+
+            $db->commit();
+            
             $newTotalShares = $currentShares + $data['quantity'];
             $stock->setNumberOfShares($newTotalShares);
             
-            $stockLot = new StockPositionLots($data['stockId'],$data["price"],$data['quantity']);
-            $db->add($stockLot);
-            $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
-            $stock->setAveragePrice($result["averagePrice"]);
+            
+            // $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
+            // $stock->setAveragePrice($result["averagePrice"]);
         }
         else{
             if ($data['quantity'] > $currentShares) {
@@ -53,10 +55,13 @@ class TransactionOnStockController extends BaseController
             $newTotalShares = $currentShares - $data['quantity'];
             $stock->setNumberOfShares($newTotalShares);
 
-            $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
-            $stock->setAveragePrice($result["averagePrice"]);
+            // $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
+            // $stock->setAveragePrice($result["averagePrice"]);
 
         }
+        $result = StockPositionLotsController::getAveragePriceForStock($data['stockId']);
+        $stock->setPrice($data["price"]);
+        $stock->setAveragePrice($result["averagePrice"]);
 
         $db->add($stock);
         $db->commit();

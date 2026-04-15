@@ -10,8 +10,6 @@ use App\Core\Response;
 
 class UserController extends BaseController
 {
-    // Setting default Currency for a new portfolio
-    // Button for adding a new дялове to User
      
     #[Route('/createUser', methods:["POST"])]
     public function createUser()
@@ -39,9 +37,10 @@ class UserController extends BaseController
             }
         }
         
-        $db->commit();
+        // $db->commit();
         return new Response("Successfuly insert a new record");
     }
+    
     #[Route('/getUsers')]
     public function getUsers()
     {   

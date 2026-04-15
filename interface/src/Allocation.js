@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
+
 const COLORS = ['#3799efff','#1900ffff' , '#00ff62ff', '#FFBB28', '#ff0000ff', '#aa00ff', '#50551fff', '#2f9f40ff' , '#000000', '#ff009dff'];
 
 const Allocation = ({ data, refreshMethods }) => {
@@ -519,14 +520,18 @@ const Allocation = ({ data, refreshMethods }) => {
               </div>
             </div>
           )}
-
+          <div className="bg-red-500 text-white p-4">
+  TEST
+</div>
           <table className="min-w-full border border-gray-300 bg-white mt-4 rounded">
-          <thead className="bg-gray-200">
+          <thead class="bg-gray-200">
             <tr>
-              <th className="px-3 py-2">Name</th>
+              <th className="px-3 py-2 text-blue-600">Name</th>
               <th className="px-3 py-2">Shares</th>
               <th className="px-3 py-2">Price</th>
               <th className="px-3 py-2">Currency</th>
+              <th className="px-3 py-2">Average Price</th>
+              <th className="px-3 py-2">Profit</th>
               <th className="px-3 py-2 text-center">Actions</th>
             </tr>
           </thead>
@@ -586,7 +591,29 @@ const Allocation = ({ data, refreshMethods }) => {
 
                 {/* CURRENCY */}
                 <td className="px-3 py-2">{stock.currency}</td>
-
+                  {/* AVERAGE PRICE */}
+                <td className="px-3 py-2">
+                  {stock.averagePrice ? Number(stock.averagePrice).toFixed(2) : "-"}
+                </td>
+                {/* PROFIT */}
+                  <td
+                className={`px-3 py-2 ${
+                  stock.averagePrice > 0 &&
+                  ((stock.price - stock.averagePrice) / stock.averagePrice) > 0
+                    ? "text-green-600"
+                    : stock.averagePrice > 0 &&
+                      ((stock.price - stock.averagePrice) / stock.averagePrice) < 0
+                    ? "text-red-600"
+                    : ""
+                }`}
+              >
+                {stock.averagePrice > 0
+                  ? (
+                      ((stock.price - stock.averagePrice) / stock.averagePrice) *
+                      100
+                    ).toFixed(2) + "%"
+                  : "-"}
+              </td>
                 {/* ACTIONS */}
                 <td className="px-3 py-2 text-center space-x-2">
                   {editingStockId === stock.id ? (
