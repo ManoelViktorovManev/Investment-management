@@ -10,13 +10,18 @@ class User extends BaseModel
     private string $name;
     private float $shares;
     private float $commissionPercent;
+    private float $averageSharePrice;
+    private float $allMoneyInvested;
 
-    public function __construct(?int $id = null, string $name = '', float $shares = 0, float $commissionPercent = 0)
+    public function __construct(string $name = '', float $shares = 0, float $moneyInvested = 0)
     {
-        $this->id = $id;
+        $this->id = null;
         $this->name = $name;
         $this->shares = $shares;
-        $this->commissionPercent = $commissionPercent;
+        $this->commissionPercent = 0;
+        $this->allMoneyInvested = $moneyInvested;
+        $this->averageSharePrice = $this->shares!=0?round($this->allMoneyInvested/$this->shares,5):0;
+        
     }
 
     public function getId(): ?int
@@ -57,5 +62,25 @@ class User extends BaseModel
     public function setCommisionPercent(float $commissionPercent): void
     {
         $this->commissionPercent = $commissionPercent;
+    }
+
+    public function getAverageSharePrice(): float
+    {
+        return $this->averageSharePrice;
+    }
+
+    public function setAverageSharePrice(float $averageSharePrice): void
+    {
+        $this->averageSharePrice = $averageSharePrice;
+    }
+
+    public function getAllMoneyInvested(): float
+    {
+        return $this->allMoneyInvested;
+    }
+
+    public function setAllMoneyInvested(float $allMoneyInvested): void
+    {
+        $this->allMoneyInvested = $allMoneyInvested;
     }
 }

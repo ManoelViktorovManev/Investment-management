@@ -20,18 +20,24 @@ class StockController extends BaseController
         if (!array_key_exists('name', $data) ||  !array_key_exists('currency', $data) || !array_key_exists('isCash', $data) ){
             return new Response("Can`t create a new Stock. Missing information",404);
         }
-
-        $stock = new Stock($data["name"],$data["currency"],$data["isCash"]); 
-        $db->add($stock);
-        $db->commit();
-
+        self::createStockStatick($data["name"],$data["currency"],$data["isCash"]);
+        
         return new Response("Successfuly insert a new record");
     }
+
+    public static function createStockStatick(string $name,string $currency, bool $isCash){
+        $db = new DbManipulation();
+        $stock = new Stock($name,$currency,$isCash); 
+        $db->add($stock);
+        $db->commit();
+    }
+
     #[Route('/getStocks')]
     public function getStock()
     { 
         return $this->json((new Stock())->query()->all());
     }
+
     #[Route('/deleteStock', methods:["POST"])]
     public function deleteStock()
     {
@@ -113,7 +119,7 @@ class StockController extends BaseController
     }
     
    
-    public static function calculatePortfolioValue($currency)
+    public static function calculatePortfolioValue(string $currency)
     {
         $allStocks = (new Stock())->query()->all(true);
         $calculation = 0;
@@ -123,7 +129,7 @@ class StockController extends BaseController
                
                 $rate=CurrencyExhangeRateController::calculateExchangeRate($stock->getCurrency(),$currency);
                 if($rate==null){
-                    return new Response("Non existing rates {$stock->getCurrency()} to {$currency}", 404);
+                    return null;
                 }
                 $calculation= $calculation + round($stock->getPrice() * $stock->getNumberOfShares() * $rate,2);
                 
@@ -136,7 +142,7 @@ class StockController extends BaseController
     }
 
     #[Route('/getPortfolioSize/{currency}')]
-    public function getPortfolioSize($currency)
+    public function getPortfolioSize(string $currency)
     {
        
         $calculation = self::calculatePortfolioValue($currency);

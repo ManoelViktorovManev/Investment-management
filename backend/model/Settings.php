@@ -11,9 +11,9 @@ class Settings extends BaseModel
     private float $sharePrice;
     private float $allShares;
     
-    public function __construct(?int $id = null,string $defaultCurrency='', float $sharePrice = 0, float $allShares = 0)
+    public function __construct(string $defaultCurrency='', float $sharePrice = 0, float $allShares = 0)
     {
-        $this->id = $id;
+        $this->id = null;
         $this->defaultCurrency = $defaultCurrency;
         $this->sharePrice = $sharePrice;
         $this->allShares = $allShares;

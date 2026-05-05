@@ -29,7 +29,8 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: newUserName,
-                shares: Number(newUserShares).toFixed(2)
+                shares: Number(newUserShares).toFixed(2),
+                money: Number(newUserMoney).toFixed(2)
             })
         });
 
@@ -83,7 +84,8 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
             body: JSON.stringify({
                 userId:user.id,
                 mode:addShares ? "add" : "remove",
-                updatedShares: Number(editShares)
+                updatedShares: Number(editShares),
+                sharePrice: share
             })
         });
 

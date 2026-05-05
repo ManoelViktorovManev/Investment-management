@@ -23,21 +23,23 @@ class UserController extends BaseController
         if (empty($listOfUsers)){
             $name= $data["name"];
             $shares = $data["shares"];
+            $money = $data['money'];
 
-            $user = new UserModel(null, $name,$shares);
+            $user = new UserModel($name,$shares,$money);
             $db->add($user);
         }
         else{
             foreach($listOfUsers as $element){
                 $name= $element["name"];
                 $shares = $element["shares"];
+                $money = $data['money'];
 
-                $user = new UserModel(null, $name,$shares);
+                $user = new UserModel($name,$shares,$money);
                 $db->add($user); 
             }
         }
         
-        // $db->commit();
+        $db->commit();
         return new Response("Successfuly insert a new record");
     }
     
@@ -46,12 +48,13 @@ class UserController extends BaseController
     {   
         return $this->json((new UserModel())->query()->all());
     }
+
     #[Route('/updateUserShares', methods:["POST"])]
     public function updateUserShares(){
         $data = json_decode(file_get_contents("php://input"), true);
 
         $user = new UserModel();
-        if (!array_key_exists('userId', $data) || !array_key_exists('mode', $data) || !array_key_exists('updatedShares', $data)){
+        if (!array_key_exists('userId', $data) || !array_key_exists('mode', $data) || !array_key_exists('updatedShares', $data) || !array_key_exists('sharePrice', $data)){
             return new Response("No existing User",404);
         }
         $db = new DbManipulation();
@@ -60,10 +63,18 @@ class UserController extends BaseController
         if($data["mode"]=="add"){
             // +
             $user->setShares($user->getShares()+$data["updatedShares"]);
+            $user->setAllMoneyInvested($user->getAllMoneyInvested() + $data["money"]);
+            $user->setAverageSharePrice(round($user->getAllMoneyInvested()/$user->getShares(),5));
         }
         else{
             // -
             $user->setShares($user->getShares()-$data["updatedShares"]);
+            $user->setAllMoneyInvested($user->getShares() * $user->getAverageSharePrice());
+            if($user->getAverageSharePrice()<$data["sharePrice"] && $user->getCommissionPercent()>0){
+                $profit = $data["sharePrice"] - $user->getAverageSharePrice();
+                $commision = $profit * $data["updatedShares"] * $user->getCommissionPercent();
+                // THINK WHAT TO DO HERE WITH THE COMMISION
+            }
         }
 
         $db->add($user);

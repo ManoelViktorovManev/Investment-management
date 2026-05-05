@@ -10,9 +10,7 @@ use App\Model\Settings;
 
 class SettingsController extends BaseController
 {
-    // Setting default Currency for a new portfolio
-    // Button for adding a new дялове to User
-     
+    
     #[Route('/createSettings', methods:["POST"])]
     public function createSettings()
     {
@@ -24,9 +22,12 @@ class SettingsController extends BaseController
         $name= $data["defaultCurrency"];
         $sharePrice = $data["sharePrice"];
         $allShares = $data["allShares"];
-        $settings = new Settings(null,$name,$sharePrice,$allShares);
+        $settings = new Settings($name,$sharePrice,$allShares);
         $db->add($settings);
         $db->commit();
+        
+        StockController::createStockStatick($name . " cash",$name,1);
+        
         return new Response("Successfuly insert a new record");
     }
     #[Route('/getSettings')]
@@ -42,7 +43,7 @@ class SettingsController extends BaseController
     public function updateSettings()
     {   
         $settings = new Settings();
-        $settings->query()->where("id","=",1)->first();
+        $settings->query()->first();
         if(!$settings){
             return new Response("Settings not found", 404);
         }
