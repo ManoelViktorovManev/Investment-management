@@ -28,7 +28,7 @@ const Allocation = ({ data, refreshMethods }) => {
 
   const [newStock, setNewStock] = useState({
     name: '',
-    currency: data.settings[0].defaultCurrency,
+    currency: settings[0].defaultCurrency,
     isCash: false,
   });
 
@@ -265,11 +265,11 @@ const Allocation = ({ data, refreshMethods }) => {
  
   return (
     <div>
-      {!buttonForStocks && (
+      {/* {!buttonForStocks && (
         <button className="px-2 py-1 bg-green-500 text-white rounded mr-2" onClick={() => setShareState(!shareState)}>
         {shareState ? "Show money" : "Show shares"}
         </button>
-      )}
+      )} */}
       
 
       <button className="px-2 py-1 bg-green-500 text-white rounded mr-2" onClick={() => setButtonForStocks(!buttonForStocks)}>
@@ -277,10 +277,14 @@ const Allocation = ({ data, refreshMethods }) => {
       </button>
 
       {!buttonForStocks && (
+        
         <div>
+          <h1 className="mt-3">
+            {"Money distribution "}
+          </h1>
           <PieChart width={400} height={400}>
             <Pie
-              data={shareState ? chartDataShares : chartDataUsersMoney}
+              data={chartDataUsersMoney}
               label
               cx="50%"
               cy="50%"
@@ -288,7 +292,7 @@ const Allocation = ({ data, refreshMethods }) => {
               fill="#8884d8"
               dataKey="value"
             >
-              {(shareState ? chartDataShares : chartDataUsersMoney).map((entry, index) => (
+              {(chartDataUsersMoney).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -297,13 +301,38 @@ const Allocation = ({ data, refreshMethods }) => {
           </PieChart>
 
           <h1 className="mt-3">
-            {shareState
-              ? "Entire shares: " + Number(settings[0].allShares).toFixed(2)
-              : "Entire value of portfolio: " + enitrePortfolioPrice}
+            {"Entire shares: " + Number(settings[0].allShares).toFixed(0)}
           </h1>
+            <h1 className="mt-3">
+            {"Share price: " + Number(settings[0].sharePrice) + " "+ settings[0].defaultCurrency}
+          </h1>
+          <h1 className="mt-3">
+            {"Entire value of portfolio: " + enitrePortfolioPrice + " "+ settings[0].defaultCurrency}
+          </h1>
+
+           <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Shares</th>
+                <th>Amount money</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} >
+                  <td >{u.name}</td>
+                  <td>{Number(u.shares).toFixed(0)}</td>
+                  <td>{(Number(u.shares).toFixed(0) * Number(settings[0].sharePrice)).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-
+     
+       
+      
       {buttonForStocks && (
         <div className="mt-4">
 
@@ -521,7 +550,6 @@ const Allocation = ({ data, refreshMethods }) => {
             </div>
           )}
           <div className="bg-red-500 text-white p-4">
-  TEST
 </div>
           <table className="min-w-full border border-gray-300 bg-white mt-4 rounded">
           <thead class="bg-gray-200">
