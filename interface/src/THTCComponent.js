@@ -113,7 +113,7 @@ const THTCComponent = ({ data, refreshMethods }) => {
         body: JSON.stringify({
             company:taxCompany,
             profitFromSale:Number(taxProfit),
-            currency: currencySelected,
+            // currency: currencySelected,
             defaultCurrency: settings[0].defaultCurrency
         })
     });
@@ -230,8 +230,8 @@ const THTCComponent = ({ data, refreshMethods }) => {
           <label>Profit from Sale:</label>
           <input type="number" style={inputStyle} value={taxProfit} onChange={e => setTaxProfit(e.target.value)} />
 
-          <label>Currency:</label>
-          <input style={inputStyle} onChange={e => setCurrencySelected(e.target.value)} />
+          {/* <label>Currency:</label>
+          <input style={inputStyle} onChange={e => setCurrencySelected(e.target.value)} /> */}
 
 
           {/* {(selectedUser && taxProfit) && (

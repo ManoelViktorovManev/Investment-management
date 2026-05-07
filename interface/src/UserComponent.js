@@ -88,7 +88,7 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
                 userId:user.id,
                 mode:addShares ? "add" : "remove",
                 updatedShares: Number(editShares),
-                sharePrice: share
+                sharePrice: Number(share).toFixed(5)
             })
         });
 

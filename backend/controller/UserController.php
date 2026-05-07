@@ -63,7 +63,7 @@ class UserController extends BaseController
         if($data["mode"]=="add"){
             // +
             $user->setShares($user->getShares()+$data["updatedShares"]);
-            $user->setAllMoneyInvested($user->getAllMoneyInvested() + $data["money"]);
+            $user->setAllMoneyInvested($user->getAllMoneyInvested() + ($data["updatedShares"]*$data['sharePrice']));
             $user->setAverageSharePrice(round($user->getAllMoneyInvested()/$user->getShares(),5));
         }
         else{
