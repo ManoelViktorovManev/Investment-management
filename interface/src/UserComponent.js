@@ -3,7 +3,7 @@ import API_BASE_URI from './EnvVar.js';
 const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate }) => {
     var users = data.users;
     var settings = data.settings;
-    var share = settings[0].sharePrice; // only one instance of settings we have
+    var share = Number(settings[0].sharePrice).toFixed(5); // only one instance of settings we have
     var allShares = settings[0].allShares;
     
     const [addShares,setAddShares] = useState(false);
@@ -20,10 +20,13 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
     const [newUserMoney, setNewUserMoney] = useState(0);
     const [newUserShares, setNewUserShares] = useState(0);
 
-    
+    const currentShares = Math.floor(editMoney / Number(share).toFixed(2));
+    const nextShares = currentShares + 1;
+    const neededMoney = (nextShares *  Number(share).toFixed(2) - editMoney).toFixed(2);
 
+    const calculateCommission = editUser==null?0:share-editUser.averageSharePrice<0?0:((share-editUser.averageSharePrice)*editShares*(editUser.commissionPercent/100)).toFixed(2);
+    // calculateCommission = calculateCommission.;
      async function  handleCreateUser() {
-      // 🔥 HERE you will add your API call
        const response = await fetch(`${API_BASE_URI}/createUser`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -154,6 +157,7 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
           ⬅ Back to price update
         </button>
       )}
+      
 
         {/* Adding or removing amount of shares/ money from the account  */}
         {(addShares || removeShares) && editUser && (
@@ -161,7 +165,9 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
           <h3 className="text-lg font-semibold">
             {addShares ? `Add Shares to ${editUser.name}` : `Remove Shares from ${editUser.name}`}
           </h3>
-
+          <h4 className="text-lg font-semibold"> Share Price : {Number(share).toFixed(5)}
+            
+          </h4>
           <div className="space-y-2">
             <label className="block text-sm text-gray-600">
               {addShares ? "Amount to Invest (Money)" : "Amount to Withdraw (Money)"}
@@ -174,7 +180,7 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
               onChange={(e) => {
                 setEditMoney(Number(e.target.value));
                 if (share !== 0) {
-                  setEditShares((Number(e.target.value) / share).toFixed(5));
+                  setEditShares(Math.floor(Number(e.target.value) / share));
                 }
               }}
             />
@@ -192,11 +198,22 @@ const UserComponent = ({ data, refreshMethods, cameFromUpdate, onBackToUpdate })
               onChange={(e) => {
                 setEditShares(Number(e.target.value));
                 if (share !== 0) {
-                  setEditMoney((Number(e.target.value) * share).toFixed(5));
+                  setEditMoney((Number(e.target.value) * share).toFixed(2));
                 }
               }}
             />
           </div>
+          {editMoney > 0 && share > 0  && (
+            <p className="text-sm text-gray-500">
+              It needs {neededMoney} for {nextShares} shares
+            </p>
+          )}
+
+          {removeShares  && (
+            <p className="text-sm text-gray-500">
+              Commision: {calculateCommission}
+            </p>
+          )}
 
           <div className="flex gap-2">
             <button
