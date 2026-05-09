@@ -8,7 +8,7 @@ import { UserComponent } from './UserComponent.js';
 import { Allocation } from './Allocation.js';
 import { SettingsComponent } from './SettingsComponent.js';
 import { THTCComponent } from './THTCComponent.js';
-import { PriceMovement } from './PriceMovement.js';
+import { TaxCalculator } from './TaxCalculator.js';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('');
@@ -344,8 +344,8 @@ function App() {
                         <THTCComponent data={data} refreshMethods={refreshMethods} />
                         )}
 
-                        {appMode === "normal" && currentPage === 'price_movement' && (
-                        <PriceMovement data={data} refreshMethods={refreshMethods} />
+                        {appMode === "normal" && currentPage === 'tax_calculator' && (
+                        <TaxCalculator data={data} />
                         )}
 
                     </main>

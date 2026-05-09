@@ -39,10 +39,10 @@ const NavbarComponent = ({ setCurrentPage, appMode }) => {
               </div>
 
               <div
-                onClick={() => setCurrentPage('price_movement')}
+                onClick={() => setCurrentPage('tax_calculator')}
                 className="cursor-pointer text-sm px-4 py-2 rounded-md hover:bg-gray-800"
               >
-                Share price movement
+                Tax calculator
               </div>
             </>
           )}

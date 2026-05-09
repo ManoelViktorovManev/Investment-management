@@ -3,10 +3,10 @@ import API_BASE_URI from './EnvVar.js';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 
-const COLORS = ['#3799efff','#1900ffff' , '#00ff62ff', '#FFBB28', '#ff0000ff', '#aa00ff', '#50551fff', '#2f9f40ff' , '#000000', '#ff009dff'];
+const COLORS = ['#3799efff','rgb(40, 24, 180)' , 'rgb(3, 97, 39)', '#b77d00', 'rgb(182, 0, 0)', '#8503c6', '#50551fff', '#2f9f40ff' , '#000000', 'rgba(179, 0, 110, 0.69)'];
 
 const Allocation = ({ data, refreshMethods }) => {
-  const users = data.users;
+  const users = data.users; 
   const settings = data.settings;
   const stocks = data.stocks;
 
