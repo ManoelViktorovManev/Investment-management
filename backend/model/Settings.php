@@ -10,6 +10,7 @@ class Settings extends BaseModel
     private string $defaultCurrency;
     private float $sharePrice;
     private float $allShares;
+    private float $taxesToPay;
     
     public function __construct(string $defaultCurrency='', float $sharePrice = 0, float $allShares = 0)
     {
@@ -17,6 +18,7 @@ class Settings extends BaseModel
         $this->defaultCurrency = $defaultCurrency;
         $this->sharePrice = $sharePrice;
         $this->allShares = $allShares;
+        $this->taxesToPay = 0;
     }
 
     public function getId(): ?int
@@ -56,6 +58,16 @@ class Settings extends BaseModel
     public function setAllShares(float $sharesCount): void
     {
         $this->allShares = $sharesCount;
+    }
+
+    public function getTaxesToPay(): float
+    {
+        return $this->taxesToPay;
+    }
+
+    public function setTaxesToPay(float $taxesToPay): void
+    {
+        $this->taxesToPay = $taxesToPay;
     }
    
 }

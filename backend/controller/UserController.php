@@ -73,7 +73,7 @@ class UserController extends BaseController
             if($user->getAverageSharePrice()<$data["sharePrice"] && $user->getCommissionPercent()>0){
                 $profit = $data["sharePrice"] - $user->getAverageSharePrice();
                 $commision = $profit * $data["updatedShares"] * $user->getCommissionPercent();
-                // THINK WHAT TO DO HERE WITH THE COMMISION
+                $user->setAmountCommisionToPayToOwner($commision+$user->getAmountCommisionToPayToOwner());
             }
         }
 

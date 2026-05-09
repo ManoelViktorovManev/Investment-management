@@ -27,6 +27,9 @@ class TransactionHistoryOnPartitionController extends BaseController
         }
         // I HAVE TO SET THE TIMEZONE => look at date_default_timezone_set()
         date_default_timezone_set("Europe/Sofia");
+        if($data["priceForPartition"]==0){
+            $data["priceForPartition"] = 1;
+        }
         $transaction = new TransactionHistoryOnPartition(null,$data["typeTransaction"],date("d.m.Y"), $data["person"], 
             $data["sumChange"], $data["changePartition"],$data["priceForPartition"], $data["newUserPartitionsNumber"]); 
         $db->add($transaction);

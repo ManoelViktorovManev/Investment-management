@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import API_BASE_URI from './EnvVar.js';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
@@ -10,9 +10,8 @@ const Allocation = ({ data, refreshMethods }) => {
   const settings = data.settings;
   const stocks = data.stocks;
 
-  // TODO!!!HERE WE HAVE BUG AND FIX IT
-  const enitrePortfolioPrice = (Number(settings[0].allShares) * Number(settings[0].sharePrice)).toFixed(2);
   const today = new Date().toISOString().split("T")[0];
+  const [enitrePortfolioPrice, setEnitrePortfolioPrice] = useState(0);
 
   const [shareState, setShareState] = useState(true);
   const [buttonForStocks, setButtonForStocks] = useState(false);
@@ -40,6 +39,18 @@ const Allocation = ({ data, refreshMethods }) => {
     rateForTheCurrencty: '',
     date: today,
   });
+
+  useEffect(() => {
+      async function load(){
+        const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
+        if (responseForCalculation.status === 200){
+          const result = await responseForCalculation.json();
+          setEnitrePortfolioPrice(Number(result.portfolioValue).toFixed(2));
+        }
+      }
+        
+      load();
+    }, [])
 
   // Edit stock state
   const [editingStockId, setEditingStockId] = useState(null);
@@ -94,7 +105,7 @@ const Allocation = ({ data, refreshMethods }) => {
 
   if (onlyOneCurrency) {
     // define which symbols are treated as currencies
-    const currencySymbols = 'Cash';
+    const currencySymbols = 'cash';
 
     let cashTotal = 0;
     const nonCash = [];
@@ -125,6 +136,12 @@ const Allocation = ({ data, refreshMethods }) => {
     }));
   }
 
+  // Assign colors AFTER all filters so the chart always reflects the current state
+  const finalStockDataWithColors = finalStockData.map((s, index) => ({
+    ...s,
+    color: COLORS[index % COLORS.length]
+  }));
+
   // Placeholder actions (API calls go here later)
   async function handleCreateStock() {
     const response = await fetch(`${API_BASE_URI}/createStock`, {
@@ -136,20 +153,20 @@ const Allocation = ({ data, refreshMethods }) => {
         isCash: newStock.isCash,
       })
     });
-    if(response.status === 200){
-      const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
-      if (responseForCalculation.status === 200){
-        const result = await responseForCalculation.json();
-        const value = result.portfolioValue;
-        const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+    // if(response.status === 200){
+    //   const responseForCalculation = await fetch(`${API_BASE_URI}/getPortfolioSize/${settings[0].defaultCurrency}`);
+    //   if (responseForCalculation.status === 200){
+    //     const result = await responseForCalculation.json();
+    //     const value = result.portfolioValue;
+    //     const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
 
-        await fetch(`${API_BASE_URI}/updateSettings`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sharePrice: newValuePerShare })
-        });
-      }
-    }
+    //     await fetch(`${API_BASE_URI}/updateSettings`, {
+    //       method: 'POST',
+    //       headers: { 'Content-Type': 'application/json' },
+    //       body: JSON.stringify({ sharePrice: newValuePerShare })
+    //     });
+    //   }
+    // }
 
     setAddStockMode(false);
     setNewStock({ name: '', currency: data.settings[0].defaultCurrency, isCash: false });
@@ -157,7 +174,7 @@ const Allocation = ({ data, refreshMethods }) => {
     refreshMethods.refreshSettings();
   }
 
-  async function handleBuyStock(transactionType){
+  async function handleBuyOrSellStock(transactionType){
     const response = await fetch(`${API_BASE_URI}/addStockTransaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -177,6 +194,7 @@ const Allocation = ({ data, refreshMethods }) => {
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
         const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+        setEnitrePortfolioPrice(Number(result.portfolioValue).toFixed(2));
 
         await fetch(`${API_BASE_URI}/updateSettings`, {
           method: 'POST',
@@ -220,7 +238,8 @@ const Allocation = ({ data, refreshMethods }) => {
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
         const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
-        console.log(newValuePerShare);
+        setEnitrePortfolioPrice(Number(result.portfolioValue).toFixed(2));
+        
         await fetch(`${API_BASE_URI}/updateSettings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -248,6 +267,7 @@ const Allocation = ({ data, refreshMethods }) => {
         const result = await responseForCalculation.json();
         const value = result.portfolioValue;
         const newValuePerShare = Number(Number(value)/Number(settings[0].allShares)).toFixed(5);
+        setEnitrePortfolioPrice(Number(result.portfolioValue).toFixed(2));
 
         await fetch(`${API_BASE_URI}/updateSettings`, {
           method: 'POST',
@@ -351,7 +371,7 @@ const Allocation = ({ data, refreshMethods }) => {
 
           <PieChart width={400} height={400}>
             <Pie
-              data={finalStockData}
+              data={finalStockDataWithColors.filter(s => s.value > 0)}
               label
               cx="50%"
               cy="50%"
@@ -359,13 +379,25 @@ const Allocation = ({ data, refreshMethods }) => {
               fill="#8884d8"
               dataKey="value"
             >
-              {finalStockData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {finalStockDataWithColors.filter(s => s.value > 0).map((entry) => (
+                <Cell key={`cell-${entry.name}`} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip formatter={(value) => representAsPercentage ? `${value}%` : value} />
             <Legend />
           </PieChart>
+
+          {finalStockDataWithColors.filter(s => s.value < 0).length > 0 && (
+            <div className="mt-2 p-3 border border-red-300 rounded bg-red-50 max-w-sm">
+              <h3 className="font-semibold text-red-700 mb-1">Liabilities</h3>
+              {finalStockDataWithColors.filter(s => s.value < 0).map(s => (
+                <div key={s.name} className="flex justify-between text-red-600 text-sm">
+                  <span>{s.name}</span>
+                  <span>{s.value.toFixed(2)} {settings[0].defaultCurrency}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <h1 className="mt-3">
             Entire value of portfolio: {enitrePortfolioPrice}
@@ -456,7 +488,7 @@ const Allocation = ({ data, refreshMethods }) => {
                 }
               />
               <div className="flex gap-2">
-                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyStock("buy")}>Upload</button>
+                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyOrSellStock("buy")}>Upload</button>
                 <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setBuyStockMode(false)}>Cancel</button>
               </div>
             </div>
@@ -520,7 +552,7 @@ const Allocation = ({ data, refreshMethods }) => {
                 }
               />
               <div className="flex gap-2">
-                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyStock("sell")}>Upload</button>
+                <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={() => handleBuyOrSellStock("sell")}>Upload</button>
                 <button className="px-3 py-2 bg-gray-400 text-white rounded" onClick={() => setSellStockMode(false)}>Cancel</button>
               </div>
             </div>

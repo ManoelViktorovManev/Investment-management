@@ -10,16 +10,16 @@ class Taxes extends BaseModel
     private string $company;
     private string $date;
     private string $currency;
-    private float $rateToDefaultCurrency;
+    // private float $rateToDefaultCurrency;
     private float $profitFromSale;
 
-    public function __construct(?int $id = null, string $company = '', string $date = '',string $currency='',float $rateToDefaultCurrency = 0, float $profitFromSale = 0)
+    public function __construct(string $company = '', string $date = '',string $currency='', float $profitFromSale = 0)
     {
-        $this->id = $id;
+        $this->id = null;
         $this->company = $company;
         $this->date = $date;
         $this->currency = $currency;
-        $this->rateToDefaultCurrency = $rateToDefaultCurrency;
+        // $this->rateToDefaultCurrency = $rateToDefaultCurrency;
         $this->profitFromSale = $profitFromSale;
     }
 
@@ -63,15 +63,15 @@ class Taxes extends BaseModel
         $this->currency = $currency;
     }
 
-    public function getRateToDefaultCurrency(): float
-    {
-        return $this->rateToDefaultCurrency;
-    }
+    // public function getRateToDefaultCurrency(): float
+    // {
+    //     return $this->rateToDefaultCurrency;
+    // }
 
-    public function setRateToDefaultCurrency(float $rateToDefaultCurrency): void
-    {
-        $this->rateToDefaultCurrency = $rateToDefaultCurrency;
-    }
+    // public function setRateToDefaultCurrency(float $rateToDefaultCurrency): void
+    // {
+    //     $this->rateToDefaultCurrency = $rateToDefaultCurrency;
+    // }
 
     public function getProfitFromSale(): float
     {

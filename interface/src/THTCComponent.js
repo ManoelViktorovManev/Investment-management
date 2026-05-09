@@ -246,7 +246,7 @@ const THTCComponent = ({ data, refreshMethods }) => {
 
           <button
             style={{...btnActive, marginTop:"1rem"}}
-            disabled={!taxCompany || !taxProfit || !currencySelected}
+            disabled={!taxCompany || !taxProfit}
             onClick={handleSubmitTax}
           >
             Submit

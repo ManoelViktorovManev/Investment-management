@@ -12,6 +12,7 @@ class User extends BaseModel
     private float $commissionPercent;
     private float $averageSharePrice;
     private float $allMoneyInvested;
+    private float $amountCommisionToPayToOwner;
 
     public function __construct(string $name = '', float $shares = 0, float $moneyInvested = 0)
     {
@@ -21,6 +22,7 @@ class User extends BaseModel
         $this->commissionPercent = 0;
         $this->allMoneyInvested = $moneyInvested;
         $this->averageSharePrice = $this->shares!=0?round($this->allMoneyInvested/$this->shares,5):0;
+        $this->amountCommisionToPayToOwner = 0;
         
     }
 
@@ -82,5 +84,15 @@ class User extends BaseModel
     public function setAllMoneyInvested(float $allMoneyInvested): void
     {
         $this->allMoneyInvested = $allMoneyInvested;
+    }
+
+    public function getAmountCommisionToPayToOwner(): float
+    {
+        return $this->amountCommisionToPayToOwner;
+    }
+
+    public function setAmountCommisionToPayToOwner(float $amountCommisionToPayToOwner): void
+    {
+        $this->amountCommisionToPayToOwner = $amountCommisionToPayToOwner;
     }
 }
